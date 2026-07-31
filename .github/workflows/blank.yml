@@ -43,9 +43,9 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
 
-      - name: Build APK (release — embeds the JS bundle, no dev server required at runtime)
+      - name: Build APK (release, arm64-v8a only — covers virtually all modern Android phones; a universal build bundling all 4 CPU architectures is the most common cause of unnecessary APK bloat)
         working-directory: ./android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -Pandroid.injected.build.abi=arm64-v8a
 
       - name: Upload APK as a downloadable artifact
         uses: actions/upload-artifact@v4
