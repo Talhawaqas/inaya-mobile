@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { ethers } from 'ethers';
-import { generateSecureSalt, deriveVaultKey, disperseAndSlice } from '@inaya-network/custody-sdk';
+import { InayaKernel } from '@inaya-network/custody-sdk';
 import { useWallet } from '../providers/WalletProvider';
 
 // Same Custody address/ABI fragment the SDK and the web dApp both use.
@@ -57,9 +57,9 @@ export default function StorageDashboardScreen({ navigation }) {
         name: picked.name,
       };
 
-      const salt = generateSecureSalt(16);
-      const vaultKey = await deriveVaultKey({ passkey, salt });
-      const sharded = await disperseAndSlice({ file: fileLike, encryptionKey: vaultKey });
+      const salt = InayaKernel.generateSecureSalt(16);
+      const vaultKey = await InayaKernel.deriveVaultKey({ passkey, salt });
+      const sharded = await InayaKernel.disperseAndSlice({ file: fileLike, encryptionKey: vaultKey });
 
       setStatus('Pinning shards to IPFS...');
       const [cidAlpha, cidBeta] = await Promise.all([
