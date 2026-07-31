@@ -36,6 +36,9 @@ jobs:
       - name: Install MetaMask Connect Multichain dependencies
         run: npm install @metamask/connect-multichain react-native-get-random-values buffer @react-native-async-storage/async-storage readable-stream
 
+      - name: Install Inaya Custody SDK and document picker
+        run: npm install github:Talhawaqas/custody-sdk ethers expo-document-picker
+
       - name: Prebuild native Android project
         run: npx expo prebuild --platform android
 
