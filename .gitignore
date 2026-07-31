@@ -31,7 +31,12 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# build artifacts / debug output
+eas-inspect-output/
+inaya-mobile.zip
 
 # typescript
 *.tsbuildinfo
