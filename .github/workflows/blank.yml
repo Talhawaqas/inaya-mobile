@@ -43,9 +43,12 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
 
-      - name: Build APK (release, arm64-v8a only — covers virtually all modern Android phones; a universal build bundling all 4 CPU architectures is the most common cause of unnecessary APK bloat)
+      - name: Build APK (release — embeds the JS bundle, no dev server required at runtime)
         working-directory: ./android
-        run: ./gradlew assembleRelease -Pandroid.injected.build.abi=arm64-v8a
+        run: ./gradlew assembleRelease
+
+      - name: List actual build output (diagnostic — shows real filenames/paths if anything unexpected happens)
+        run: find android/app/build/outputs -type f -name "*.apk"
 
       - name: Upload APK as a downloadable artifact
         uses: actions/upload-artifact@v4
