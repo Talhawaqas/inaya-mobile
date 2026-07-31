@@ -31,13 +31,13 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Install MetaMask Connect Multichain dependencies
-        run: npm install @metamask/connect-multichain react-native-get-random-values buffer @react-native-async-storage/async-storage readable-stream
+        run: npm install --legacy-peer-deps @metamask/connect-multichain react-native-get-random-values buffer @react-native-async-storage/async-storage readable-stream
 
       - name: Install Inaya Custody SDK and document picker
-        run: npm install git+https://${{ secrets.CUSTODY_SDK_PAT }}@github.com/Talhawaqas/custody-sdk.git ethers expo-document-picker
+        run: npm install --legacy-peer-deps git+https://github.com/Talhawaqas/custody-sdk.git ethers expo-document-picker
 
       - name: Prebuild native Android project
         run: npx expo prebuild --platform android
