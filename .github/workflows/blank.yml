@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Unzip project files
-        run: unzip -o inaya-mobile.zip -d .
+        run: unzip -o inaya_mobile.zip -d .
 
       - name: Write .env (from a GitHub secret, so this never depends on it surviving the zip upload)
         run: echo "EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID=${{ secrets.WALLETCONNECT_PROJECT_ID }}" > .env
@@ -37,7 +37,7 @@ jobs:
         run: npm install @metamask/connect-multichain react-native-get-random-values buffer @react-native-async-storage/async-storage readable-stream
 
       - name: Install Inaya Custody SDK and document picker
-        run: npm install github:Talhawaqas/custody-sdk ethers expo-document-picker
+        run: npm install git+https://${{ secrets.CUSTODY_SDK_PAT }}@github.com/Talhawaqas/custody-sdk.git ethers expo-document-picker
 
       - name: Prebuild native Android project
         run: npx expo prebuild --platform android
