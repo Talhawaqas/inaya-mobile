@@ -8,13 +8,6 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 const emptyModule = path.resolve(__dirname, 'src/empty-module.js');
 
-// @inaya-network/custody-sdk is linked in via a local "file:" dependency
-// (sibling repo, not published to npm) — Metro doesn't follow symlinks or
-// watch outside the project root by default, so both need enabling.
-const custodySdkPath = path.resolve(__dirname, '../inaya-network-dapp/custody-sdk');
-config.resolver.unstable_enableSymlinks = true;
-config.watchFolders = [...(config.watchFolders || []), custodySdkPath];
-
 config.resolver.extraNodeModules = {
   stream: require.resolve('readable-stream'),
   crypto: emptyModule,

@@ -1,0 +1,58 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # lets you trigger this manually from GitHub's Actions tab
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up Java (required for Android builds)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Prebuild native Android project
+        run: npx expo prebuild --platform android
+
+      - name: Ensure a debug keystore exists (release build signs with it, since this is an alpha, not a Play Store submission)
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkeypair -v -keystore ~/.android/debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build APK (release — embeds the JS bundle, no dev server required at runtime)
+        working-directory: ./android
+        run: ./gradlew assembleRelease
+
+      - name: List actual build output (diagnostic — shows real filenames/paths if anything unexpected happens)
+        run: find android/app/build/outputs -type f -name "*.apk"
+
+      - name: Upload APK as a downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: inaya-mobile-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error

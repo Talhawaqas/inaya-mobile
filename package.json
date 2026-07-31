@@ -9,7 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@inaya-network/custody-sdk": "file:../inaya-network-dapp/custody-sdk",
+    "@inaya-network/custody-sdk": "github:Talhawaqas/custody-sdk",
     "@metamask/connect-multichain": "^1.2.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "11.4.1",
