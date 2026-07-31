@@ -13,6 +13,9 @@ jobs:
       - name: Unzip project files
         run: unzip -o inaya_mobile.zip -d .
 
+      - name: Write .env (from a GitHub secret, so this never depends on it surviving the zip upload)
+        run: echo "EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID=${{ secrets.WALLETCONNECT_PROJECT_ID }}" > .env
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
