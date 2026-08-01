@@ -49,17 +49,15 @@ export default function StorageDashboardScreen({ navigation }) {
 
       setStatus('Encrypting...');
       const blob = await (await fetch(picked.uri)).blob();
-      // disperseAndSlice() needs .arrayBuffer(), .type, and .name — a plain
-      // fetched Blob has the first two but not .name, so wrap it.
-      const fileLike = {
-        arrayBuffer: () => blob.arrayBuffer(),
-        type: blob.type || picked.mimeType || 'application/octet-stream',
-        name: picked.name,
-      };
+      // disperseAndSlice() hands the file straight to FileReader.readAsDataURL(),
+      // which requires a real Blob instance — a plain {arrayBuffer, type, name}
+      // lookalike fails with "parameter 1 is not of type 'Blob'". A fetched Blob
+      // just lacks .name, so attach it directly rather than replacing the Blob.
+      blob.name = picked.name;
 
       const salt = InayaKernel.generateSecureSalt(16);
       const vaultKey = await InayaKernel.deriveVaultKey({ passkey, salt });
-      const sharded = await InayaKernel.disperseAndSlice({ file: fileLike, encryptionKey: vaultKey });
+      const sharded = await InayaKernel.disperseAndSlice({ file: blob, encryptionKey: vaultKey });
 
       setStatus('Pinning shards to IPFS...');
       const [cidAlpha, cidBeta] = await Promise.all([
