@@ -12,6 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { ethers } from 'ethers';
 import { useWallet } from '../providers/WalletProvider';
+import { colors, spacing, radius, fonts } from '../theme';
 
 const INAYA_TOKEN_ADDRESS = '0x3966a3378c8d9e6bb34dd0b8458eef4b878ce94e';
 const USDT_TOKEN_ADDRESS = '0x6f16E2d169B5F2c7141c2b46dD864f8daE01745D';
@@ -60,7 +61,7 @@ export default function WalletBalanceScreen() {
     <ScrollView
       style={styles.root}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchBalances} tintColor="#22d3d0" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchBalances} tintColor={colors.cyan} />}
     >
       <Text style={styles.title}>Wallet Balance</Text>
       <Text style={styles.subtitle}>Read-only — no signing happens on this screen.</Text>
@@ -90,12 +91,19 @@ function BalanceRow({ label, value }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0a0e14' },
-  content: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: '800', color: '#fff', marginTop: 8 },
-  subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 4, marginBottom: 20 },
-  card: { backgroundColor: '#111c33', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#1c2a38', marginBottom: 12 },
-  cardLabel: { fontSize: 10, color: '#22d3d0', fontWeight: '700', letterSpacing: 1.5 },
-  cardValue: { fontSize: 22, color: '#fff', fontWeight: '800', marginTop: 6 },
-  cardSub: { fontSize: 12, color: '#64748b', lineHeight: 18 },
+  root: { flex: 1, backgroundColor: colors.bg },
+  content: { padding: spacing.xl, paddingBottom: spacing.xxxl + 8 },
+  title: { fontSize: 24, fontFamily: fonts.sansExtraBold, color: colors.textPrimary, marginTop: spacing.sm },
+  subtitle: { fontSize: 13, fontFamily: fonts.sans, color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.xl },
+  card: {
+    backgroundColor: 'rgba(11,17,32,0.6)',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.cyan,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  cardLabel: { fontSize: 10, fontFamily: fonts.sansBold, color: colors.cyan, letterSpacing: 1.5 },
+  cardValue: { fontSize: 22, fontFamily: fonts.monoBold, color: colors.textPrimary, marginTop: spacing.sm },
+  cardSub: { fontSize: 12, fontFamily: fonts.sans, color: colors.textMuted, lineHeight: 18 },
 });

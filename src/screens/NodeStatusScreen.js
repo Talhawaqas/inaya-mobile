@@ -9,8 +9,11 @@
 // calls it either, so there's no live behavior to match there.
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useWallet } from '../providers/WalletProvider';
+import { colors, spacing, radius, fonts } from '../theme';
+import GradientButton from '../components/GradientButton';
+import StatusDot from '../components/StatusDot';
 
 export default function NodeStatusScreen() {
   const { address, isConnected, connecting, connect, isSignedUp, isSigning, signUp } = useWallet();
@@ -27,6 +30,7 @@ export default function NodeStatusScreen() {
 
   // Matches page.js exactly: isConnected ? (isSignedUp ? "ACTIVE_NODE" : "UNVERIFIED_SIGNUP") : "WAITING_AUTH"
   const statusLabel = !isConnected ? 'IDLE' : isSignedUp ? 'LIVE — VERIFIED' : 'LIVE — UNVERIFIED';
+  const statusColor = !isConnected ? colors.textMuted : isSignedUp ? colors.success : colors.warning;
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
@@ -37,17 +41,10 @@ export default function NodeStatusScreen() {
 
       <View style={styles.card}>
         <View style={styles.statusHeader}>
-          <View style={[styles.dot, isConnected ? styles.dotLive : styles.dotIdle]} />
+          <StatusDot active={isConnected} color={isSignedUp ? colors.success : colors.warning} />
           <Text style={styles.cardLabel}>NODE STATUS</Text>
         </View>
-        <Text
-          style={[
-            styles.statusValue,
-            !isConnected ? styles.statusIdle : isSignedUp ? styles.statusActive : styles.statusUnverified,
-          ]}
-        >
-          {statusLabel}
-        </Text>
+        <Text style={[styles.statusValue, { color: statusColor }]}>{statusLabel}</Text>
         <Text style={styles.cardSub}>
           {!isConnected
             ? 'Connect your wallet to activate this node.'
@@ -58,23 +55,22 @@ export default function NodeStatusScreen() {
       </View>
 
       {!isConnected && (
-        <TouchableOpacity style={styles.actionButton} onPress={connect} disabled={connecting}>
-          {connecting ? (
-            <ActivityIndicator color="#0a0e14" />
-          ) : (
-            <Text style={styles.actionButtonText}>Connect Wallet</Text>
-          )}
-        </TouchableOpacity>
+        <GradientButton
+          title="Connect Wallet"
+          onPress={connect}
+          loading={connecting}
+          style={styles.actionButton}
+        />
       )}
 
       {isConnected && !isSignedUp && (
-        <TouchableOpacity style={styles.actionButton} onPress={handleSignUp} disabled={isSigning}>
-          {isSigning ? (
-            <ActivityIndicator color="#0a0e14" />
-          ) : (
-            <Text style={styles.actionButtonText}>📝 Complete Sign-Up (Verify Node)</Text>
-          )}
-        </TouchableOpacity>
+        <GradientButton
+          title="📝 Complete Sign-Up (Verify Node)"
+          onPress={handleSignUp}
+          loading={isSigning}
+          variant="warning"
+          style={styles.actionButton}
+        />
       )}
       {!!signUpError && <Text style={styles.errorText}>❌ {signUpError}</Text>}
 
@@ -88,23 +84,23 @@ export default function NodeStatusScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0a0e14' },
-  content: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: '800', color: '#fff', marginTop: 8 },
-  subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 4, marginBottom: 20, lineHeight: 18 },
-  card: { backgroundColor: '#111c33', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#1c2a38', marginBottom: 16 },
-  statusHeader: { flexDirection: 'row', alignItems: 'center' },
-  dot: { width: 7, height: 7, borderRadius: 4, marginRight: 6 },
-  dotLive: { backgroundColor: '#34d399' },
-  dotIdle: { backgroundColor: '#64748b' },
-  cardLabel: { fontSize: 10, color: '#22d3d0', fontWeight: '700', letterSpacing: 1.5 },
-  cardValue: { fontSize: 18, color: '#fff', fontWeight: '800', marginTop: 6 },
-  cardSub: { fontSize: 11, color: '#64748b', marginTop: 6 },
-  statusValue: { fontSize: 18, fontWeight: '800', marginTop: 8 },
-  statusActive: { color: '#34d399' },
-  statusUnverified: { color: '#f59e0b' },
-  statusIdle: { color: '#64748b' },
-  actionButton: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
-  actionButtonText: { color: '#0a0e14', fontWeight: '800', fontSize: 13 },
-  errorText: { color: '#ff8080', fontSize: 11, marginBottom: 16, textAlign: 'center' },
+  root: { flex: 1, backgroundColor: colors.bg },
+  content: { padding: spacing.xl, paddingBottom: spacing.xxxl + 8 },
+  title: { fontSize: 24, fontFamily: fonts.sansExtraBold, color: colors.textPrimary, marginTop: spacing.sm },
+  subtitle: { fontSize: 13, fontFamily: fonts.sans, color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.xl, lineHeight: 18 },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.lg,
+  },
+  statusHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  cardLabel: { fontSize: 10, fontFamily: fonts.sansBold, color: colors.cyan, letterSpacing: 1.5 },
+  cardValue: { fontSize: 18, fontFamily: fonts.monoBold, color: colors.textPrimary, marginTop: spacing.sm },
+  cardSub: { fontSize: 11, fontFamily: fonts.sans, color: colors.textMuted, marginTop: spacing.sm },
+  statusValue: { fontSize: 18, fontFamily: fonts.monoBold, marginTop: spacing.md },
+  actionButton: { marginBottom: spacing.lg },
+  errorText: { color: colors.danger, fontSize: 11, marginBottom: spacing.lg, textAlign: 'center', fontFamily: fonts.mono },
 });

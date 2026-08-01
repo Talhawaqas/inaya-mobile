@@ -5,11 +5,15 @@
 // shard, pin to IPFS via the existing dApp backend, register on-chain).
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { ethers } from 'ethers';
 import { InayaKernel } from '@inaya-network/custody-sdk';
 import { useWallet } from '../providers/WalletProvider';
+import { colors, spacing, radius, fonts } from '../theme';
+import GradientButton from '../components/GradientButton';
+import StatTile from '../components/StatTile';
+import StatusDot from '../components/StatusDot';
 
 // Same Custody address/ABI fragment the SDK and the web dApp both use.
 const CUSTODY_ADDRESS = '0x7F5E6cF1353beEE4fc19FD46Dd6EaD0B3895a888';
@@ -97,7 +101,10 @@ export default function StorageDashboardScreen({ navigation }) {
       <Text style={styles.subtitle}>Encrypted client-side. Split before it leaves your device.</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>WALLET STATUS</Text>
+        <View style={styles.statusHeader}>
+          <StatusDot active={isConnected} />
+          <Text style={styles.cardLabel}>WALLET STATUS</Text>
+        </View>
         {isConnected ? (
           <>
             <Text style={styles.cardValue}>{address?.slice(0, 6)}...{address?.slice(-4)}</Text>
@@ -106,45 +113,38 @@ export default function StorageDashboardScreen({ navigation }) {
             </Text>
           </>
         ) : (
-          <TouchableOpacity style={styles.connectButton} onPress={connect} disabled={connecting}>
-            <Text style={styles.connectButtonText}>{connecting ? 'Connecting...' : 'Connect Wallet'}</Text>
-          </TouchableOpacity>
+          <GradientButton
+            title={connecting ? 'Connecting...' : 'Connect Wallet'}
+            onPress={connect}
+            loading={connecting}
+            style={{ marginTop: spacing.md }}
+          />
         )}
       </View>
 
       <View style={styles.row}>
-        <View style={[styles.statCard, { marginRight: 8 }]}>
-          <Text style={styles.statBig}>—</Text>
-          <Text style={styles.statLabel}>Files Stored</Text>
-        </View>
-        <View style={[styles.statCard, { marginLeft: 8 }]}>
-          <Text style={styles.statBig}>—</Text>
-          <Text style={styles.statLabel}>Watcher Uptime</Text>
-        </View>
+        <StatTile label="Files Stored" value="—" style={{ marginRight: spacing.sm }} />
+        <StatTile label="Watcher Uptime" value="—" style={{ marginLeft: spacing.sm }} />
       </View>
 
       {isConnected && (
         <TextInput
           style={styles.passkeyInput}
           placeholder="Encryption passkey (never leaves your device)"
-          placeholderTextColor="#64748b"
+          placeholderTextColor={colors.textMuted}
           secureTextEntry
           value={passkey}
           onChangeText={setPasskey}
         />
       )}
 
-      <TouchableOpacity
-        style={[styles.actionButton, !isConnected && styles.actionButtonDisabled]}
-        disabled={!isConnected || isUploading}
+      <GradientButton
+        title="+ Upload a File"
         onPress={handleUpload}
-      >
-        {isUploading ? (
-          <ActivityIndicator color="#0a0e14" />
-        ) : (
-          <Text style={styles.actionButtonText}>+ Upload a File</Text>
-        )}
-      </TouchableOpacity>
+        disabled={!isConnected}
+        loading={isUploading}
+        style={styles.uploadButton}
+      />
       {!!status && <Text style={styles.statusText}>{status}</Text>}
 
       <View style={styles.navRow}>
@@ -160,26 +160,38 @@ export default function StorageDashboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0a0e14' },
-  content: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 26, fontWeight: '800', color: '#fff', marginTop: 8 },
-  subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 4, marginBottom: 20 },
-  card: { backgroundColor: '#111c33', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#1c2a38', marginBottom: 16 },
-  cardLabel: { fontSize: 10, color: '#22d3d0', fontWeight: '700', letterSpacing: 1.5 },
-  cardValue: { fontSize: 18, color: '#fff', fontWeight: '700', marginTop: 6 },
-  cardSub: { fontSize: 11, color: '#64748b', marginTop: 4 },
-  connectButton: { backgroundColor: '#22d3d0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 10 },
-  connectButtonText: { color: '#0a0e14', fontWeight: '800', fontSize: 13 },
-  row: { flexDirection: 'row', marginBottom: 16 },
-  statCard: { flex: 1, backgroundColor: '#111c33', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#1c2a38', alignItems: 'center' },
-  statBig: { fontSize: 24, color: '#fff', fontWeight: '800' },
-  statLabel: { fontSize: 10, color: '#64748b', marginTop: 4 },
-  actionButton: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 8 },
-  passkeyInput: { backgroundColor: '#111c33', borderWidth: 1, borderColor: '#1c2a38', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: '#fff', fontSize: 13, marginBottom: 12 },
-  statusText: { color: '#94a3b8', fontSize: 11, textAlign: 'center', marginBottom: 20, fontFamily: 'monospace' },
-  actionButtonDisabled: { opacity: 0.4 },
-  actionButtonText: { color: '#0a0e14', fontWeight: '800', fontSize: 13 },
+  root: { flex: 1, backgroundColor: colors.bg },
+  content: { padding: spacing.xl, paddingBottom: spacing.xxxl + 8 },
+  title: { fontSize: 26, fontFamily: fonts.sansExtraBold, color: colors.textPrimary, marginTop: spacing.sm },
+  subtitle: { fontSize: 13, fontFamily: fonts.sans, color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.xl },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.lg,
+  },
+  statusHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  cardLabel: { fontSize: 10, fontFamily: fonts.sansBold, color: colors.cyan, letterSpacing: 1.5 },
+  cardValue: { fontSize: 18, fontFamily: fonts.monoBold, color: colors.textPrimary, marginTop: spacing.sm },
+  cardSub: { fontSize: 11, fontFamily: fonts.sans, color: colors.textMuted, marginTop: spacing.xs },
+  row: { flexDirection: 'row', marginBottom: spacing.lg },
+  passkeyInput: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    color: colors.textPrimary,
+    fontFamily: fonts.sans,
+    fontSize: 13,
+    marginBottom: spacing.md,
+  },
+  uploadButton: { marginBottom: spacing.sm },
+  statusText: { color: colors.textSecondary, fontSize: 11, textAlign: 'center', marginBottom: spacing.xl, fontFamily: fonts.mono },
   navRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  navButton: { paddingVertical: 8 },
-  navButtonText: { color: '#22d3d0', fontWeight: '700', fontSize: 13 },
+  navButton: { paddingVertical: spacing.sm },
+  navButtonText: { color: colors.cyan, fontFamily: fonts.sansBold, fontSize: 13 },
 });
