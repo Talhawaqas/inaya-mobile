@@ -75,7 +75,6 @@ export default function StorageDashboardScreen({ navigation }) {
         pinShardToIPFS(sharded.shardBeta, sharded.filename, 'Beta', address),
       ]);
 
-      setStatus('Submitting on-chain registration...');
       const assetIdText = `${sharded.filename}-${Date.now()}`;
       const fileHash = ethers.id(assetIdText);
       const sizeBytes = picked.size ?? 0;
@@ -83,9 +82,30 @@ export default function StorageDashboardScreen({ navigation }) {
       const data = custodyInterface.encodeFunctionData('batchRegisterAssets', [
         [fileHash], [sizeBytes], [cidAlpha], [cidBeta],
       ]);
+      const txParams = { from: address, to: CUSTODY_ADDRESS, data };
+
+      // Same approach the web dApp uses (page.js) — without an explicit gas
+      // limit, MetaMask Mobile's Multichain API bridge picks its own, far
+      // more conservative default (observed ~0.03 tBNB vs. ~0.0001 tBNB for
+      // the identical call from the web dApp, which always estimates and
+      // caps it itself). 30% buffer over the raw estimate matches the web
+      // dApp's own margin; the 360,000 fallback matches its estimateGas()
+      // failure fallback too (one file per mobile upload, vs. its
+      // per-file × count for batched uploads).
+      setStatus('Estimating gas...');
+      let gasLimit;
+      try {
+        const estimatedGasHex = await invokeMethod({ method: 'eth_estimateGas', params: [txParams] });
+        gasLimit = (BigInt(estimatedGasHex) * 130n) / 100n;
+      } catch (gasErr) {
+        console.warn('Gas estimation failed, using safety fallback:', gasErr);
+        gasLimit = 360000n;
+      }
+
+      setStatus('Submitting on-chain registration...');
       const txHash = await invokeMethod({
         method: 'eth_sendTransaction',
-        params: [{ from: address, to: CUSTODY_ADDRESS, data }],
+        params: [{ ...txParams, gas: ethers.toBeHex(gasLimit) }],
       });
 
       setStatus(`✅ Uploaded — tx ${txHash.slice(0, 14)}...`);
