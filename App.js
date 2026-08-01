@@ -7,7 +7,7 @@ import 'react-native-get-random-values'; // must be imported before ethers/crypt
 import './polyfills'; // must come immediately after react-native-get-random-values, before any MetaMask Connect code
 import React from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -120,6 +120,49 @@ const navTheme = {
   },
 };
 
+// Rendered inside SafeAreaProvider so it can read the device's actual
+// safe-area insets (notch, gesture nav bar) — App() itself can't call
+// useSafeAreaInsets() since it's the one rendering the provider, not a
+// descendant of it. A fixed tabBarStyle.height (as this had before)
+// replaces React Navigation's own automatic safe-area handling for the
+// tab bar instead of adding to it, which is what let the tab bar overlap
+// the system gesture area and cut off screen content on real devices.
+function AppNavigator() {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 54 + insets.bottom;
+
+  return (
+    <NavigationContainer theme={navTheme}>
+      <StatusBar style="light" />
+      <Tab.Navigator
+        initialRouteName="Home"
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: colors.cyan,
+          tabBarInactiveTintColor: colors.textMuted,
+          tabBarStyle: {
+            backgroundColor: colors.navBar,
+            borderTopColor: colors.border,
+            height: tabBarHeight,
+            paddingBottom: insets.bottom + 6,
+            paddingTop: 6,
+          },
+          tabBarLabelStyle: { fontFamily: fonts.sansSemiBold, fontSize: 10 },
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name={TAB_ICONS[route.name]} color={color} size={size ? size - 2 : 20} />
+          ),
+        })}
+      >
+        <Tab.Screen name="Home" component={HomeStack} />
+        <Tab.Screen name="Business" component={BusinessModelScreen} options={{ title: 'Business' }} />
+        <Tab.Screen name="Staking" component={StakingScreen} />
+        <Tab.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: 'Dashboard' }} />
+        <Tab.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: 'Paper' }} />
+      </Tab.Navigator>
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -144,34 +187,7 @@ export default function App() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <WalletProviderRoot>
-          <NavigationContainer theme={navTheme}>
-            <StatusBar style="light" />
-            <Tab.Navigator
-              initialRouteName="Home"
-              screenOptions={({ route }) => ({
-                headerShown: false,
-                tabBarActiveTintColor: colors.cyan,
-                tabBarInactiveTintColor: colors.textMuted,
-                tabBarStyle: {
-                  backgroundColor: colors.navBar,
-                  borderTopColor: colors.border,
-                  height: 60,
-                  paddingBottom: 8,
-                  paddingTop: 6,
-                },
-                tabBarLabelStyle: { fontFamily: fonts.sansSemiBold, fontSize: 10 },
-                tabBarIcon: ({ color, size }) => (
-                  <Ionicons name={TAB_ICONS[route.name]} color={color} size={size ? size - 2 : 20} />
-                ),
-              })}
-            >
-              <Tab.Screen name="Home" component={HomeStack} />
-              <Tab.Screen name="Business" component={BusinessModelScreen} options={{ title: 'Business' }} />
-              <Tab.Screen name="Staking" component={StakingScreen} />
-              <Tab.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: 'Dashboard' }} />
-              <Tab.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: 'Paper' }} />
-            </Tab.Navigator>
-          </NavigationContainer>
+          <AppNavigator />
         </WalletProviderRoot>
       </ErrorBoundary>
     </SafeAreaProvider>

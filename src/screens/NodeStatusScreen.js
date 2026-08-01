@@ -10,12 +10,14 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import StatusDot from '../components/StatusDot';
 
 export default function NodeStatusScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { address, isConnected, connecting, connect, isSignedUp, isSigning, signUp } = useWallet();
   const [signUpError, setSignUpError] = React.useState('');
 
@@ -33,7 +35,7 @@ export default function NodeStatusScreen() {
   const statusColor = !isConnected ? colors.textMuted : isSignedUp ? colors.success : colors.warning;
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
       <Text style={styles.title}>Watcher Node</Text>
       <Text style={styles.subtitle}>
         Connect and verify your wallet to activate this device as a node on the Inaya Network.

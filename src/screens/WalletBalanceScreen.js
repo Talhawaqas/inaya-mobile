@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { ethers } from 'ethers';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 
@@ -30,6 +31,7 @@ async function readTokenBalance(invokeMethod, tokenAddress, address) {
 }
 
 export default function WalletBalanceScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { address, isConnected, invokeMethod } = useWallet();
   const [balances, setBalances] = useState({ bnb: null, inaya: null, usdt: null });
   const [refreshing, setRefreshing] = useState(false);
@@ -60,7 +62,7 @@ export default function WalletBalanceScreen() {
   return (
     <ScrollView
       style={styles.root}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchBalances} tintColor={colors.cyan} />}
     >
       <Text style={styles.title}>Wallet Balance</Text>

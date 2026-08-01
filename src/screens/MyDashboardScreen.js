@@ -9,16 +9,18 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import StatTile from '../components/StatTile';
 
 export default function MyDashboardScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { address, isConnected, connecting, connect } = useWallet();
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
       <Text style={styles.title}>My Dashboard</Text>
       <Text style={styles.subtitle}>
         A live read of your on-chain billing activity, storage allocation, and total spend across Pay-As-You-Go

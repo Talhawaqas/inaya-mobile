@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { colors, spacing, radius, fonts } from '../theme';
 
 const SECTIONS = ['Abstract', 'The Problem', 'Architecture', 'Vision', 'Tokenomics Matrix'];
@@ -78,10 +79,11 @@ const TOKENOMICS = [
 ];
 
 export default function WhitePaperScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const [section, setSection] = useState('Abstract');
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
       <Text style={styles.title}>THE INAYA PROTOCOL</Text>
       <Text style={styles.subtitle}>A Decentralized Sovereign Custody Network for High-Value Assets</Text>
 

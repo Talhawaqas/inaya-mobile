@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { ethers } from 'ethers';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { InayaKernel } from '@inaya-network/custody-sdk';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts } from '../theme';
@@ -39,6 +40,7 @@ async function pinShardToIPFS(shardContent, filename, tag, walletAddress) {
 }
 
 export default function StorageDashboardScreen({ navigation }) {
+  const tabBarHeight = useBottomTabBarHeight();
   const { connect, address, isConnected, chainId, connecting, invokeMethod } = useWallet();
   const [passkey, setPasskey] = useState('');
   const [status, setStatus] = useState('');
@@ -96,7 +98,7 @@ export default function StorageDashboardScreen({ navigation }) {
   }
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
       <Text style={styles.title}>Sovereign Data Storage</Text>
       <Text style={styles.subtitle}>Encrypted client-side. Split before it leaves your device.</Text>
 

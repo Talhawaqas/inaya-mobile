@@ -11,6 +11,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
@@ -44,6 +45,7 @@ const FUNDAMENTALS = [
 ];
 
 export default function BusinessModelScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { address } = useWallet();
   const [selectedTier, setSelectedTier] = useState('250 TB / Year');
   const [checkoutUrl, setCheckoutUrl] = useState(null);
@@ -79,7 +81,7 @@ export default function BusinessModelScreen() {
   }
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
       <Text style={styles.title}>Strategic Business Model & Financial Architecture</Text>
       <Text style={styles.subtitle}>
         Retail and developer accounts run on transparent Pay-As-You-Go pricing settled in stablecoins, while

@@ -13,6 +13,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { ethers } from 'ethers';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
@@ -51,6 +52,7 @@ const LOCK_TIERS = [
 const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 
 export default function StakingScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { address, isConnected, invokeMethod, connect, connecting } = useWallet();
   const [overview, setOverview] = useState({
     totalStakedTVL: '0', estimatedAPY: '0.00', myStakedBalance: '0',
@@ -204,7 +206,7 @@ export default function StakingScreen() {
   }
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
       <Text style={styles.title}>$INAYA Staking Engine</Text>
       <Text style={styles.subtitle}>
         Stake $INAYA to earn passive APY from the 8,000,000 INAYA Staking Rewards Pool and unlock priority bandwidth tiers.
