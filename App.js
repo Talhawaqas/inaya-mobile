@@ -10,6 +10,8 @@ import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -29,6 +31,10 @@ import { WalletProviderRoot } from './src/providers/WalletProvider';
 import StorageDashboardScreen from './src/screens/StorageDashboardScreen';
 import NodeStatusScreen from './src/screens/NodeStatusScreen';
 import WalletBalanceScreen from './src/screens/WalletBalanceScreen';
+import BusinessModelScreen from './src/screens/BusinessModelScreen';
+import StakingScreen from './src/screens/StakingScreen';
+import MyDashboardScreen from './src/screens/MyDashboardScreen';
+import WhitePaperScreen from './src/screens/WhitePaperScreen';
 import { colors, fonts } from './src/theme';
 
 // General safety net for any render-time crash NOT already caught by
@@ -66,6 +72,35 @@ class ErrorBoundary extends React.Component {
 }
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+// Home tab keeps its own stack so StorageDashboard can still push into
+// NodeStatus/WalletBalance exactly as before — nothing in those three
+// screens' navigation.navigate() calls needed to change.
+function HomeStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.navBar },
+        headerTintColor: colors.textPrimary,
+        headerTitleStyle: { fontFamily: fonts.sansExtraBold, fontSize: 16 },
+        headerShadowVisible: false,
+      }}
+    >
+      <Stack.Screen name="StorageDashboard" component={StorageDashboardScreen} options={{ title: 'Storage Dashboard' }} />
+      <Stack.Screen name="NodeStatus" component={NodeStatusScreen} options={{ title: 'Watcher Node Status' }} />
+      <Stack.Screen name="WalletBalance" component={WalletBalanceScreen} options={{ title: 'Wallet Balance' }} />
+    </Stack.Navigator>
+  );
+}
+
+const TAB_ICONS = {
+  Home: 'home',
+  Business: 'briefcase',
+  Staking: 'trending-up',
+  Dashboard: 'grid',
+  WhitePaper: 'document-text',
+};
 
 // Extends React Navigation's own DarkTheme rather than writing a theme
 // object from scratch — v7 made `fonts` a required theme property, and a
@@ -111,31 +146,31 @@ export default function App() {
         <WalletProviderRoot>
           <NavigationContainer theme={navTheme}>
             <StatusBar style="light" />
-            <Stack.Navigator
-              initialRouteName="StorageDashboard"
-              screenOptions={{
-                headerStyle: { backgroundColor: colors.navBar },
-                headerTintColor: colors.textPrimary,
-                headerTitleStyle: { fontFamily: fonts.sansExtraBold, fontSize: 16 },
-                headerShadowVisible: false,
-              }}
+            <Tab.Navigator
+              initialRouteName="Home"
+              screenOptions={({ route }) => ({
+                headerShown: false,
+                tabBarActiveTintColor: colors.cyan,
+                tabBarInactiveTintColor: colors.textMuted,
+                tabBarStyle: {
+                  backgroundColor: colors.navBar,
+                  borderTopColor: colors.border,
+                  height: 60,
+                  paddingBottom: 8,
+                  paddingTop: 6,
+                },
+                tabBarLabelStyle: { fontFamily: fonts.sansSemiBold, fontSize: 10 },
+                tabBarIcon: ({ color, size }) => (
+                  <Ionicons name={TAB_ICONS[route.name]} color={color} size={size ? size - 2 : 20} />
+                ),
+              })}
             >
-              <Stack.Screen
-                name="StorageDashboard"
-                component={StorageDashboardScreen}
-                options={{ title: 'Storage Dashboard' }}
-              />
-              <Stack.Screen
-                name="NodeStatus"
-                component={NodeStatusScreen}
-                options={{ title: 'Watcher Node Status' }}
-              />
-              <Stack.Screen
-                name="WalletBalance"
-                component={WalletBalanceScreen}
-                options={{ title: 'Wallet Balance' }}
-              />
-            </Stack.Navigator>
+              <Tab.Screen name="Home" component={HomeStack} />
+              <Tab.Screen name="Business" component={BusinessModelScreen} options={{ title: 'Business' }} />
+              <Tab.Screen name="Staking" component={StakingScreen} />
+              <Tab.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: 'Dashboard' }} />
+              <Tab.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: 'Paper' }} />
+            </Tab.Navigator>
           </NavigationContainer>
         </WalletProviderRoot>
       </ErrorBoundary>
