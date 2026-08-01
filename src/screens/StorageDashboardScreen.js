@@ -19,15 +19,19 @@ const custodyInterface = new ethers.Interface([
 
 // Reuses the SAME /api/upload route the web dApp already calls to pin
 // shards to Pinata — no separate mobile-specific pinning setup needed.
-async function pinShardToIPFS(shardContent, filename, tag) {
-  const res = await fetch('https://inayanetwork.com/api/upload', {
+// Payload keys (encryptedShard/elementTag) must match src/app/api/upload/route.js
+// exactly, same as the web dApp's own call in page.js — the route destructures
+// those specific names, not shard/tag. www. avoids a redirect hop off the apex
+// domain (inayanetwork.com -> www.inayanetwork.com).
+async function pinShardToIPFS(shardContent, filename, tag, walletAddress) {
+  const res = await fetch('https://www.inayanetwork.com/api/upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ shard: shardContent, filename, tag }),
+    body: JSON.stringify({ encryptedShard: shardContent, filename, elementTag: tag, walletAddress }),
   });
-  if (!res.ok) throw new Error(`Pinning failed for shard ${tag} (HTTP ${res.status})`);
   const data = await res.json();
-  return data.cid ?? data.IpfsHash; // matches the response shape the web dApp's own upload flow expects
+  if (!res.ok || data.error) throw new Error(data.error || data.pinata || `Pinning failed for shard ${tag} (HTTP ${res.status})`);
+  return data.IpfsHash;
 }
 
 export default function StorageDashboardScreen({ navigation }) {
@@ -61,8 +65,8 @@ export default function StorageDashboardScreen({ navigation }) {
 
       setStatus('Pinning shards to IPFS...');
       const [cidAlpha, cidBeta] = await Promise.all([
-        pinShardToIPFS(sharded.shardAlpha, sharded.filename, 'Alpha'),
-        pinShardToIPFS(sharded.shardBeta, sharded.filename, 'Beta'),
+        pinShardToIPFS(sharded.shardAlpha, sharded.filename, 'Alpha', address),
+        pinShardToIPFS(sharded.shardBeta, sharded.filename, 'Beta', address),
       ]);
 
       setStatus('Submitting on-chain registration...');
