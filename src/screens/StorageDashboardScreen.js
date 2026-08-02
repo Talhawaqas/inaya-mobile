@@ -4,9 +4,12 @@
 // connection state, quick stats, and a real file upload flow (encrypt,
 // shard, pin to IPFS via the existing dApp backend, register on-chain).
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import * as Sharing from 'expo-sharing';
+import { File, Paths } from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ethers } from 'ethers';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { InayaKernel } from '@inaya-network/custody-sdk';
@@ -21,6 +24,38 @@ const CUSTODY_ADDRESS = '0x7F5E6cF1353beEE4fc19FD46Dd6EaD0B3895a888';
 const custodyInterface = new ethers.Interface([
   'function batchRegisterAssets(bytes32[] fileHashes, uint256[] fileSizes, string[] shardACIDs, string[] shardBCIDs) external',
 ]);
+
+// Same BNB Testnet RPC WalletProvider.js uses for the wallet bridge — reading
+// assets(bytes32) is a plain view call, so retrieval deliberately uses its own
+// plain ethers.JsonRpcProvider instead of going through the connected wallet
+// at all. There's no private key on this device to construct an ethers.Wallet
+// with (MetaMask Mobile holds it), and MetaMask Connect Multichain's
+// invokeMethod requires an active session even for reads — a public RPC read
+// needs neither.
+const RPC_URL = 'https://data-seed-prebsc-1-s1.binance.org:8545';
+const CUSTODY_READ_ABI = ['function assets(bytes32) view returns (address owner, string shardACID, string shardBCID, uint256 timestamp)'];
+
+function getReadOnlyCustody() {
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  return new ethers.Contract(CUSTODY_ADDRESS, CUSTODY_READ_ABI, provider);
+}
+
+// Mirrors InayaKernel's own defaultFetchShard() — the pinning route
+// (api/upload/route.js) stores { shard, element } as the pinned JSON, so
+// retrieval reads back the same `.shard` field.
+async function fetchShardFromIPFS(cid) {
+  const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
+  if (!res.ok) throw new Error(`Failed to fetch shard ${cid} (HTTP ${res.status})`);
+  const json = await res.json();
+  return json.shard;
+}
+
+const MIME_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg', 'application/pdf': 'pdf', 'text/plain': 'txt' };
+
+// Per-wallet local upload history — this app has no backend file listing of
+// its own, so "My Files" is only ever what this specific device has uploaded
+// (mirrors the web dApp's own local getFilenameMapping() lookup, same idea).
+const UPLOADS_STORAGE_KEY_PREFIX = 'inaya_uploads_';
 
 // Reuses the SAME /api/upload route the web dApp already calls to pin
 // shards to Pinata — no separate mobile-specific pinning setup needed.
@@ -45,6 +80,22 @@ export default function StorageDashboardScreen({ navigation }) {
   const [passkey, setPasskey] = useState('');
   const [status, setStatus] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploads, setUploads] = useState([]);
+  const [downloadingHash, setDownloadingHash] = useState(null);
+  const [manualFileHash, setManualFileHash] = useState('');
+
+  useEffect(() => {
+    if (!address) { setUploads([]); return; }
+    AsyncStorage.getItem(UPLOADS_STORAGE_KEY_PREFIX + address.toLowerCase())
+      .then((raw) => setUploads(raw ? JSON.parse(raw) : []))
+      .catch(() => setUploads([]));
+  }, [address]);
+
+  async function persistUpload(entry) {
+    const next = [entry, ...uploads];
+    setUploads(next);
+    await AsyncStorage.setItem(UPLOADS_STORAGE_KEY_PREFIX + address.toLowerCase(), JSON.stringify(next));
+  }
 
   async function handleUpload() {
     if (!isConnected) return;
@@ -109,11 +160,62 @@ export default function StorageDashboardScreen({ navigation }) {
       });
 
       setStatus(`✅ Uploaded — tx ${txHash.slice(0, 14)}...`);
+      await persistUpload({ fileHash, filename: sharded.filename, sizeBytes, uploadedAt: Date.now() });
     } catch (err) {
       console.error('Upload failed:', err);
       setStatus(`❌ ${err.message}`);
     } finally {
       setIsUploading(false);
+    }
+  }
+
+  // Retrieval — the mobile "Download" flow. Reads the on-chain record (via a
+  // plain read-only provider, see getReadOnlyCustody() above), fetches both
+  // encrypted shards from IPFS, decrypts locally with the same passkey used
+  // at upload, writes the result to the device's cache directory, then hands
+  // off to the native share sheet — there's no browser download bar on
+  // mobile, so "choose an app to save this to" is the real equivalent.
+  async function handleDownload(fileHash, suggestedFilename) {
+    if (!fileHash) { setStatus('Enter a file hash first.'); return; }
+    if (!passkey) { setStatus('Enter the passkey used to encrypt this file first.'); return; }
+
+    setDownloadingHash(fileHash);
+    try {
+      setStatus('Reading on-chain record...');
+      const custody = getReadOnlyCustody();
+      const [owner, cidAlpha, cidBeta] = await custody.assets(fileHash);
+      if (owner === ethers.ZeroAddress) throw new Error('No asset found on-chain for this file hash.');
+
+      setStatus('Fetching encrypted shards...');
+      const [shardAlpha, shardBeta] = await Promise.all([
+        fetchShardFromIPFS(cidAlpha),
+        fetchShardFromIPFS(cidBeta),
+      ]);
+
+      setStatus('Decrypting...');
+      const dataUrl = await InayaKernel.reconstructAndDecrypt({ shardAlpha, shardBeta, passkey });
+
+      const match = /^data:([^;]+);base64,(.*)$/s.exec(dataUrl);
+      if (!match) throw new Error('Unexpected decrypted data format.');
+      const [, mimeType, base64Data] = match;
+      const filename = suggestedFilename || `retrieved-${fileHash.slice(2, 10)}.${MIME_EXTENSIONS[mimeType] || 'bin'}`;
+
+      setStatus('Saving to device...');
+      const file = new File(Paths.cache, filename);
+      file.create({ overwrite: true });
+      file.write(base64Data, { encoding: 'base64' });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: `Save ${filename}` });
+        setStatus('✅ Choose where to save the file.');
+      } else {
+        setStatus(`✅ Saved: ${file.uri}`);
+      }
+    } catch (err) {
+      console.error('Download failed:', err);
+      setStatus(`❌ ${err.message}`);
+    } finally {
+      setDownloadingHash(null);
     }
   }
 
@@ -169,6 +271,50 @@ export default function StorageDashboardScreen({ navigation }) {
       />
       {!!status && <Text style={styles.statusText}>{status}</Text>}
 
+      {isConnected && uploads.length > 0 && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>YOUR UPLOADS (this device)</Text>
+          {uploads.map((u) => (
+            <View key={u.fileHash} style={styles.uploadRow}>
+              <View style={{ flex: 1, marginRight: spacing.sm }}>
+                <Text style={styles.uploadFilename} numberOfLines={1}>{u.filename}</Text>
+                <Text style={styles.cardSub}>{new Date(u.uploadedAt).toLocaleDateString()}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.downloadButton}
+                onPress={() => handleDownload(u.fileHash, u.filename)}
+                disabled={downloadingHash === u.fileHash}
+              >
+                <Text style={styles.downloadButtonText}>
+                  {downloadingHash === u.fileHash ? 'Working...' : 'Download'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {isConnected && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>RETRIEVE BY FILE HASH</Text>
+          <Text style={styles.cardSub}>For files uploaded elsewhere, or from before this device tracked uploads.</Text>
+          <TextInput
+            style={[styles.passkeyInput, { marginTop: spacing.md }]}
+            placeholder="0x... file hash"
+            placeholderTextColor={colors.textMuted}
+            value={manualFileHash}
+            onChangeText={setManualFileHash}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <GradientButton
+            title={downloadingHash === manualFileHash ? 'Working...' : 'Retrieve & Download'}
+            onPress={() => handleDownload(manualFileHash, null)}
+            disabled={!manualFileHash || !passkey || downloadingHash === manualFileHash}
+          />
+        </View>
+      )}
+
       <View style={styles.navRow}>
         <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('NodeStatus')}>
           <Text style={styles.navButtonText}>Watcher Node →</Text>
@@ -213,6 +359,25 @@ const styles = StyleSheet.create({
   },
   uploadButton: { marginBottom: spacing.sm },
   statusText: { color: colors.textSecondary, fontSize: 11, textAlign: 'center', marginBottom: spacing.xl, fontFamily: fonts.mono },
+  uploadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginTop: spacing.sm,
+  },
+  uploadFilename: { fontSize: 13, fontFamily: fonts.sansBold, color: colors.textPrimary },
+  downloadButton: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.cyan,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  downloadButtonText: { color: colors.cyan, fontFamily: fonts.sansBold, fontSize: 11 },
   navRow: { flexDirection: 'row', justifyContent: 'space-between' },
   navButton: { paddingVertical: spacing.sm },
   navButtonText: { color: colors.cyan, fontFamily: fonts.sansBold, fontSize: 13 },
