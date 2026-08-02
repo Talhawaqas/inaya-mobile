@@ -8,9 +8,10 @@
 // screens; this one only reads summary state.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { ethers } from 'ethers';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useWallet } from '../providers/WalletProvider';
 import { useUploadsHistory } from '../hooks/useUploadsHistory';
 import { colors, spacing, radius, fonts, glassCard } from '../theme';
@@ -34,7 +35,8 @@ const ACTIONS = [
 ];
 
 export default function StorageDashboardScreen({ navigation }) {
-  const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = insets.bottom;
   const { connect, address, isConnected, connecting, invokeMethod, isSignedUp } = useWallet();
   const { totalUsedBytes } = useUploadsHistory();
   const [inayaBalance, setInayaBalance] = useState(null);
@@ -53,15 +55,16 @@ export default function StorageDashboardScreen({ navigation }) {
 
   useEffect(() => { fetchBalance(); }, [fetchBalance]);
 
-  // Navigate() bubbles up to the parent Tab.Navigator for route names not
-  // found in this stack (Staking, Dashboard are sibling tabs, not HomeStack
-  // screens) -- same call works for both stack-local and tab-level routes.
+  // Navigate() bubbles up to the parent Drawer.Navigator for route names not
+  // found in this stack (Staking, Dashboard are sibling drawer items, not
+  // HomeStack screens) -- same call works for both stack-local and
+  // drawer-level routes.
   const goTo = (routeName) => navigation.navigate(routeName);
 
   return (
     <View style={styles.root}>
       <BackgroundGlow />
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md, paddingBottom: tabBarHeight + spacing.xl }]}>
         <View style={styles.header}>
           <View style={styles.brandRow}>
             <View style={styles.logoMark} />
@@ -70,6 +73,16 @@ export default function StorageDashboardScreen({ navigation }) {
               <Text style={styles.brandSubtitle}>NETWORK</Text>
             </View>
           </View>
+          {/* This screen's own Stack.Screen has headerShown: false (see App.js) --
+              the Drawer's automatic hamburger+header shows on every other screen,
+              but Home needs its own since HomeStack's header is hidden here to
+              avoid a double header when nested inside the drawer. */}
+          <TouchableOpacity
+            onPress={() => navigation.getParent()?.openDrawer()}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="menu" size={26} color={colors.textPrimary} />
+          </TouchableOpacity>
         </View>
 
         <GlassCard style={styles.balanceCard}>

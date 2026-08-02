@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, fonts } from '../theme';
 
 const SECTIONS = ['Abstract', 'The Problem', 'Architecture', 'Vision', 'Tokenomics Matrix'];
@@ -79,7 +79,7 @@ const TOKENOMICS = [
 ];
 
 export default function WhitePaperScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const [section, setSection] = useState('Abstract');
 
   return (

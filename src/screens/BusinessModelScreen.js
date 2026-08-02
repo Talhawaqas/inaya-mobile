@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWallet } from '../providers/WalletProvider';
 import { useCardCustomer } from '../providers/CardCustomerProvider';
 import { colors, spacing, radius, fonts } from '../theme';
@@ -46,7 +46,7 @@ const FUNDAMENTALS = [
 ];
 
 export default function BusinessModelScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const { address } = useWallet();
   const { email: cardCustomerEmail, plan: cardCustomerPlan, polling: planPolling, timedOut: planTimedOut, resolveFromCheckout } = useCardCustomer();
   const [selectedTier, setSelectedTier] = useState('250 TB / Year');

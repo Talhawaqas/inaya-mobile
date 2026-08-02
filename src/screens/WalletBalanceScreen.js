@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { ethers } from 'ethers';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 
@@ -31,7 +31,7 @@ async function readTokenBalance(invokeMethod, tokenAddress, address) {
 }
 
 export default function WalletBalanceScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const { address, isConnected, invokeMethod } = useWallet();
   const [balances, setBalances] = useState({ bnb: null, inaya: null, usdt: null });
   const [refreshing, setRefreshing] = useState(false);

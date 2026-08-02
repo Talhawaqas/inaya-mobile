@@ -6,14 +6,14 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUploadsHistory } from '../hooks/useUploadsHistory';
 import { colors, spacing, radius, fonts, glassCard } from '../theme';
 import BackgroundGlow from '../components/BackgroundGlow';
 import { retrieveAndSaveFile } from '../utils/retrieveFile';
 
 export default function MyFilesScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const { uploads } = useUploadsHistory();
   const [passkey, setPasskey] = useState('');
   const [workingHash, setWorkingHash] = useState(null);

@@ -10,14 +10,14 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import StatusDot from '../components/StatusDot';
 
 export default function NodeStatusScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const { address, isConnected, connecting, connect, isSignedUp, isSigning, signUp } = useWallet();
   const [signUpError, setSignUpError] = React.useState('');
 

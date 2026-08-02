@@ -9,7 +9,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWallet } from '../providers/WalletProvider';
 import { useCardCustomer } from '../providers/CardCustomerProvider';
 import { colors, spacing, radius, fonts } from '../theme';
@@ -17,7 +17,7 @@ import GradientButton from '../components/GradientButton';
 import StatTile from '../components/StatTile';
 
 export default function MyDashboardScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const { address, isConnected, connecting, connect } = useWallet();
   const { email: cardCustomerEmail, plan: cardCustomerPlan, polling: planPolling, timedOut: planTimedOut } = useCardCustomer();
 

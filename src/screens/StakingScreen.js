@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { ethers } from 'ethers';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts, glow } from '../theme';
 import GradientButton from '../components/GradientButton';
@@ -54,7 +54,7 @@ const LOCK_TIERS = [
 const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 
 export default function StakingScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const { address, isConnected, invokeMethod, connect, connecting } = useWallet();
   const [overview, setOverview] = useState({
     totalStakedTVL: '0', estimatedAPY: '0.00', myStakedBalance: '0',

@@ -7,14 +7,14 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import BackgroundGlow from '../components/BackgroundGlow';
 import { retrieveAndSaveFile } from '../utils/retrieveFile';
 
 export default function DownloadScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const [fileHash, setFileHash] = useState('');
   const [passkey, setPasskey] = useState('');
   const [status, setStatus] = useState('');

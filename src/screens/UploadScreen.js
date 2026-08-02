@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { ethers } from 'ethers';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InayaKernel } from '@inaya-network/custody-sdk';
 import { useWallet } from '../providers/WalletProvider';
 import { useUploadsHistory } from '../hooks/useUploadsHistory';
@@ -18,7 +18,7 @@ import BackgroundGlow from '../components/BackgroundGlow';
 import { CUSTODY_ADDRESS, custodyInterface, pinShardToIPFS } from '../utils/custody';
 
 export default function UploadScreen() {
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useSafeAreaInsets().bottom;
   const { address, isConnected, invokeMethod } = useWallet();
   const { persistUpload } = useUploadsHistory();
   const [passkey, setPasskey] = useState('');

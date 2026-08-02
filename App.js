@@ -1,16 +1,24 @@
 // App.js
 //
-// Root entry point — sets up navigation between the three Phase 1
-// screens and wraps everything in the WalletConnect provider.
+// Root entry point — sets up navigation and wraps everything in the
+// WalletConnect provider.
+//
+// Navigation was originally a bottom tab bar; switched to a left-side
+// drawer (opened via a hamburger icon) per user feedback that the bottom
+// tabs were hard to see/tap. react-native-gesture-handler's import MUST be
+// the very first line in the entry file (its own setup requirement,
+// unrelated to the react-native-get-random-values/ethers ordering below).
 
+import 'react-native-gesture-handler';
 import 'react-native-get-random-values'; // must be imported before ethers/crypto anywhere
 import './polyfills'; // must come immediately after react-native-get-random-values, before any MetaMask Connect code
 import React from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -76,11 +84,14 @@ class ErrorBoundary extends React.Component {
 }
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
 
-// Home tab keeps its own stack so StorageDashboard can still push into
-// NodeStatus/WalletBalance exactly as before — nothing in those three
-// screens' navigation.navigate() calls needed to change.
+// Home keeps its own stack so StorageDashboard can still push into
+// NodeStatus/WalletBalance/Upload/Download/MyFiles exactly as before —
+// nothing in those screens' navigation.navigate() calls needed to change.
+// Its own header is hidden (headerShown: false below) since
+// StorageDashboardScreen renders its own brand header with the hamburger
+// button that opens the drawer — showing both would double up.
 function HomeStack() {
   return (
     <Stack.Navigator
@@ -91,7 +102,7 @@ function HomeStack() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="StorageDashboard" component={StorageDashboardScreen} options={{ title: 'Dashboard' }} />
+      <Stack.Screen name="StorageDashboard" component={StorageDashboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NodeStatus" component={NodeStatusScreen} options={{ title: 'Watcher Node Status' }} />
       <Stack.Screen name="WalletBalance" component={WalletBalanceScreen} options={{ title: 'Wallet Balance' }} />
       <Stack.Screen name="Upload" component={UploadScreen} options={{ title: 'Upload' }} />
@@ -101,12 +112,20 @@ function HomeStack() {
   );
 }
 
-const TAB_ICONS = {
-  Home: 'home',
-  Business: 'briefcase',
-  Staking: 'trending-up',
-  Dashboard: 'grid',
-  WhitePaper: 'document-text',
+const DRAWER_ICONS = {
+  Home: 'home-outline',
+  Business: 'briefcase-outline',
+  Staking: 'trending-up-outline',
+  Dashboard: 'grid-outline',
+  WhitePaper: 'document-text-outline',
+};
+
+const DRAWER_LABELS = {
+  Home: 'Home',
+  Business: 'Business',
+  Staking: 'Staking',
+  Dashboard: 'Dashboard',
+  WhitePaper: 'White Paper',
 };
 
 // Extends React Navigation's own DarkTheme rather than writing a theme
@@ -127,45 +146,55 @@ const navTheme = {
   },
 };
 
-// Rendered inside SafeAreaProvider so it can read the device's actual
-// safe-area insets (notch, gesture nav bar) — App() itself can't call
-// useSafeAreaInsets() since it's the one rendering the provider, not a
-// descendant of it. A fixed tabBarStyle.height (as this had before)
-// replaces React Navigation's own automatic safe-area handling for the
-// tab bar instead of adding to it, which is what let the tab bar overlap
-// the system gesture area and cut off screen content on real devices.
-function AppNavigator() {
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = 54 + insets.bottom;
+// Branded header above the auto-generated nav item list — the only custom
+// part of the drawer; DrawerItemList below handles everything else
+// (active/inactive styling comes from screenOptions in AppNavigator).
+function CustomDrawerContent(props) {
+  return (
+    <DrawerContentScrollView {...props} contentContainerStyle={{ backgroundColor: colors.navBar, flexGrow: 1, paddingTop: 0 }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 8 }}>
+        <Text style={{ fontFamily: fonts.sansExtraBold, fontSize: 18, color: colors.textPrimary, letterSpacing: 1 }}>INAYA</Text>
+        <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 10, color: colors.cyan, letterSpacing: 2, marginTop: -2 }}>NETWORK</Text>
+      </View>
+      <DrawerItemList {...props} />
+    </DrawerContentScrollView>
+  );
+}
 
+// Bottom tabs were hard for some users to see/tap — replaced with a
+// left-side drawer opened via a hamburger icon per that feedback. Every
+// screen still has an automatic header+hamburger from the Drawer itself,
+// except Home: its nested stack (see HomeStack above) hides its own
+// duplicate header, and StorageDashboardScreen renders its own brand
+// header with a hamburger button (navigation.getParent()?.openDrawer())
+// instead.
+function AppNavigator() {
   return (
     <NavigationContainer theme={navTheme}>
       <StatusBar style="light" />
-      <Tab.Navigator
+      <Drawer.Navigator
         initialRouteName="Home"
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: colors.cyan,
-          tabBarInactiveTintColor: colors.textMuted,
-          tabBarStyle: {
-            backgroundColor: colors.navBar,
-            borderTopColor: colors.border,
-            height: tabBarHeight,
-            paddingBottom: insets.bottom + 6,
-            paddingTop: 6,
-          },
-          tabBarLabelStyle: { fontFamily: fonts.sansSemiBold, fontSize: 10 },
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name={TAB_ICONS[route.name]} color={color} size={size ? size - 2 : 20} />
-          ),
+          headerShown: route.name !== 'Home',
+          headerStyle: { backgroundColor: colors.navBar },
+          headerTintColor: colors.textPrimary,
+          headerTitleStyle: { fontFamily: fonts.sansExtraBold, fontSize: 16 },
+          headerShadowVisible: false,
+          drawerStyle: { backgroundColor: colors.navBar, width: 260 },
+          drawerActiveTintColor: colors.cyan,
+          drawerInactiveTintColor: colors.textMuted,
+          drawerActiveBackgroundColor: 'rgba(0,242,254,0.08)',
+          drawerLabelStyle: { fontFamily: fonts.sansSemiBold, fontSize: 13, marginLeft: -8 },
+          drawerIcon: ({ color, size }) => <Ionicons name={DRAWER_ICONS[route.name]} color={color} size={size ?? 20} />,
         })}
       >
-        <Tab.Screen name="Home" component={HomeStack} />
-        <Tab.Screen name="Business" component={BusinessModelScreen} options={{ title: 'Business' }} />
-        <Tab.Screen name="Staking" component={StakingScreen} />
-        <Tab.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: 'Dashboard' }} />
-        <Tab.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: 'Paper' }} />
-      </Tab.Navigator>
+        <Drawer.Screen name="Home" component={HomeStack} options={{ title: DRAWER_LABELS.Home }} />
+        <Drawer.Screen name="Business" component={BusinessModelScreen} options={{ title: DRAWER_LABELS.Business }} />
+        <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />
+        <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />
+        <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />
+      </Drawer.Navigator>
     </NavigationContainer>
   );
 }
@@ -191,14 +220,16 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <WalletProviderRoot>
-          <CardCustomerProviderRoot>
-            <AppNavigator />
-          </CardCustomerProviderRoot>
-        </WalletProviderRoot>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          <WalletProviderRoot>
+            <CardCustomerProviderRoot>
+              <AppNavigator />
+            </CardCustomerProviderRoot>
+          </WalletProviderRoot>
+        </ErrorBoundary>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
