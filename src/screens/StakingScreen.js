@@ -15,9 +15,11 @@ import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 
 import { ethers } from 'ethers';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useWallet } from '../providers/WalletProvider';
-import { colors, spacing, radius, fonts } from '../theme';
+import { colors, spacing, radius, fonts, glow } from '../theme';
 import GradientButton from '../components/GradientButton';
-import StatTile from '../components/StatTile';
+import GlassCard from '../components/GlassCard';
+import SegmentedToggle from '../components/SegmentedToggle';
+import BackgroundGlow from '../components/BackgroundGlow';
 import { waitForReceipt } from '../utils/waitForReceipt';
 
 const INAYA_TOKEN_ADDRESS = '0x3966a3378c8d9e6bb34dd0b8458eef4b878ce94e';
@@ -44,9 +46,9 @@ const erc20 = new ethers.Interface(ERC20_ABI);
 const staking = new ethers.Interface(STAKING_ABI);
 
 const LOCK_TIERS = [
-  { label: 'Flexible', value: 0 },
-  { label: '30 Days', value: 30 },
-  { label: '90 Days', value: 90 },
+  { label: 'Flexible', sublabel: '1.0x', value: 0 },
+  { label: '30 Days', sublabel: '1.25x', value: 30 },
+  { label: '90 Days', sublabel: '1.50x', value: 90 },
 ];
 
 const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
@@ -206,125 +208,125 @@ export default function StakingScreen() {
   }
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
-      <Text style={styles.title}>$INAYA Staking Engine</Text>
-      <Text style={styles.subtitle}>
-        Stake $INAYA to earn passive APY from the 8,000,000 INAYA Staking Rewards Pool and unlock priority bandwidth tiers.
-      </Text>
+    <View style={styles.root}>
+      <BackgroundGlow />
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xl }]}>
+        <Text style={styles.title}>Staking</Text>
+        <Text style={styles.subtitle}>
+          Stake $INAYA to earn passive APY from the 8,000,000 INAYA Staking Rewards Pool and unlock priority bandwidth tiers.
+        </Text>
 
-      {!!log && <Text style={styles.logText}>{log}</Text>}
+        {!!log && <Text style={styles.logText}>{log}</Text>}
 
-      {!isConnected && (
-        <View style={styles.connectBanner}>
-          <Text style={styles.connectBannerText}>Connect your wallet to see live staking data and stake/unstake/claim.</Text>
-          <GradientButton title="Connect Wallet" onPress={connect} loading={connecting} style={{ marginTop: spacing.md }} />
-        </View>
-      )}
-
-      <View style={styles.grid}>
-        <StatTile label="Total Value Locked" value={isConnected ? `${Number(overview.totalStakedTVL).toLocaleString()} INAYA` : '—'} style={styles.gridItem} />
-        <StatTile label="Estimated APY" value={isConnected ? `${overview.estimatedAPY}%` : '—'} valueColor={colors.success} style={styles.gridItem} />
-        <StatTile label="My Staked Balance" value={isConnected ? `${Number(overview.myStakedBalance).toLocaleString()} INAYA` : '—'} style={styles.gridItem} />
-        <StatTile label="Claimable Rewards" value={isConnected ? Number(overview.claimableRewards).toFixed(4) : '—'} valueColor={colors.warning} style={styles.gridItem} />
-      </View>
-
-      {isConnected && overview.userTier === 'Enterprise Priority' && (
-        <View style={styles.tierBanner}>
-          <Text style={styles.tierBannerText}>⚡ Tier 1 Priority Node — High API Bandwidth Active</Text>
-        </View>
-      )}
-
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>📥 Stake</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          placeholder="Amount to stake"
-          placeholderTextColor={colors.textMuted}
-          value={stakeAmount}
-          onChangeText={setStakeAmount}
-        />
-        <View style={styles.tierRow}>
-          {LOCK_TIERS.map((tier) => (
-            <TouchableOpacity
-              key={tier.value}
-              onPress={() => setLockTier(tier.value)}
-              style={[styles.tierButton, lockTier === tier.value && styles.tierButtonActive]}
-            >
-              <Text style={[styles.tierButtonText, lockTier === tier.value && styles.tierButtonTextActive]}>{tier.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Text style={styles.hint}>Flexible = 1.00x · 30 Days = 1.25x · 90 Days = 1.50x reward multiplier.</Text>
-        <GradientButton title="⚡ Approve & Stake" onPress={handleStake} loading={busy === 'stake'} disabled={!isConnected || busy !== null} />
-      </View>
-
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>📤 Unstake</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          placeholder="Amount to withdraw"
-          placeholderTextColor={colors.textMuted}
-          value={unstakeAmount}
-          onChangeText={setUnstakeAmount}
-        />
-        {overview.lockExpiryTimestamp > Date.now() && (
-          <Text style={styles.lockNotice}>🔒 Locked until {new Date(overview.lockExpiryTimestamp).toLocaleString()}</Text>
+        {!isConnected && (
+          <GlassCard style={{ marginBottom: spacing.lg }}>
+            <Text style={styles.connectBannerText}>Connect your wallet to see live staking data and stake/unstake/claim.</Text>
+            <GradientButton title="Connect Wallet" onPress={connect} loading={connecting} style={{ marginTop: spacing.md }} />
+          </GlassCard>
         )}
-        <TouchableOpacity
-          style={[styles.withdrawButton, (busy !== null || !isConnected) && styles.disabled]}
-          onPress={handleUnstake}
-          disabled={!isConnected || busy !== null}
-        >
-          <Text style={styles.withdrawButtonText}>{busy === 'unstake' ? 'WITHDRAWING...' : 'WITHDRAW'}</Text>
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>🎁 Claim Rewards</Text>
-        <Text style={styles.claimValue}>{Number(overview.claimableRewards).toFixed(4)}</Text>
-        <Text style={styles.hint}>$INAYA available to claim</Text>
-        <GradientButton
-          title="Claim Rewards"
-          onPress={handleClaim}
-          loading={busy === 'claim'}
-          disabled={!isConnected || busy !== null || parseFloat(overview.claimableRewards) <= 0}
-          style={{ marginTop: spacing.md }}
-        />
-      </View>
-    </ScrollView>
+        <GlassCard style={styles.tvlCard}>
+          <Text style={styles.tvlLabel}>Total Value Locked</Text>
+          <Text style={styles.tvlValue}>{isConnected ? Number(overview.totalStakedTVL).toLocaleString() : '—'} <Text style={styles.tvlUnit}>INAYA</Text></Text>
+        </GlassCard>
+
+        <View style={styles.metricsRow}>
+          <GlassCard style={styles.metricCard}>
+            <Text style={styles.metricLabel}>Est. APY</Text>
+            <Text style={[styles.metricValue, { color: colors.success }]}>{isConnected ? `${overview.estimatedAPY}%` : '—'}</Text>
+          </GlassCard>
+          <GlassCard style={styles.metricCard}>
+            <Text style={styles.metricLabel}>Your Staked</Text>
+            <Text style={styles.metricValue}>{isConnected ? Number(overview.myStakedBalance).toLocaleString() : '—'}</Text>
+          </GlassCard>
+        </View>
+
+        <GlassCard style={{ marginBottom: spacing.lg }}>
+          <Text style={styles.metricLabel}>Claimable Rewards</Text>
+          <Text style={[styles.claimValue, { color: colors.warning }]}>{isConnected ? Number(overview.claimableRewards).toFixed(4) : '—'}</Text>
+          <GradientButton
+            title="Claim Rewards"
+            onPress={handleClaim}
+            loading={busy === 'claim'}
+            disabled={!isConnected || busy !== null || parseFloat(overview.claimableRewards) <= 0}
+            style={{ marginTop: spacing.md }}
+          />
+        </GlassCard>
+
+        {isConnected && overview.userTier === 'Enterprise Priority' && (
+          <View style={styles.tierBanner}>
+            <Text style={styles.tierBannerText}>⚡ Tier 1 Priority Node — High API Bandwidth Active</Text>
+          </View>
+        )}
+
+        <GlassCard style={{ marginBottom: spacing.lg }}>
+          <Text style={styles.panelTitle}>Stake</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            placeholder="Amount to stake"
+            placeholderTextColor={colors.textMuted}
+            value={stakeAmount}
+            onChangeText={setStakeAmount}
+          />
+          <Text style={styles.lockTierLabel}>Lock Tier</Text>
+          <SegmentedToggle options={LOCK_TIERS} value={lockTier} onChange={setLockTier} style={{ marginBottom: spacing.lg }} />
+          <GradientButton title="Stake Now" onPress={handleStake} loading={busy === 'stake'} disabled={!isConnected || busy !== null} />
+        </GlassCard>
+
+        <GlassCard style={{ marginBottom: spacing.lg }}>
+          <Text style={styles.panelTitle}>Unstake</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            placeholder="Amount to withdraw"
+            placeholderTextColor={colors.textMuted}
+            value={unstakeAmount}
+            onChangeText={setUnstakeAmount}
+          />
+          {overview.lockExpiryTimestamp > Date.now() && (
+            <Text style={styles.lockNotice}>🔒 Locked until {new Date(overview.lockExpiryTimestamp).toLocaleString()}</Text>
+          )}
+          <TouchableOpacity
+            style={[styles.withdrawButton, (busy !== null || !isConnected) && styles.disabled]}
+            onPress={handleUnstake}
+            disabled={!isConnected || busy !== null}
+          >
+            <Text style={styles.withdrawButtonText}>{busy === 'unstake' ? 'WITHDRAWING...' : 'WITHDRAW'}</Text>
+          </TouchableOpacity>
+        </GlassCard>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.xl, paddingBottom: spacing.xxxl + 8 },
-  title: { fontSize: 22, fontFamily: fonts.sansExtraBold, color: colors.textPrimary },
+  title: { fontSize: 24, fontFamily: fonts.sansExtraBold, color: colors.textPrimary },
   subtitle: { fontSize: 13, fontFamily: fonts.sans, color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.lg, lineHeight: 18 },
   logText: { fontFamily: fonts.mono, fontSize: 11, color: colors.cyan, backgroundColor: 'rgba(0,242,254,0.06)', borderWidth: 1, borderColor: colors.borderAccent, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
-  connectBanner: { backgroundColor: 'rgba(0,0,0,0.2)', borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg },
   connectBannerText: { fontFamily: fonts.mono, fontSize: 12, color: colors.textMuted, fontStyle: 'italic' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  gridItem: { minWidth: '46%', flex: 1 },
+  tvlCard: { marginBottom: spacing.md, ...glow(colors.cyan, 0.1, 14) },
+  tvlLabel: { fontFamily: fonts.sansSemiBold, fontSize: 12, color: colors.textSecondary },
+  tvlValue: { fontFamily: fonts.monoBold, fontSize: 26, color: colors.textPrimary, marginTop: spacing.sm },
+  tvlUnit: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.textSecondary },
+  metricsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  metricCard: { flex: 1 },
+  metricLabel: { fontFamily: fonts.sansSemiBold, fontSize: 11, color: colors.textSecondary },
+  metricValue: { fontFamily: fonts.monoBold, fontSize: 18, color: colors.textPrimary, marginTop: spacing.xs },
+  claimValue: { fontFamily: fonts.sansExtraBold, fontSize: 26, marginTop: spacing.xs },
   tierBanner: { backgroundColor: 'rgba(52,211,153,0.06)', borderWidth: 1, borderColor: 'rgba(52,211,153,0.3)', borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.lg },
   tierBannerText: { fontFamily: fonts.monoBold, fontSize: 11, color: colors.success },
-  panel: { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.borderAccent, borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg },
   panelTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.textPrimary, marginBottom: spacing.md },
   input: {
-    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md,
+    backgroundColor: 'rgba(0,0,0,0.2)', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md,
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2, color: colors.textPrimary,
     fontFamily: fonts.mono, fontSize: 13, marginBottom: spacing.md,
   },
-  tierRow: { flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.sm },
-  tierButton: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(0,0,0,0.2)', alignItems: 'center' },
-  tierButtonActive: { backgroundColor: colors.cyan, borderColor: colors.cyan },
-  tierButtonText: { fontFamily: fonts.sansBold, fontSize: 10, color: colors.textSecondary },
-  tierButtonTextActive: { color: colors.bg },
-  hint: { fontFamily: fonts.mono, fontSize: 9, color: colors.textMuted, marginBottom: spacing.md },
+  lockTierLabel: { fontFamily: fonts.sansSemiBold, fontSize: 11, color: colors.textSecondary, marginBottom: spacing.sm },
   lockNotice: { fontFamily: fonts.monoBold, fontSize: 10, color: colors.warning, marginBottom: spacing.md },
   withdrawButton: { backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingVertical: spacing.md, alignItems: 'center' },
   withdrawButtonText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.textPrimary },
   disabled: { opacity: 0.4 },
-  claimValue: { fontFamily: fonts.sansExtraBold, fontSize: 26, color: colors.success },
 });

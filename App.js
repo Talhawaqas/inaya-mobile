@@ -31,6 +31,9 @@ import { WalletProviderRoot } from './src/providers/WalletProvider';
 import StorageDashboardScreen from './src/screens/StorageDashboardScreen';
 import NodeStatusScreen from './src/screens/NodeStatusScreen';
 import WalletBalanceScreen from './src/screens/WalletBalanceScreen';
+import UploadScreen from './src/screens/UploadScreen';
+import DownloadScreen from './src/screens/DownloadScreen';
+import MyFilesScreen from './src/screens/MyFilesScreen';
 import BusinessModelScreen from './src/screens/BusinessModelScreen';
 import StakingScreen from './src/screens/StakingScreen';
 import MyDashboardScreen from './src/screens/MyDashboardScreen';
@@ -87,9 +90,12 @@ function HomeStack() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="StorageDashboard" component={StorageDashboardScreen} options={{ title: 'Storage Dashboard' }} />
+      <Stack.Screen name="StorageDashboard" component={StorageDashboardScreen} options={{ title: 'Dashboard' }} />
       <Stack.Screen name="NodeStatus" component={NodeStatusScreen} options={{ title: 'Watcher Node Status' }} />
       <Stack.Screen name="WalletBalance" component={WalletBalanceScreen} options={{ title: 'Wallet Balance' }} />
+      <Stack.Screen name="Upload" component={UploadScreen} options={{ title: 'Upload' }} />
+      <Stack.Screen name="Download" component={DownloadScreen} options={{ title: 'Download' }} />
+      <Stack.Screen name="MyFiles" component={MyFilesScreen} options={{ title: 'My Files' }} />
     </Stack.Navigator>
   );
 }

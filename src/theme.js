@@ -19,6 +19,7 @@ export const colors = {
 
   cyan: '#00f2fe',
   blue: '#4facfe',
+  violet: '#7c5cff', // spatial-background accent glow only, not used for text/CTAs
 
   textPrimary: '#ffffff',
   textSecondary: '#94a3b8',
@@ -28,11 +29,35 @@ export const colors = {
   warning: '#f59e0b',
   warningDeep: '#ea580c',
   danger: '#f87171',
+
+  // Glassmorphism surfaces -- translucent-color + border + glow rather than
+  // a real backdrop blur (expo-blur/@react-native-community/blur): this app's
+  // background is a near-flat dark navy, not rich content, so a literal blur
+  // buys little over a well-tuned translucent card, and skipping it avoids
+  // adding a native module that would need a real device/emulator to verify
+  // visually -- something this environment doesn't have.
+  glass: 'rgba(15,23,42,0.55)',
+  glassBorder: 'rgba(255,255,255,0.09)',
 };
 
 export const gradients = {
   accent: [colors.cyan, colors.blue],
   warning: [colors.warning, colors.warningDeep],
+};
+
+// Style spread for a glassmorphism card — translucent background, subtle
+// border, soft ambient shadow. Spread this into a StyleSheet entry rather
+// than calling it inline every render.
+export const glassCard = {
+  backgroundColor: colors.glass,
+  borderWidth: 1,
+  borderColor: colors.glassBorder,
+  borderRadius: 18,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.3,
+  shadowRadius: 16,
+  elevation: 6,
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 };
