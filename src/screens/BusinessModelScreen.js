@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useWallet } from '../providers/WalletProvider';
+import { useCardCustomer } from '../providers/CardCustomerProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import CheckoutWebView from '../components/CheckoutWebView';
@@ -47,6 +48,7 @@ const FUNDAMENTALS = [
 export default function BusinessModelScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { address } = useWallet();
+  const { email: cardCustomerEmail, plan: cardCustomerPlan, polling: planPolling, timedOut: planTimedOut, resolveFromCheckout } = useCardCustomer();
   const [selectedTier, setSelectedTier] = useState('250 TB / Year');
   const [checkoutUrl, setCheckoutUrl] = useState(null);
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
@@ -71,10 +73,15 @@ export default function BusinessModelScreen() {
     }
   }
 
-  function handleCheckoutResult({ status, tier }) {
+  async function handleCheckoutResult({ status, tier, sessionId }) {
     setCheckoutUrl(null);
     if (status === 'success') {
       setCheckoutMessage(`✅ Payment received for ${tier || selectedTier} — activating on-chain, this can take up to a minute.`);
+      // Resolves the Stripe session to the customer's email and starts the
+      // corporate-plan-status poll below -- this is the step that was
+      // missing entirely before: checkout success was detected, but nothing
+      // ever confirmed activation or showed it anywhere in the app.
+      await resolveFromCheckout(sessionId);
     } else if (status === 'cancelled') {
       setCheckoutMessage('Checkout cancelled.');
     }
@@ -142,6 +149,30 @@ export default function BusinessModelScreen() {
           </View>
         ))}
       </View>
+
+      {/* CARD CUSTOMER PLAN STATUS -- the piece that was missing entirely: checkout
+          success used to just show a one-time toast and never actually confirmed
+          or displayed activation anywhere. */}
+      {cardCustomerPlan ? (
+        <View style={styles.planStatusCard}>
+          <Text style={styles.planStatusLabel}>YOUR CORPORATE RESERVE PLAN</Text>
+          <Text style={styles.planStatusTier}>{cardCustomerPlan.tier}</Text>
+          <Text style={styles.planStatusLine}>
+            <Text style={styles.planStatusActive}>ACTIVE</Text> · valid until {new Date(cardCustomerPlan.expiresAt).toLocaleDateString()}
+          </Text>
+          <Text style={styles.planStatusEmail}>Signed in as {cardCustomerEmail}</Text>
+        </View>
+      ) : planPolling ? (
+        <View style={styles.planPendingCard}>
+          <Text style={styles.planPendingText}>⏳ Activating your plan on-chain — this can take up to a minute. Feel free to keep browsing, this updates automatically.</Text>
+        </View>
+      ) : planTimedOut ? (
+        <View style={styles.planTimedOutCard}>
+          <Text style={styles.planTimedOutText}>
+            ⚠️ Payment received, but activation is taking longer than expected. This usually means the settlement step failed server-side — contact support with email: {cardCustomerEmail}
+          </Text>
+        </View>
+      ) : null}
 
       {/* CORPORATE RESERVE */}
       <View style={styles.panel}>
@@ -233,6 +264,16 @@ const styles = StyleSheet.create({
   testModeNotice: { backgroundColor: 'rgba(245,158,11,0.1)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.4)', borderRadius: radius.sm, padding: spacing.sm, marginTop: spacing.md },
   testModeText: { fontFamily: fonts.monoBold, fontSize: 10, color: colors.warning },
   checkoutMessage: { fontFamily: fonts.mono, fontSize: 11, color: colors.textSecondary, marginTop: spacing.md },
+  planStatusCard: { backgroundColor: 'rgba(52,211,153,0.06)', borderWidth: 1, borderColor: 'rgba(52,211,153,0.4)', borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg },
+  planStatusLabel: { fontFamily: fonts.sansBold, fontSize: 10, color: colors.success, letterSpacing: 1 },
+  planStatusTier: { fontFamily: fonts.sansExtraBold, fontSize: 16, color: colors.textPrimary, marginTop: spacing.xs },
+  planStatusLine: { fontFamily: fonts.mono, fontSize: 11, color: colors.textSecondary, marginTop: spacing.xs },
+  planStatusActive: { color: colors.success, fontFamily: fonts.monoBold },
+  planStatusEmail: { fontFamily: fonts.mono, fontSize: 10, color: colors.textMuted, marginTop: spacing.sm, fontStyle: 'italic' },
+  planPendingCard: { backgroundColor: 'rgba(0,242,254,0.06)', borderWidth: 1, borderColor: colors.borderAccent, borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg },
+  planPendingText: { fontFamily: fonts.mono, fontSize: 11, color: colors.cyan, lineHeight: 16 },
+  planTimedOutCard: { backgroundColor: 'rgba(245,158,11,0.06)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.4)', borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg },
+  planTimedOutText: { fontFamily: fonts.mono, fontSize: 11, color: colors.warning, lineHeight: 16 },
   fundamentalCard: { backgroundColor: 'rgba(0,0,0,0.2)', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm },
   fundamentalTitle: { fontFamily: fonts.sansBold, fontSize: 11, color: colors.cyan },
   fundamentalBody: { fontFamily: fonts.mono, fontSize: 10, color: colors.textMuted, marginTop: spacing.xs, lineHeight: 15 },

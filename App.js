@@ -28,6 +28,7 @@ import {
 } from '@expo-google-fonts/jetbrains-mono';
 
 import { WalletProviderRoot } from './src/providers/WalletProvider';
+import { CardCustomerProviderRoot } from './src/providers/CardCustomerProvider';
 import StorageDashboardScreen from './src/screens/StorageDashboardScreen';
 import NodeStatusScreen from './src/screens/NodeStatusScreen';
 import WalletBalanceScreen from './src/screens/WalletBalanceScreen';
@@ -193,7 +194,9 @@ export default function App() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <WalletProviderRoot>
-          <AppNavigator />
+          <CardCustomerProviderRoot>
+            <AppNavigator />
+          </CardCustomerProviderRoot>
         </WalletProviderRoot>
       </ErrorBoundary>
     </SafeAreaProvider>
