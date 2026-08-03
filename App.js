@@ -47,6 +47,7 @@ import BusinessModelScreen from './src/screens/BusinessModelScreen';
 import StakingScreen from './src/screens/StakingScreen';
 import MyDashboardScreen from './src/screens/MyDashboardScreen';
 import WhitePaperScreen from './src/screens/WhitePaperScreen';
+import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
 import { colors, fonts } from './src/theme';
 
 // General safety net for any render-time crash NOT already caught by
@@ -118,6 +119,7 @@ const DRAWER_ICONS = {
   Staking: 'trending-up-outline',
   Dashboard: 'grid-outline',
   WhitePaper: 'document-text-outline',
+  KnowledgeBase: 'megaphone-outline',
 };
 
 const DRAWER_LABELS = {
@@ -126,6 +128,7 @@ const DRAWER_LABELS = {
   Staking: 'Staking',
   Dashboard: 'Dashboard',
   WhitePaper: 'White Paper',
+  KnowledgeBase: 'Knowledge Base',
 };
 
 // Extends React Navigation's own DarkTheme rather than writing a theme
@@ -194,6 +197,7 @@ function AppNavigator() {
         <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />
         <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />
         <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />
+        <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />
       </Drawer.Navigator>
     </NavigationContainer>
   );
