@@ -8,7 +8,7 @@
 // screens; this one only reads summary state.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { ethers } from 'ethers';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -66,13 +66,6 @@ export default function StorageDashboardScreen({ navigation }) {
       <BackgroundGlow />
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md, paddingBottom: tabBarHeight + spacing.xl }]}>
         <View style={styles.header}>
-          <View style={styles.brandRow}>
-            <View style={styles.logoMark} />
-            <View>
-              <Text style={styles.brandTitle}>INAYA</Text>
-              <Text style={styles.brandSubtitle}>NETWORK</Text>
-            </View>
-          </View>
           {/* This screen's own Stack.Screen has headerShown: false (see App.js) --
               the Drawer's automatic hamburger+header shows on every other screen,
               but Home needs its own since HomeStack's header is hidden here to
@@ -81,8 +74,15 @@ export default function StorageDashboardScreen({ navigation }) {
             onPress={() => navigation.getParent()?.openDrawer()}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Ionicons name="menu" size={26} color={colors.textPrimary} />
+            <Ionicons name="menu" size={28} color={colors.textPrimary} />
           </TouchableOpacity>
+          <View style={styles.brandRow}>
+            <Image source={require('../../assets/icon.png')} style={styles.logoMark} />
+            <View>
+              <Text style={styles.brandTitle}>INAYA</Text>
+              <Text style={styles.brandSubtitle}>NETWORK</Text>
+            </View>
+          </View>
         </View>
 
         <GlassCard style={styles.balanceCard}>
@@ -135,14 +135,11 @@ export default function StorageDashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.xl },
-  header: { marginBottom: spacing.lg },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.lg },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  logoMark: {
-    width: 34, height: 34, borderRadius: radius.sm,
-    backgroundColor: 'rgba(0,242,254,0.12)', borderWidth: 1, borderColor: colors.borderAccent,
-  },
-  brandTitle: { fontFamily: fonts.sansExtraBold, fontSize: 16, color: colors.textPrimary, letterSpacing: 1 },
-  brandSubtitle: { fontFamily: fonts.sansSemiBold, fontSize: 9, color: colors.cyan, letterSpacing: 2, marginTop: -2 },
+  logoMark: { width: 38, height: 38, borderRadius: radius.sm },
+  brandTitle: { fontFamily: fonts.sansExtraBold, fontSize: 22, color: colors.textPrimary, letterSpacing: 1 },
+  brandSubtitle: { fontFamily: fonts.sansSemiBold, fontSize: 12, color: colors.cyan, letterSpacing: 2, marginTop: -2 },
   balanceCard: { marginBottom: spacing.lg },
   balanceLabel: { fontFamily: fonts.sansSemiBold, fontSize: 12, color: colors.textSecondary },
   balanceValue: { fontFamily: fonts.monoBold, fontSize: 28, color: colors.textPrimary, marginTop: spacing.sm },
