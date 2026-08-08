@@ -48,6 +48,7 @@ import StakingScreen from './src/screens/StakingScreen';
 import MyDashboardScreen from './src/screens/MyDashboardScreen';
 import WhitePaperScreen from './src/screens/WhitePaperScreen';
 import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
+import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import { colors, fonts } from './src/theme';
 
 // General safety net for any render-time crash NOT already caught by
@@ -120,6 +121,7 @@ const DRAWER_ICONS = {
   Dashboard: 'grid-outline',
   WhitePaper: 'document-text-outline',
   KnowledgeBase: 'megaphone-outline',
+  AIAssistant: 'chatbubble-ellipses-outline',
 };
 
 const DRAWER_LABELS = {
@@ -129,6 +131,7 @@ const DRAWER_LABELS = {
   Dashboard: 'Dashboard',
   WhitePaper: 'White Paper',
   KnowledgeBase: 'Knowledge Base',
+  AIAssistant: 'Ask AI',
 };
 
 // Extends React Navigation's own DarkTheme rather than writing a theme
@@ -198,6 +201,7 @@ function AppNavigator() {
         <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />
         <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />
         <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />
+        <Drawer.Screen name="AIAssistant" component={AIAssistantScreen} options={{ title: DRAWER_LABELS.AIAssistant }} />
       </Drawer.Navigator>
     </NavigationContainer>
   );
