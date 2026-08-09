@@ -12,13 +12,15 @@
 // roadmaps from ever making different claims.
 //
 // ACCURACY RULE (do not relax this): a stage or feature only gets marked
-// LIVE here if it's actually shipped and working today. As of this file's
-// creation, Stage 4 (AI Business Assistant) is real and shipped, but ONLY
-// in the WEB Business Workspace — this app's own "Ask AI" screen is a
-// separate, general docs assistant with no business-workspace awareness,
-// so bringing the permission-aware business assistant to mobile is listed
-// under Stage 5, not claimed as already live here. Stages 5-8 have no
-// implementation anywhere — roadmap direction only.
+// LIVE here if it's actually shipped and working today. Stage 4 (AI
+// Business Assistant) is real and shipped on BOTH web and mobile — this
+// app's Business Workspace has an "Ask the AI Assistant" action on each
+// company card (src/screens/business/BusinessAIScreen.js), calling the
+// same POST /api/ai/business-chat and the same permission-scoped tools
+// the web version uses. This app's separate, older "Ask AI" screen (a
+// general docs assistant, /api/ai/chat) is unrelated and still exists
+// alongside it. Stages 5-8 have no implementation anywhere — roadmap
+// direction only.
 
 export const ROADMAP_STATUS = {
   LIVE: 'LIVE',
@@ -150,10 +152,11 @@ export const ROADMAP_STAGES = [
       'Document access queries',
       'Natural-language business questions',
       'Integrated into the Business Workspace',
+      'Available on web and mobile',
     ],
     tools: ['list_documents', 'list_departments', 'list_projects', 'get_activity', 'get_document_access'],
     notes:
-      'Live today in the web Business Workspace. The mobile app currently has a separate general-purpose assistant without business-workspace awareness — bringing this same permission-aware assistant to mobile is a near-term goal (Stage 5).',
+      'Live today in both the web and mobile Business Workspace, powered by the exact same permission-scoped tools on the backend.',
   },
   {
     number: 5,
@@ -165,7 +168,6 @@ export const ROADMAP_STAGES = [
       { title: 'CRM', items: ['Customers', 'Leads', 'Deals', 'Customer records', 'Sales pipeline'] },
       { title: 'Procurement', items: ['Suppliers', 'Purchase requests', 'Purchase orders', 'Approval workflows'] },
       { title: 'Inventory', items: ['Products / items', 'Stock levels', 'Warehouses', 'Stock movements'] },
-      { title: 'Mobile AI', items: ['Extend the permission-aware AI Business Assistant to the mobile app'] },
     ],
   },
   {
