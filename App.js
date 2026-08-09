@@ -50,6 +50,7 @@ import WhitePaperScreen from './src/screens/WhitePaperScreen';
 import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
 import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ReferralScreen from './src/screens/ReferralScreen';
+import BusinessWorkspaceStack from './src/screens/business/BusinessWorkspaceStack';
 import { colors, fonts } from './src/theme';
 
 // General safety net for any render-time crash NOT already caught by
@@ -118,6 +119,7 @@ function HomeStack() {
 const DRAWER_ICONS = {
   Home: 'home-outline',
   Business: 'briefcase-outline',
+  Workspace: 'lock-closed-outline',
   Staking: 'trending-up-outline',
   Dashboard: 'grid-outline',
   WhitePaper: 'document-text-outline',
@@ -129,6 +131,7 @@ const DRAWER_ICONS = {
 const DRAWER_LABELS = {
   Home: 'Home',
   Business: 'Business',
+  Workspace: 'Business Workspace',
   Staking: 'Staking',
   Dashboard: 'Dashboard',
   WhitePaper: 'White Paper',
@@ -185,7 +188,7 @@ function AppNavigator() {
         initialRouteName="Home"
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={({ route }) => ({
-          headerShown: route.name !== 'Home',
+          headerShown: route.name !== 'Home' && route.name !== 'Workspace',
           headerStyle: { backgroundColor: colors.navBar },
           headerTintColor: colors.textPrimary,
           headerTitleStyle: { fontFamily: fonts.sansExtraBold, fontSize: 16 },
@@ -200,6 +203,7 @@ function AppNavigator() {
       >
         <Drawer.Screen name="Home" component={HomeStack} options={{ title: DRAWER_LABELS.Home }} />
         <Drawer.Screen name="Business" component={BusinessModelScreen} options={{ title: DRAWER_LABELS.Business }} />
+        <Drawer.Screen name="Workspace" component={BusinessWorkspaceStack} options={{ title: DRAWER_LABELS.Workspace }} />
         <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />
         <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />
         <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />
