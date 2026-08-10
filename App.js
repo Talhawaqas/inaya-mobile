@@ -13,7 +13,7 @@ import 'react-native-gesture-handler';
 import 'react-native-get-random-values'; // must be imported before ethers/crypto anywhere
 import './polyfills'; // must come immediately after react-native-get-random-values, before any MetaMask Connect code
 import React from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
@@ -161,8 +161,21 @@ const navTheme = {
   },
 };
 
-// Branded header above the auto-generated nav item list — the only custom
-// part of the drawer; DrawerItemList below handles everything else
+// Same three community links as the web dApp's socialLinksList
+// (inaya-network-dapp/src/app/page.js) — kept in sync manually, same as
+// the knowledge base articles. Plain https:// links: Linking.openURL
+// already hands off to the native YouTube/X/Telegram app via iOS
+// Universal Links / Android App Links when it's installed, so no custom
+// URL scheme or app.json config is needed for that behavior.
+const SOCIAL_LINKS = [
+  { label: 'Telegram', href: 'https://t.me/inayanetwork', icon: 'paper-plane' },
+  { label: 'YouTube', href: 'https://youtube.com/@inayanetworkofficial?si=GzAzY5m3PzZy8MU-', icon: 'logo-youtube' },
+  { label: 'X', href: 'https://x.com/InayaNetwork', icon: 'logo-twitter' },
+];
+
+// Branded header above the auto-generated nav item list, and a social-
+// links row pinned below it at the bottom of the drawer — the only two
+// custom parts; DrawerItemList in between handles everything else
 // (active/inactive styling comes from screenOptions in AppNavigator).
 function CustomDrawerContent(props) {
   return (
@@ -172,6 +185,19 @@ function CustomDrawerContent(props) {
         <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 10, color: colors.cyan, letterSpacing: 2, marginTop: -2 }}>NETWORK</Text>
       </View>
       <DrawerItemList {...props} />
+      <View style={{ flex: 1 }} />
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingVertical: 20, borderTopWidth: 1, borderTopColor: colors.border, marginTop: 8 }}>
+        {SOCIAL_LINKS.map((social) => (
+          <TouchableOpacity
+            key={social.label}
+            onPress={() => Linking.openURL(social.href)}
+            accessibilityLabel={social.label}
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,242,254,0.08)', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Ionicons name={social.icon} color={colors.textMuted} size={18} />
+          </TouchableOpacity>
+        ))}
+      </View>
     </DrawerContentScrollView>
   );
 }
