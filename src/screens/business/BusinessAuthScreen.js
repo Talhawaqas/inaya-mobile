@@ -13,7 +13,7 @@
 // invite-member or admin flows on mobile this pass.
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { Platform, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -25,43 +25,87 @@ import { orgFetch, setStoredSessionToken } from '../../utils/orgApi';
 // own expo-auth-session docs, this is boilerplate, not app-specific logic.
 WebBrowser.maybeCompleteAuthSession();
 
-export default function BusinessAuthScreen({ onAuthenticated }) {
-  const insets = useSafeAreaInsets();
-  const [mode, setMode] = useState('signin'); // 'signin' | 'create'
+// expo-auth-session's Google provider requires a client ID matching the
+// CURRENT platform — a Web client alone is enough on the web target, but
+// on a real native Android/iOS build it hard-requires androidClientId /
+// iosClientId respectively and throws synchronously (inside the hook
+// itself, before any try/catch in this file can run) if that's missing.
+// We only registered a Web client so far, so on native this resolves to
+// undefined — see GoogleSignInButton below, which is only ever MOUNTED
+// (not just conditionally rendered) when this is truthy, since the crash
+// happens at hook-call time, not at render/click time.
+const GOOGLE_CLIENT_ID_FOR_PLATFORM = Platform.select({
+  web: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+  android: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
+  ios: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
+});
 
-  // Silently absent (no button rendered) when EXPO_PUBLIC_GOOGLE_CLIENT_ID
-  // isn't configured, same as the web app's AuthScreen — not a hard
-  // dependency every build must set up. Uses Expo's auth proxy with a
-  // single "Web application" OAuth client shared with the web app; see
-  // src/lib/googleAuth.js on the backend for why that's enough for now.
-  const [googleRequesting, setGoogleRequesting] = useState(false);
-  const [googleError, setGoogleError] = useState('');
-  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+// Isolated into its own component specifically so Google.useAuthRequest()
+// is never CALLED at all on a platform without a matching client ID —
+// conditionally rendering the JSX wouldn't be enough, since the hook
+// throws as soon as the component function runs, regardless of what JSX
+// it returns. The parent only mounts this when GOOGLE_CLIENT_ID_FOR_PLATFORM
+// is set.
+function GoogleSignInButton({ onIdToken }) {
+  const [requesting, setRequesting] = useState(false);
+  const [error, setError] = useState('');
+  const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
     responseType: 'id_token',
   });
 
   useEffect(() => {
-    if (googleResponse?.type === 'success' && googleResponse.params?.id_token) {
-      handleGoogleIdToken(googleResponse.params.id_token);
-    } else if (googleResponse?.type === 'error') {
-      setGoogleError('Google sign-in failed.');
+    if (response?.type === 'success' && response.params?.id_token) {
+      handleIdToken(response.params.id_token);
+    } else if (response?.type === 'error') {
+      setError('Google sign-in failed.');
     }
-  }, [googleResponse]);
+  }, [response]);
+
+  async function handleIdToken(idToken) {
+    setRequesting(true);
+    setError('');
+    try {
+      await onIdToken(idToken);
+    } catch (err) {
+      setError(err.message || 'Could not sign in with Google.');
+    } finally {
+      setRequesting(false);
+    }
+  }
+
+  return (
+    <>
+      <TouchableOpacity
+        style={[styles.googleButton, (requesting || !request) && styles.buttonDisabled]}
+        onPress={() => promptAsync()}
+        disabled={requesting || !request}
+      >
+        {requesting ? <ActivityIndicator color={colors.textPrimary} /> : (
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
+        )}
+      </TouchableOpacity>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <View style={styles.dividerRow}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>or</Text>
+        <View style={styles.dividerLine} />
+      </View>
+    </>
+  );
+}
+
+export default function BusinessAuthScreen({ onAuthenticated }) {
+  const insets = useSafeAreaInsets();
+  const [mode, setMode] = useState('signin'); // 'signin' | 'create'
 
   async function handleGoogleIdToken(idToken) {
-    setGoogleRequesting(true);
-    setGoogleError('');
-    try {
-      const data = await orgFetch('/api/orgs/login/google', { method: 'POST', body: { idToken } });
-      await setStoredSessionToken(data.sessionToken);
-      const session = await orgFetch('/api/orgs/session');
-      onAuthenticated(session);
-    } catch (err) {
-      setGoogleError(err.message || 'Could not sign in with Google.');
-    } finally {
-      setGoogleRequesting(false);
-    }
+    const data = await orgFetch('/api/orgs/login/google', { method: 'POST', body: { idToken } });
+    await setStoredSessionToken(data.sessionToken);
+    const session = await orgFetch('/api/orgs/session');
+    onAuthenticated(session);
   }
 
   const [email, setEmail] = useState('');
@@ -133,25 +177,7 @@ export default function BusinessAuthScreen({ onAuthenticated }) {
 
       {!linkSent ? (
         <View style={[styles.card, { marginTop: spacing.lg }]}>
-          {!!process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID && (
-            <>
-              <TouchableOpacity
-                style={[styles.googleButton, (googleRequesting || !googleRequest) && styles.buttonDisabled]}
-                onPress={() => promptGoogleAsync()}
-                disabled={googleRequesting || !googleRequest}
-              >
-                {googleRequesting ? <ActivityIndicator color={colors.textPrimary} /> : (
-                  <Text style={styles.googleButtonText}>Continue with Google</Text>
-                )}
-              </TouchableOpacity>
-              {googleError ? <Text style={styles.error}>{googleError}</Text> : null}
-              <View style={styles.dividerRow}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-            </>
-          )}
+          {!!GOOGLE_CLIENT_ID_FOR_PLATFORM && <GoogleSignInButton onIdToken={handleGoogleIdToken} />}
           <View style={styles.modeRow}>
             <TouchableOpacity
               style={[styles.modeButton, mode === 'signin' && styles.modeButtonActive]}
