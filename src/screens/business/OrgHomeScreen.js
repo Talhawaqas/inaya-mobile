@@ -6,19 +6,81 @@
 // departments; each card also has a secondary "Ask the AI Assistant"
 // action, since the assistant is scoped to one org at a time.
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { useBusinessSession } from './BusinessSessionContext';
+import { orgFetch } from '../../utils/orgApi';
+import { isBiometricAvailable, getBiometricEnabled, setBiometricEnabled } from '../../utils/biometric';
 
 const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', member: 'Member' };
 
+// A signed-in user with zero org memberships can now genuinely happen —
+// magic-link logins only ever come from an existing member or an invite,
+// but Google sign-in (BusinessAuthScreen) can be a brand-new identity with
+// no company yet. /api/orgs/create infers ownerEmail from the existing
+// session when one is present, so this only needs a company name.
+function CreateCompanyForm({ onCreated }) {
+  const [orgName, setOrgName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSubmit() {
+    if (!orgName.trim()) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await orgFetch('/api/orgs/create', { method: 'POST', body: { orgName: orgName.trim() } });
+      onCreated();
+    } catch (err) {
+      setError(err.message || 'Could not create the company.');
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <View style={[styles.card, { marginTop: spacing.lg }]}>
+      <Text style={styles.emptyText}>You're not an active member of any company yet — create one to get started, or ask an owner/admin to invite you.</Text>
+      <TextInput
+        style={[styles.input, { marginTop: spacing.md }]}
+        value={orgName}
+        onChangeText={setOrgName}
+        placeholder="Company name"
+        placeholderTextColor={colors.textMuted}
+        editable={!submitting}
+      />
+      <TouchableOpacity style={[styles.button, submitting && styles.buttonDisabled]} onPress={handleSubmit} disabled={submitting}>
+        {submitting ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Create company</Text>}
+      </TouchableOpacity>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+    </View>
+  );
+}
+
 export default function OrgHomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { session, signOut } = useBusinessSession();
+  const { session, signOut, refreshSession } = useBusinessSession();
   const orgs = session?.orgs || [];
+
+  // Hidden entirely on a device with no Face ID/fingerprint enrolled —
+  // never show a toggle for a capability that isn't there.
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricEnabled, setBiometricEnabledState] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const available = await isBiometricAvailable();
+      setBiometricAvailable(available);
+      if (available) setBiometricEnabledState(await getBiometricEnabled());
+    })();
+  }, []);
+
+  async function toggleBiometric(value) {
+    setBiometricEnabledState(value);
+    await setBiometricEnabled(value);
+  }
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxxl }]}>
@@ -26,9 +88,7 @@ export default function OrgHomeScreen({ navigation }) {
       <Text style={styles.subtitle}>Signed in as {session?.email}</Text>
 
       {orgs.length === 0 ? (
-        <View style={[styles.card, { marginTop: spacing.lg }]}>
-          <Text style={styles.emptyText}>You're not an active member of any company yet — ask an owner or admin to invite you.</Text>
-        </View>
+        <CreateCompanyForm onCreated={refreshSession} />
       ) : (
         orgs.map((org) => (
           <View key={org.orgId} style={[styles.card, { marginTop: spacing.md }]}>
@@ -54,6 +114,16 @@ export default function OrgHomeScreen({ navigation }) {
         ))
       )}
 
+      {biometricAvailable && (
+        <View style={[styles.card, styles.biometricRow, { marginTop: spacing.lg }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.biometricTitle}>Biometric unlock</Text>
+            <Text style={styles.biometricHint}>Require Face ID / fingerprint to open this workspace</Text>
+          </View>
+          <Switch value={biometricEnabled} onValueChange={toggleBiometric} trackColor={{ true: colors.cyan }} />
+        </View>
+      )}
+
       <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
         <Text style={styles.signOutText}>Sign out</Text>
       </TouchableOpacity>
@@ -76,6 +146,30 @@ const styles = StyleSheet.create({
   },
   aiButtonText: { fontFamily: fonts.sansMedium, fontSize: 12, color: colors.cyan },
   emptyText: { fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+  biometricRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  biometricTitle: { fontFamily: fonts.sansBold, fontSize: 13, color: colors.textPrimary },
+  biometricHint: { fontFamily: fonts.sans, fontSize: 11, color: colors.textMuted, marginTop: 2, lineHeight: 15 },
   signOutButton: { marginTop: spacing.xxl, alignItems: 'center', paddingVertical: spacing.sm },
   signOutText: { fontFamily: fonts.sansMedium, fontSize: 12, color: colors.danger },
+  input: {
+    fontFamily: fonts.sans,
+    fontSize: 13,
+    color: colors.textPrimary,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  button: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.cyan,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
+  buttonDisabled: { opacity: 0.4 },
+  buttonText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.bg, textTransform: 'uppercase', letterSpacing: 0.5 },
+  error: { fontFamily: fonts.sans, fontSize: 11, color: colors.danger, marginTop: spacing.sm },
 });

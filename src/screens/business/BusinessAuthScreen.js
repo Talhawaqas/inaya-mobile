@@ -12,15 +12,57 @@
 // Scoped per the SOW's mobile section: sign in / create company only — no
 // invite-member or admin flows on mobile this pass.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch, setStoredSessionToken } from '../../utils/orgApi';
+
+// Required once so the in-app browser session Google sign-in opens
+// properly hands control back to the app when it completes — see Expo's
+// own expo-auth-session docs, this is boilerplate, not app-specific logic.
+WebBrowser.maybeCompleteAuthSession();
 
 export default function BusinessAuthScreen({ onAuthenticated }) {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState('signin'); // 'signin' | 'create'
+
+  // Silently absent (no button rendered) when EXPO_PUBLIC_GOOGLE_CLIENT_ID
+  // isn't configured, same as the web app's AuthScreen — not a hard
+  // dependency every build must set up. Uses Expo's auth proxy with a
+  // single "Web application" OAuth client shared with the web app; see
+  // src/lib/googleAuth.js on the backend for why that's enough for now.
+  const [googleRequesting, setGoogleRequesting] = useState(false);
+  const [googleError, setGoogleError] = useState('');
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    responseType: 'id_token',
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type === 'success' && googleResponse.params?.id_token) {
+      handleGoogleIdToken(googleResponse.params.id_token);
+    } else if (googleResponse?.type === 'error') {
+      setGoogleError('Google sign-in failed.');
+    }
+  }, [googleResponse]);
+
+  async function handleGoogleIdToken(idToken) {
+    setGoogleRequesting(true);
+    setGoogleError('');
+    try {
+      const data = await orgFetch('/api/orgs/login/google', { method: 'POST', body: { idToken } });
+      await setStoredSessionToken(data.sessionToken);
+      const session = await orgFetch('/api/orgs/session');
+      onAuthenticated(session);
+    } catch (err) {
+      setGoogleError(err.message || 'Could not sign in with Google.');
+    } finally {
+      setGoogleRequesting(false);
+    }
+  }
 
   const [email, setEmail] = useState('');
   const [orgName, setOrgName] = useState('');
@@ -91,6 +133,25 @@ export default function BusinessAuthScreen({ onAuthenticated }) {
 
       {!linkSent ? (
         <View style={[styles.card, { marginTop: spacing.lg }]}>
+          {!!process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID && (
+            <>
+              <TouchableOpacity
+                style={[styles.googleButton, (googleRequesting || !googleRequest) && styles.buttonDisabled]}
+                onPress={() => promptGoogleAsync()}
+                disabled={googleRequesting || !googleRequest}
+              >
+                {googleRequesting ? <ActivityIndicator color={colors.textPrimary} /> : (
+                  <Text style={styles.googleButtonText}>Continue with Google</Text>
+                )}
+              </TouchableOpacity>
+              {googleError ? <Text style={styles.error}>{googleError}</Text> : null}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            </>
+          )}
           <View style={styles.modeRow}>
             <TouchableOpacity
               style={[styles.modeButton, mode === 'signin' && styles.modeButtonActive]}
@@ -203,6 +264,18 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.4 },
   buttonText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.bg, textTransform: 'uppercase', letterSpacing: 0.5 },
+  googleButton: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
+  googleButtonText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.textPrimary },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.md, marginBottom: spacing.xs },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerText: { fontFamily: fonts.sansBold, fontSize: 10, color: colors.textMuted, textTransform: 'uppercase', marginHorizontal: spacing.sm },
   error: { fontFamily: fonts.sans, fontSize: 11, color: colors.danger, marginTop: spacing.sm },
   linkBox: {
     marginTop: spacing.sm,

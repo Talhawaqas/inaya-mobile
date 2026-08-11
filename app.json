@@ -2,6 +2,7 @@
   "expo": {
     "name": "inaya-mobile",
     "slug": "inaya-mobile",
+    "scheme": "inayamobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -30,6 +31,14 @@
       "eas": {
         "projectId": "d3ab3b26-0be8-4082-9f01-45a7b90d8f56"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Inaya to use Face ID to unlock your Business Workspace."
+        }
+      ]
+    ]
   }
 }

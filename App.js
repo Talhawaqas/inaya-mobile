@@ -187,7 +187,10 @@ function CustomDrawerContent(props) {
       </View>
       <DrawerItemList {...props} />
       <View style={{ flex: 1 }} />
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingVertical: 20, borderTopWidth: 1, borderTopColor: colors.border, marginTop: 8 }}>
+      <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 10, color: colors.textMuted, letterSpacing: 1.5, textAlign: 'center', textTransform: 'uppercase', marginTop: 8 }}>
+        Official Channels
+      </Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingTop: 10, paddingBottom: 20, borderTopWidth: 1, borderTopColor: colors.border }}>
         {SOCIAL_LINKS.map((social) => (
           <TouchableOpacity
             key={social.label}
