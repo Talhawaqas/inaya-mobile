@@ -33,15 +33,18 @@ jobs:
       - name: Prebuild native Android project
         run: npx expo prebuild --platform android
 
-      - name: Ensure a debug keystore exists (release build signs with it, since this is an alpha, not a Play Store submission)
+      - name: Restore the stable signing keystore (release build signs with it, since this is an alpha, not a Play Store submission)
+        # Every run on ubuntu-latest starts on a fresh, empty runner — there
+        # is no persisted ~/.android/debug.keystore to reuse between builds.
+        # Generating a fresh one here on every run (the old approach) meant
+        # the signing fingerprint changed on every single build, which
+        # breaks anything tied to that fingerprint — specifically, Google
+        # Sign-In's Android OAuth client registration, which is pinned to
+        # one exact SHA-1. Restoring the SAME keystore from a repo secret
+        # keeps the fingerprint stable across builds.
         run: |
           mkdir -p ~/.android
-          if [ ! -f ~/.android/debug.keystore ]; then
-            keytool -genkeypair -v -keystore ~/.android/debug.keystore \
-              -storepass android -alias androiddebugkey -keypass android \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/debug.keystore
 
       - name: Build APK (release — embeds the JS bundle, no dev server required at runtime)
         working-directory: ./android
