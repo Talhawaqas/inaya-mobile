@@ -8,6 +8,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # These are EXPO_PUBLIC_ values — meant to be embedded in the client
+    # bundle, not secrets (Google OAuth "Client ID"s and a WalletConnect
+    # project ID are public identifiers by design, unlike a client secret).
+    # Set at job level so every step sees them, in particular the Gradle
+    # build step below: this pipeline builds via `expo prebuild` + a direct
+    # Gradle build, NOT `expo start`/`expo export` — those Expo-CLI commands
+    # auto-load a local .env file, but a direct Gradle build bypasses that
+    # entirely and only sees real process environment variables. The local
+    # .env file (gitignored, never committed) is invisible to this workflow,
+    # so these have to be set here explicitly or the JS bundle Gradle embeds
+    # ends up with every EXPO_PUBLIC_* value undefined.
+    env:
+      EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID: fe5441b91ed1d12a68c3f34e18bb75c2
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID: 689943698003-3eb2hmpjfflp5atmq6i5k7fo7hlmg0iv.apps.googleusercontent.com
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID: 689943698003-b991hqvg7rhgip76k8tuvhmvlrt98sig.apps.googleusercontent.com
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
