@@ -171,6 +171,7 @@ const SOCIAL_LINKS = [
   { label: 'Telegram', href: 'https://t.me/inayanetwork', icon: 'paper-plane' },
   { label: 'YouTube', href: 'https://youtube.com/@inayanetworkofficial?si=GzAzY5m3PzZy8MU-', icon: 'logo-youtube' },
   { label: 'X', href: 'https://x.com/InayaNetwork', icon: 'logo-twitter' },
+  { label: 'Discord', href: 'https://discord.gg/DS8uDAr9jV', icon: 'logo-discord' },
 ];
 
 // Branded header above the auto-generated nav item list, and a social-
