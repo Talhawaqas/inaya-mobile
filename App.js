@@ -50,6 +50,7 @@ import WhitePaperScreen from './src/screens/WhitePaperScreen';
 import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
 import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ReferralScreen from './src/screens/ReferralScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import BusinessWorkspaceStack from './src/screens/business/BusinessWorkspaceStack';
 import SaaSRoadmapScreen from './src/screens/SaaSRoadmapScreen';
 import { isBiometricAvailable, getBiometricEnabled, promptBiometricUnlock } from './src/utils/biometric';
@@ -129,6 +130,7 @@ const DRAWER_ICONS = {
   KnowledgeBase: 'megaphone-outline',
   AIAssistant: 'chatbubble-ellipses-outline',
   Referrals: 'people-outline',
+  Settings: 'settings-outline',
 };
 
 const DRAWER_LABELS = {
@@ -142,6 +144,7 @@ const DRAWER_LABELS = {
   KnowledgeBase: 'Knowledge Base',
   AIAssistant: 'Ask AI',
   Referrals: 'Referrals',
+  Settings: 'Settings',
 };
 
 // Extends React Navigation's own DarkTheme rather than writing a theme
@@ -245,6 +248,7 @@ function AppNavigator() {
         <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />
         <Drawer.Screen name="AIAssistant" component={AIAssistantScreen} options={{ title: DRAWER_LABELS.AIAssistant }} />
         <Drawer.Screen name="Referrals" component={ReferralScreen} options={{ title: DRAWER_LABELS.Referrals }} />
+        <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: DRAWER_LABELS.Settings }} />
       </Drawer.Navigator>
     </NavigationContainer>
   );

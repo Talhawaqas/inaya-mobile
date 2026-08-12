@@ -6,14 +6,13 @@
 // departments; each card also has a secondary "Ask the AI Assistant"
 // action, since the assistant is scoped to one org at a time.
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Switch } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { useBusinessSession } from './BusinessSessionContext';
 import { orgFetch } from '../../utils/orgApi';
-import { isBiometricAvailable, getBiometricEnabled, setBiometricEnabled } from '../../utils/biometric';
 
 const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', member: 'Member' };
 
@@ -64,24 +63,6 @@ export default function OrgHomeScreen({ navigation }) {
   const { session, signOut, refreshSession } = useBusinessSession();
   const orgs = session?.orgs || [];
 
-  // Hidden entirely on a device with no Face ID/fingerprint enrolled —
-  // never show a toggle for a capability that isn't there.
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [biometricEnabled, setBiometricEnabledState] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const available = await isBiometricAvailable();
-      setBiometricAvailable(available);
-      if (available) setBiometricEnabledState(await getBiometricEnabled());
-    })();
-  }, []);
-
-  async function toggleBiometric(value) {
-    setBiometricEnabledState(value);
-    await setBiometricEnabled(value);
-  }
-
   return (
     <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxxl }]}>
       <Text style={styles.title}>Business Workspace</Text>
@@ -114,16 +95,6 @@ export default function OrgHomeScreen({ navigation }) {
         ))
       )}
 
-      {biometricAvailable && (
-        <View style={[styles.card, styles.biometricRow, { marginTop: spacing.lg }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.biometricTitle}>Biometric unlock</Text>
-            <Text style={styles.biometricHint}>Require Face ID / fingerprint to open the app</Text>
-          </View>
-          <Switch value={biometricEnabled} onValueChange={toggleBiometric} trackColor={{ true: colors.cyan }} />
-        </View>
-      )}
-
       <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
         <Text style={styles.signOutText}>Sign out</Text>
       </TouchableOpacity>
@@ -146,9 +117,6 @@ const styles = StyleSheet.create({
   },
   aiButtonText: { fontFamily: fonts.sansMedium, fontSize: 12, color: colors.cyan },
   emptyText: { fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, lineHeight: 17 },
-  biometricRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  biometricTitle: { fontFamily: fonts.sansBold, fontSize: 13, color: colors.textPrimary },
-  biometricHint: { fontFamily: fonts.sans, fontSize: 11, color: colors.textMuted, marginTop: 2, lineHeight: 15 },
   signOutButton: { marginTop: spacing.xxl, alignItems: 'center', paddingVertical: spacing.sm },
   signOutText: { fontFamily: fonts.sansMedium, fontSize: 12, color: colors.danger },
   input: {

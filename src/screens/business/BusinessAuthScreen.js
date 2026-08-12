@@ -12,8 +12,8 @@
 // Scoped per the SOW's mobile section: sign in / create company only — no
 // invite-member or admin flows on mobile this pass.
 
-import React, { useState, useEffect } from 'react';
-import { Platform, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Platform, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -52,15 +52,36 @@ const GOOGLE_CLIENT_ID_FOR_PLATFORM = Platform.select({
 // A Web-type OAuth client also won't accept a bare custom-scheme redirect
 // URI (inayamobile://...) in Google Cloud Console — it requires one ending
 // in a real public TLD ("must end with a public top-level domain"). So this
-// points at a real HTTPS page instead: src/app/oauth2redirect/page.js in
-// the inaya-network-dapp repo (deployed at inayanetwork.com). In practice
-// that page's own JS rarely runs — expo-auth-session's underlying
-// WebBrowser.openAuthSessionAsync watches for navigation to this exact URL
-// and closes its in-app browser session the moment it's requested, handing
-// the resulting URL (Google's id_token, in the fragment) straight back to
-// this hook. The page is just a fallback for the rarer case where the OS
-// opens it in a real external browser instead of the in-app session.
+// is what's actually sent to Google as the request's redirect_uri: a real
+// HTTPS page, src/app/oauth2redirect/page.js in the inaya-network-dapp repo
+// (deployed at inayanetwork.com), whose only job is to immediately bounce
+// into the app via its OWN custom scheme (inayamobile://oauth2redirect#...,
+// registered via app.json's "scheme") carrying over Google's id_token.
+//
+// IMPORTANT: expo-web-browser's own promise-resolution on Android
+// (_waitForRedirectAsync in its source) only resolves 'success' when the
+// inbound deep-link URL literally STARTS WITH this exact REDIRECT_URI
+// string — since the inbound URL is actually inayamobile://oauth2redirect
+// (a different scheme+host entirely, from the bounce above), that check
+// always fails, and the flow silently resolves 'dismiss' instead (a
+// competing AppState-based race that fires the moment the app regains
+// foreground) — which nothing here was handling, so the user just landed
+// back on this same sign-in screen with no error and no progress. That's
+// why this DOESN'T rely on Google.useAuthRequest's own `response` for the
+// actual result — see the Linking 'url' listener in GoogleSignInButton
+// below, which independently catches the inbound custom-scheme deep link
+// and extracts the id_token from it directly.
 const REDIRECT_URI = 'https://www.inayanetwork.com/oauth2redirect';
+const APP_REDIRECT_PREFIX = 'inayamobile://oauth2redirect';
+
+// Manual fragment parse rather than URLSearchParams — not guaranteed
+// available in this RN/Hermes setup (see polyfills.js, which doesn't
+// shim it), and this only ever needs one specific key out of a URL we
+// constructed ourselves in the oauth2redirect page.
+function extractIdTokenFromUrl(url) {
+  const match = url.match(/[#&]id_token=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 // Isolated into its own component specifically so Google.useAuthRequest()
 // is never CALLED at all on a platform without a matching client ID —
@@ -79,6 +100,11 @@ function GoogleSignInButton({ onIdToken }) {
     responseType: 'id_token',
   });
 
+  // Guards against handling the same sign-in twice — on web the hook's own
+  // `response` below is the real (and only) success path; on native it's
+  // the Linking listener that actually fires (see REDIRECT_URI's comment).
+  const handledRef = useRef(false);
+
   useEffect(() => {
     if (response?.type === 'success' && response.params?.id_token) {
       handleIdToken(response.params.id_token);
@@ -87,7 +113,27 @@ function GoogleSignInButton({ onIdToken }) {
     }
   }, [response]);
 
+  // Native (Android/iOS) path: the OAuth redirect actually completes by
+  // reopening the app via its own custom scheme (see REDIRECT_URI's
+  // comment for why expo-web-browser's own promise can't catch this) — so
+  // catch that deep link directly instead of trusting `response` above.
+  useEffect(() => {
+    const handler = ({ url }) => {
+      if (!url || !url.startsWith(APP_REDIRECT_PREFIX)) return;
+      const idToken = extractIdTokenFromUrl(url);
+      if (idToken) {
+        handleIdToken(idToken);
+      } else {
+        setError('Google sign-in failed.');
+      }
+    };
+    const sub = Linking.addEventListener('url', handler);
+    return () => sub.remove();
+  }, []);
+
   async function handleIdToken(idToken) {
+    if (handledRef.current) return;
+    handledRef.current = true;
     setRequesting(true);
     setError('');
     try {
@@ -96,6 +142,7 @@ function GoogleSignInButton({ onIdToken }) {
       setError(err.message || 'Could not sign in with Google.');
     } finally {
       setRequesting(false);
+      handledRef.current = false;
     }
   }
 
