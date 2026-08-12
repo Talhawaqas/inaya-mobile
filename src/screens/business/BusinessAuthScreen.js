@@ -19,6 +19,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch, setStoredSessionToken } from '../../utils/orgApi';
+import { suspendAppLock, resumeAppLock } from '../../utils/appLockSuspend';
 
 // Required once so the in-app browser session Google sign-in opens
 // properly hands control back to the app when it completes — see Expo's
@@ -143,6 +144,7 @@ function GoogleSignInButton({ onIdToken }) {
     } finally {
       setRequesting(false);
       handledRef.current = false;
+      resumeAppLock();
     }
   }
 
@@ -150,7 +152,15 @@ function GoogleSignInButton({ onIdToken }) {
     <>
       <TouchableOpacity
         style={[styles.googleButton, (requesting || !request) && styles.buttonDisabled]}
-        onPress={() => promptAsync()}
+        onPress={() => {
+          // Opening the Custom Tab/ASWebAuthenticationSession backgrounds
+          // this app the same way actually leaving it would — without this,
+          // App.js's AppLockGate re-locks the instant the browser opens and
+          // unmounts everything, including this in-progress sign-in. Lifted
+          // again in handleIdToken's finally once there's an actual result.
+          suspendAppLock();
+          promptAsync();
+        }}
         disabled={requesting || !request}
       >
         {requesting ? <ActivityIndicator color={colors.textPrimary} /> : (

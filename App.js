@@ -13,7 +13,7 @@ import 'react-native-gesture-handler';
 import 'react-native-get-random-values'; // must be imported before ethers/crypto anywhere
 import './polyfills'; // must come immediately after react-native-get-random-values, before any MetaMask Connect code
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Linking, AppState, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Linking, AppState, StyleSheet, Alert } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
@@ -53,7 +53,15 @@ import ReferralScreen from './src/screens/ReferralScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import BusinessWorkspaceStack from './src/screens/business/BusinessWorkspaceStack';
 import SaaSRoadmapScreen from './src/screens/SaaSRoadmapScreen';
-import { isBiometricAvailable, getBiometricEnabled, promptBiometricUnlock } from './src/utils/biometric';
+import {
+  isBiometricAvailable,
+  getBiometricEnabled,
+  setBiometricEnabled,
+  getBiometricPromptDismissed,
+  setBiometricPromptDismissed,
+  promptBiometricUnlock,
+} from './src/utils/biometric';
+import { isAppLockSuspended } from './src/utils/appLockSuspend';
 import { colors, fonts } from './src/theme';
 
 // General safety net for any render-time crash NOT already caught by
@@ -290,11 +298,17 @@ function AppLockGate({ children }) {
   // Re-lock on backgrounding, re-prompt on returning to foreground —
   // otherwise this only ever checks once at cold start, which misses the
   // actual point (someone else picking up an already-unlocked phone).
+  //
+  // isAppLockSuspended() skips the re-lock specifically: opening Chrome
+  // Custom Tabs / ASWebAuthenticationSession for Google sign-in causes this
+  // exact same background transition, and re-locking here would unmount
+  // this whole subtree (including the screen mid-sign-in) the instant that
+  // browser opens — see appLockSuspend.js's header comment.
   useEffect(() => {
     let previousState = AppState.currentState;
     const sub = AppState.addEventListener('change', (nextState) => {
       const wasActive = previousState === 'active';
-      if (wasActive && nextState !== 'active' && gateRef.current === 'unlocked') {
+      if (wasActive && nextState !== 'active' && gateRef.current === 'unlocked' && !isAppLockSuspended()) {
         setGate('required');
       } else if (!wasActive && nextState === 'active' && gateRef.current === 'required') {
         runCheck();
@@ -303,6 +317,32 @@ function AppLockGate({ children }) {
     });
     return () => sub.remove();
   }, [runCheck]);
+
+  // One-time nudge, shown once the app is actually visible (not mid-lock),
+  // to enable biometric lock if the device supports it and the user hasn't
+  // already decided either way — see biometric.js's getBiometricPromptDismissed.
+  const promptedRef = useRef(false);
+  useEffect(() => {
+    if (gate !== 'not-required' && gate !== 'unlocked') return;
+    if (promptedRef.current) return;
+    promptedRef.current = true;
+    (async () => {
+      const [available, enabled, promptDismissed] = await Promise.all([
+        isBiometricAvailable(),
+        getBiometricEnabled(),
+        getBiometricPromptDismissed(),
+      ]);
+      if (!available || enabled || promptDismissed) return;
+      Alert.alert(
+        'Enable biometric lock?',
+        'Require Face ID or fingerprint to open the Inaya app.',
+        [
+          { text: 'Not now', style: 'cancel', onPress: () => setBiometricPromptDismissed(true) },
+          { text: 'Enable', onPress: () => setBiometricEnabled(true) },
+        ],
+      );
+    })();
+  }, [gate]);
 
   if (gate === 'checking') {
     return (

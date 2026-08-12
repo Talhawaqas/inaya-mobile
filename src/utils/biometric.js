@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 
 const BIOMETRIC_ENABLED_KEY = 'inaya_biometric_enabled';
+const BIOMETRIC_PROMPT_DISMISSED_KEY = 'inaya_biometric_prompt_dismissed';
 
 /** Hardware present AND at least one biometric enrolled — never show/apply
  *  the gate to a user who has no Face ID/fingerprint set up on their device.
@@ -42,12 +43,23 @@ export async function setBiometricEnabled(enabled) {
   await AsyncStorage.setItem(BIOMETRIC_ENABLED_KEY, enabled ? "true" : "false");
 }
 
+/** Whether the user has already been asked (and answered either way, or
+ *  dismissed) the one-time "enable biometric lock?" prompt shown at app
+ *  launch — so it only ever asks once, not on every cold start. */
+export async function getBiometricPromptDismissed() {
+  return (await AsyncStorage.getItem(BIOMETRIC_PROMPT_DISMISSED_KEY)) === "true";
+}
+
+export async function setBiometricPromptDismissed(dismissed) {
+  await AsyncStorage.setItem(BIOMETRIC_PROMPT_DISMISSED_KEY, dismissed ? "true" : "false");
+}
+
 /** Returns true on success, false on cancel/failure — never throws, so
  *  callers can treat any non-true result as "stay locked". */
 export async function promptBiometricUnlock() {
   try {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: "Unlock Business Workspace",
+      promptMessage: "Unlock Inaya",
       disableDeviceFallback: false, // allow device passcode as a fallback — standard practice
     });
     return !!result.success;
