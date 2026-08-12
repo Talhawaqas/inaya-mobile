@@ -118,7 +118,7 @@ export default function OrgHomeScreen({ navigation }) {
         <View style={[styles.card, styles.biometricRow, { marginTop: spacing.lg }]}>
           <View style={{ flex: 1 }}>
             <Text style={styles.biometricTitle}>Biometric unlock</Text>
-            <Text style={styles.biometricHint}>Require Face ID / fingerprint to open this workspace</Text>
+            <Text style={styles.biometricHint}>Require Face ID / fingerprint to open the app</Text>
           </View>
           <Switch value={biometricEnabled} onValueChange={toggleBiometric} trackColor={{ true: colors.cyan }} />
         </View>

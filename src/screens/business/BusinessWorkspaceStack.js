@@ -9,12 +9,11 @@
 // DocumentDetail stack. Mirrors HomeStack's pattern of hiding its own
 // Drawer header and using its own Stack.Navigator headers instead.
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, AppState, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { colors, fonts, spacing, radius } from '../../theme';
+import { colors, fonts } from '../../theme';
 import { orgFetch, getStoredSessionToken, setStoredSessionToken } from '../../utils/orgApi';
-import { isBiometricAvailable, getBiometricEnabled, promptBiometricUnlock } from '../../utils/biometric';
 import { BusinessSessionProvider } from './BusinessSessionContext';
 import BusinessAuthScreen from './BusinessAuthScreen';
 import OrgHomeScreen from './OrgHomeScreen';
@@ -58,51 +57,11 @@ export default function BusinessWorkspaceStack() {
     setSession(null);
   }, []);
 
-  // Biometric app-unlock — a LOCAL gate on top of the session above, only
-  // relevant once that session is real. 'checking' while the hardware/
-  // enrollment/preference checks run; 'not-required' when the device has
-  // no biometrics enrolled or the user hasn't opted in (both skip the gate
-  // silently); 'required' shows the retry screen below; 'unlocked' renders
-  // the actual workspace. Mirrored into a ref so the AppState listener
-  // (a plain callback, not tied to React's render cycle) can read the
-  // current value without a stale closure.
-  const [biometricGate, setBiometricGate] = useState('checking');
-  const biometricGateRef = useRef('checking');
-  useEffect(() => {
-    biometricGateRef.current = biometricGate;
-  }, [biometricGate]);
-
-  const runBiometricCheck = useCallback(async () => {
-    const [available, enabled] = await Promise.all([isBiometricAvailable(), getBiometricEnabled()]);
-    if (!available || !enabled) {
-      setBiometricGate('not-required');
-      return;
-    }
-    setBiometricGate('required');
-    const success = await promptBiometricUnlock();
-    setBiometricGate(success ? 'unlocked' : 'required');
-  }, []);
-
-  useEffect(() => {
-    if (session && typeof session === 'object') runBiometricCheck();
-  }, [session, runBiometricCheck]);
-
-  // Re-lock on backgrounding, re-prompt on returning to foreground — a
-  // gate that only checks once at cold start misses the actual point of
-  // the feature (someone else picking up an already-unlocked phone).
-  useEffect(() => {
-    let previousState = AppState.currentState;
-    const sub = AppState.addEventListener('change', (nextState) => {
-      const wasActive = previousState === 'active';
-      if (wasActive && nextState !== 'active' && biometricGateRef.current === 'unlocked') {
-        setBiometricGate('required');
-      } else if (!wasActive && nextState === 'active' && biometricGateRef.current === 'required') {
-        runBiometricCheck();
-      }
-      previousState = nextState;
-    });
-    return () => sub.remove();
-  }, [runBiometricCheck]);
+  // Biometric app-unlock now happens once, app-wide, at launch (App.js's
+  // AppLockGate) rather than being re-checked specifically for this screen —
+  // see biometric.js's header comment. Gating here too would just mean a
+  // redundant second Face ID/fingerprint prompt on top of the one the user
+  // already cleared to open the app at all.
 
   if (session === undefined) {
     return (
@@ -114,29 +73,6 @@ export default function BusinessWorkspaceStack() {
 
   if (session === null) {
     return <BusinessAuthScreen onAuthenticated={setSession} />;
-  }
-
-  if (biometricGate === 'checking') {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.cyan} />
-      </View>
-    );
-  }
-
-  if (biometricGate === 'required') {
-    return (
-      <View style={lockStyles.root}>
-        <Text style={lockStyles.title}>Unlock to continue</Text>
-        <Text style={lockStyles.hint}>Confirm with Face ID / fingerprint to open Business Workspace.</Text>
-        <TouchableOpacity style={lockStyles.button} onPress={runBiometricCheck}>
-          <Text style={lockStyles.buttonText}>Try again</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={lockStyles.signOutLink} onPress={signOut}>
-          <Text style={lockStyles.signOutText}>Sign out instead</Text>
-        </TouchableOpacity>
-      </View>
-    );
   }
 
   return (
@@ -159,13 +95,3 @@ export default function BusinessWorkspaceStack() {
     </BusinessSessionProvider>
   );
 }
-
-const lockStyles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
-  title: { fontFamily: fonts.sansExtraBold, fontSize: 18, color: colors.textPrimary },
-  hint: { fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs, marginBottom: spacing.xl, lineHeight: 17 },
-  button: { backgroundColor: colors.cyan, borderRadius: radius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.xl },
-  buttonText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.bg, textTransform: 'uppercase', letterSpacing: 0.5 },
-  signOutLink: { marginTop: spacing.lg, paddingVertical: spacing.sm },
-  signOutText: { fontFamily: fonts.sansMedium, fontSize: 12, color: colors.danger },
-});

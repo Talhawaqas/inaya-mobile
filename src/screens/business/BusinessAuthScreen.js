@@ -17,6 +17,7 @@ import { Platform, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollVi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch, setStoredSessionToken } from '../../utils/orgApi';
 
@@ -30,15 +31,33 @@ WebBrowser.maybeCompleteAuthSession();
 // on a real native Android/iOS build it hard-requires androidClientId /
 // iosClientId respectively and throws synchronously (inside the hook
 // itself, before any try/catch in this file can run) if that's missing.
-// We only registered a Web client so far, so on native this resolves to
-// undefined — see GoogleSignInButton below, which is only ever MOUNTED
-// (not just conditionally rendered) when this is truthy, since the crash
-// happens at hook-call time, not at render/click time.
+// See GoogleSignInButton below, which is only ever MOUNTED (not just
+// conditionally rendered) when this is truthy, since the crash happens at
+// hook-call time, not at render/click time.
+//
+// IMPORTANT: every slot below points at the same WEB client ID, not a
+// dedicated "Android" (or "iOS") type client. This flow signs in via a
+// browser redirect using a custom URI scheme (see REDIRECT_URI), and only
+// a "Web application"-type OAuth client supports that redirect mechanism —
+// Google's "Android"/"iOS" client types are for their native SDK flow
+// (verified by package name + signing certificate, no redirect URI at
+// all), and reject a redirect-based request with "Custom URI scheme is
+// not enabled for your Android client". expo-auth-session's hook still
+// needs *some* value in the platform-specific slot to not throw its own
+// invariant check, so we just feed it the Web client ID everywhere.
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_ID_FOR_PLATFORM = Platform.select({
-  web: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-  android: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
-  ios: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
+  web: GOOGLE_WEB_CLIENT_ID,
+  android: GOOGLE_WEB_CLIENT_ID,
+  ios: GOOGLE_WEB_CLIENT_ID,
 });
+
+// Fixed, explicit redirect URI (rather than letting the library derive one)
+// so the exact value that must be registered in Google Cloud Console is
+// known and stable, instead of guessed. Uses app.json's "scheme":
+// "inayamobile" — only meaningful in a real native build (dev client or
+// release APK), not Expo Go.
+const REDIRECT_URI = makeRedirectUri({ scheme: 'inayamobile', path: 'oauth2redirect' });
 
 // Isolated into its own component specifically so Google.useAuthRequest()
 // is never CALLED at all on a platform without a matching client ID —
@@ -50,9 +69,10 @@ function GoogleSignInButton({ onIdToken }) {
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState('');
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_WEB_CLIENT_ID,
+    redirectUri: REDIRECT_URI,
     responseType: 'id_token',
   });
 

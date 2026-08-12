@@ -12,8 +12,8 @@
 import 'react-native-gesture-handler';
 import 'react-native-get-random-values'; // must be imported before ethers/crypto anywhere
 import './polyfills'; // must come immediately after react-native-get-random-values, before any MetaMask Connect code
-import React from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Linking, AppState, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
@@ -52,6 +52,7 @@ import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ReferralScreen from './src/screens/ReferralScreen';
 import BusinessWorkspaceStack from './src/screens/business/BusinessWorkspaceStack';
 import SaaSRoadmapScreen from './src/screens/SaaSRoadmapScreen';
+import { isBiometricAvailable, getBiometricEnabled, promptBiometricUnlock } from './src/utils/biometric';
 import { colors, fonts } from './src/theme';
 
 // General safety net for any render-time crash NOT already caught by
@@ -249,6 +250,89 @@ function AppNavigator() {
   );
 }
 
+// Whole-app biometric gate — runs before ANYTHING else mounts (wallet
+// providers included), not just the Business Workspace section. The
+// underlying preference (inaya_biometric_enabled) and hardware/enrollment
+// checks are the same ones the Workspace's own toggle in OrgHomeScreen.js
+// writes/reads (see src/utils/biometric.js) — enabling it there now locks
+// the entire app, not just that one screen, per user request. 'checking'
+// while the async hardware/enrollment/preference checks run (kept brief so
+// it doesn't meaningfully delay launch); 'not-required' when there's no
+// biometric hardware enrolled or the user hasn't opted in (skips the gate
+// silently, every launch); 'required' shows the lock screen; 'unlocked'
+// renders the real app. Mirrored into a ref so the AppState listener (a
+// plain callback outside React's render cycle) always reads the current
+// value instead of a stale closure.
+function AppLockGate({ children }) {
+  const [gate, setGate] = useState('checking');
+  const gateRef = useRef('checking');
+  useEffect(() => {
+    gateRef.current = gate;
+  }, [gate]);
+
+  const runCheck = useCallback(async () => {
+    const [available, enabled] = await Promise.all([isBiometricAvailable(), getBiometricEnabled()]);
+    if (!available || !enabled) {
+      setGate('not-required');
+      return;
+    }
+    setGate('required');
+    const success = await promptBiometricUnlock();
+    setGate(success ? 'unlocked' : 'required');
+  }, []);
+
+  useEffect(() => { runCheck(); }, [runCheck]);
+
+  // Re-lock on backgrounding, re-prompt on returning to foreground —
+  // otherwise this only ever checks once at cold start, which misses the
+  // actual point (someone else picking up an already-unlocked phone).
+  useEffect(() => {
+    let previousState = AppState.currentState;
+    const sub = AppState.addEventListener('change', (nextState) => {
+      const wasActive = previousState === 'active';
+      if (wasActive && nextState !== 'active' && gateRef.current === 'unlocked') {
+        setGate('required');
+      } else if (!wasActive && nextState === 'active' && gateRef.current === 'required') {
+        runCheck();
+      }
+      previousState = nextState;
+    });
+    return () => sub.remove();
+  }, [runCheck]);
+
+  if (gate === 'checking') {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.cyan} />
+      </View>
+    );
+  }
+
+  if (gate === 'required') {
+    return (
+      <View style={lockStyles.root}>
+        <Text style={lockStyles.brand}>INAYA</Text>
+        <Text style={lockStyles.title}>Unlock to continue</Text>
+        <Text style={lockStyles.hint}>Confirm with Face ID / fingerprint to open the app.</Text>
+        <TouchableOpacity style={lockStyles.button} onPress={runCheck}>
+          <Text style={lockStyles.buttonText}>Try again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return children;
+}
+
+const lockStyles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  brand: { fontFamily: fonts.sansExtraBold, fontSize: 22, color: colors.cyan, letterSpacing: 2, marginBottom: 24 },
+  title: { fontFamily: fonts.sansExtraBold, fontSize: 18, color: colors.textPrimary },
+  hint: { fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 6, marginBottom: 24, lineHeight: 17 },
+  button: { backgroundColor: colors.cyan, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 24 },
+  buttonText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.bg, textTransform: 'uppercase', letterSpacing: 0.5 },
+});
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -273,11 +357,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ErrorBoundary>
-          <WalletProviderRoot>
-            <CardCustomerProviderRoot>
-              <AppNavigator />
-            </CardCustomerProviderRoot>
-          </WalletProviderRoot>
+          <AppLockGate>
+            <WalletProviderRoot>
+              <CardCustomerProviderRoot>
+                <AppNavigator />
+              </CardCustomerProviderRoot>
+            </WalletProviderRoot>
+          </AppLockGate>
         </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
