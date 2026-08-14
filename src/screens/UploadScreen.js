@@ -16,6 +16,8 @@ import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import BackgroundGlow from '../components/BackgroundGlow';
 import { CUSTODY_ADDRESS, custodyInterface, pinShardToIPFS } from '../utils/custody';
+import { waitForReceipt } from '../utils/waitForReceipt';
+import { qualifyViaUpload } from '../utils/watcherApi';
 
 export default function UploadScreen() {
   const tabBarHeight = useSafeAreaInsets().bottom;
@@ -75,8 +77,27 @@ export default function UploadScreen() {
         params: [{ ...txParams, gas: ethers.toBeHex(gasLimit) }],
       });
 
+      // Previously this screen declared success the instant the tx was
+      // merely SUBMITTED, before confirming it actually mined — a reverted
+      // transaction would still show "Uploaded ✅". Waiting for the receipt
+      // (StakingScreen.js already does this for its own on-chain actions)
+      // fixes that and gives the Watcher Pioneer Program hook below a real
+      // proof-of-success to report, not just a hopeful txHash.
+      setStatus('Mining registration transaction...');
+      await waitForReceipt(invokeMethod, txHash);
+
       setStatus(`Uploaded — tx ${txHash.slice(0, 14)}...`);
       await persistUpload({ fileHash, filename: sharded.filename, sizeBytes, uploadedAt: Date.now() });
+
+      // Fire-and-forget: never blocks or breaks the upload flow above if
+      // this fails, and the backend simply no-ops for wallets that aren't
+      // enrolled in the program — see watcherPioneer.js's startSession.
+      try {
+        const result = await qualifyViaUpload(invokeMethod, address, txHash);
+        if (result?.started) setStatus((prev) => `${prev} · Watcher session started 🎉`);
+      } catch (watcherErr) {
+        console.warn('Watcher Pioneer qualification skipped:', watcherErr?.message);
+      }
     } catch (err) {
       console.error('Upload failed:', err);
       setStatus(`${err.message}`);

@@ -50,6 +50,7 @@ import WhitePaperScreen from './src/screens/WhitePaperScreen';
 import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
 import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ReferralScreen from './src/screens/ReferralScreen';
+import WatcherPioneerScreen from './src/screens/WatcherPioneerScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import BusinessWorkspaceStack from './src/screens/business/BusinessWorkspaceStack';
 import SaaSRoadmapScreen from './src/screens/SaaSRoadmapScreen';
@@ -138,6 +139,7 @@ const DRAWER_ICONS = {
   KnowledgeBase: 'megaphone-outline',
   AIAssistant: 'chatbubble-ellipses-outline',
   Referrals: 'people-outline',
+  WatcherPioneer: 'trophy-outline',
   Settings: 'settings-outline',
 };
 
@@ -152,6 +154,7 @@ const DRAWER_LABELS = {
   KnowledgeBase: 'Knowledge Base',
   AIAssistant: 'Ask AI',
   Referrals: 'Referrals',
+  WatcherPioneer: 'Watcher Pioneer Program',
   Settings: 'Settings',
 };
 
@@ -256,6 +259,7 @@ function AppNavigator() {
         <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />
         <Drawer.Screen name="AIAssistant" component={AIAssistantScreen} options={{ title: DRAWER_LABELS.AIAssistant }} />
         <Drawer.Screen name="Referrals" component={ReferralScreen} options={{ title: DRAWER_LABELS.Referrals }} />
+        <Drawer.Screen name="WatcherPioneer" component={WatcherPioneerScreen} options={{ title: DRAWER_LABELS.WatcherPioneer }} />
         <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: DRAWER_LABELS.Settings }} />
       </Drawer.Navigator>
     </NavigationContainer>
