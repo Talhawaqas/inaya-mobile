@@ -19,6 +19,21 @@ import { ethers } from 'ethers';
 const BNB_TESTNET_SCOPE = 'eip155:97';
 const BNB_TESTNET_RPC = 'https://data-seed-prebsc-1-s1.binance.org:8545';
 
+// Same params the web dApp already uses successfully (page.js's
+// ensureCorrectNetwork()) — kept in sync deliberately, not re-derived.
+// Requesting a session for eip155:97 (client.connect() below) only asks
+// MetaMask to GRANT that scope if the wallet already knows about it; it
+// does NOT add the network to a wallet that's never seen BSC Testnet
+// before, which is exactly what users were getting stuck on. This is what
+// wallet_addEthereumChain is for.
+const BSC_TESTNET_PARAMS = {
+  chainId: '0x61',
+  chainName: 'BNB Smart Chain Testnet',
+  nativeCurrency: { name: 'tBNB', symbol: 'tBNB', decimals: 18 },
+  rpcUrls: ['https://rpc.ankr.com/bsc_testnet', 'https://data-seed-prebsc-1-s1.binance.org:8545/'],
+  blockExplorerUrls: ['https://testnet.bscscan.com'],
+};
+
 let clientPromise = null;
 
 function getClient() {
@@ -48,6 +63,32 @@ function getClient() {
 
 const WalletContext = createContext(null);
 
+// wallet_switchEthereumChain / wallet_addEthereumChain go through
+// connect-multichain's EIP1193_PASSTHROUGH_METHODS — the exact same
+// forwarding path already used for personal_sign/eth_sendTransaction below,
+// confirmed against the installed package's own source, not assumed. A
+// 4902 error code is the wallet's documented way of saying "I don't have
+// that chain configured" (see connect-multichain's own error classifier,
+// which has a dedicated "unrecognized_chain" bucket for it) — that's the
+// exact signal to fall back to wallet_addEthereumChain.
+async function ensureBscTestnet(client) {
+  try {
+    await client.invokeMethod({
+      scope: BNB_TESTNET_SCOPE,
+      request: { method: 'wallet_switchEthereumChain', params: [{ chainId: BSC_TESTNET_PARAMS.chainId }] },
+    });
+  } catch (switchErr) {
+    if (switchErr?.code === 4902) {
+      await client.invokeMethod({
+        scope: BNB_TESTNET_SCOPE,
+        request: { method: 'wallet_addEthereumChain', params: [BSC_TESTNET_PARAMS] },
+      });
+    } else {
+      throw switchErr;
+    }
+  }
+}
+
 // Same wording the web dApp's handleWeb3SignUp() uses (page.js) — a plain
 // wallet_sign, no server round-trip. Node "sign-up" is proof of wallet
 // ownership only, not a capacity/heartbeat registration.
@@ -75,14 +116,28 @@ export function WalletProviderRoot({ children }) {
     return () => { mounted = false; };
   }, []);
 
+  const [networkError, setNetworkError] = useState('');
+
   const connect = useCallback(async () => {
     const client = clientRef.current;
     if (!client) return;
     setConnecting(true);
+    setNetworkError('');
     try {
       await client.connect([BNB_TESTNET_SCOPE], []);
       const newSession = await client.provider.getSession();
       setSession(newSession);
+
+      // Best-effort: the connection itself already succeeded above, so a
+      // failure here shouldn't undo that or block the user — just surface
+      // it so the UI can point them at manually switching if this ever
+      // doesn't work (e.g. the user dismisses MetaMask's own prompt).
+      try {
+        await ensureBscTestnet(client);
+      } catch (networkErr) {
+        console.warn('Could not auto-switch/add BNB Chain Testnet:', networkErr);
+        setNetworkError('Please switch your wallet to BNB Chain Testnet to continue.');
+      }
     } finally {
       setConnecting(false);
     }
@@ -147,6 +202,7 @@ export function WalletProviderRoot({ children }) {
     isSignedUp,
     isSigning,
     signUp,
+    networkError,
   };
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

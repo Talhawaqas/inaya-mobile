@@ -25,9 +25,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Linking, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, radius, fonts, glassCard } from '../theme';
 
 const API_BASE = 'https://www.inayanetwork.com';
+
+// Persisted so a returning referrer's verified code/status survives an app
+// restart — without this, activatedEmail/referrerStatus reset to nothing
+// on every fresh launch (React Navigation keeps this screen mounted across
+// drawer-tab switches within one app session, so it was only ever a
+// cold-start problem, but that's exactly when users open the app to check
+// their code). Just an email address, not sensitive.
+const ACTIVATED_EMAIL_KEY = 'inaya_referral_activated_email';
 
 function StatusPill({ status }) {
   const map = {
@@ -106,6 +115,21 @@ export default function ReferralScreen() {
       .finally(() => setLoadingLeaderboard(false));
   }, []);
 
+  // Resume a previously-activated referrer on cold start — see
+  // ACTIVATED_EMAIL_KEY's comment. refreshStatus() also benefits from
+  // /api/referrals/status's own Didit-reconciliation fallback, so this
+  // doubles as a chance to self-heal a status stuck on "pending" locally
+  // despite already being verified on Didit's side.
+  useEffect(() => {
+    (async () => {
+      const persisted = await AsyncStorage.getItem(ACTIVATED_EMAIL_KEY);
+      if (!persisted) return;
+      setEmail(persisted);
+      setActivatedEmail(persisted);
+      refreshStatus(persisted);
+    })();
+  }, [refreshStatus]);
+
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     if (activatedEmail && referrerStatus?.status === 'pending') {
@@ -133,6 +157,7 @@ export default function ReferralScreen() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not start verification.');
       setActivatedEmail(trimmed);
+      await AsyncStorage.setItem(ACTIVATED_EMAIL_KEY, trimmed);
       setReferrerStatus(data.status === 'verified' ? { status: 'verified', referralCode: data.referralCode } : { status: 'pending' });
       if (data.url) setKycUrl(data.url);
     } catch (err) {
