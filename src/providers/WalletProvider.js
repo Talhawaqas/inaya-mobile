@@ -15,6 +15,7 @@ import { Linking } from 'react-native';
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createMultichainClient } from '@metamask/connect-multichain';
 import { ethers } from 'ethers';
+import { suspendAppLock, resumeAppLock } from '../utils/appLockSuspend';
 
 const BNB_TESTNET_SCOPE = 'eip155:97';
 const BNB_TESTNET_RPC = 'https://data-seed-prebsc-1-s1.binance.org:8545';
@@ -123,6 +124,16 @@ export function WalletProviderRoot({ children }) {
     if (!client) return;
     setConnecting(true);
     setNetworkError('');
+    // Every step below hands off to the MetaMask app via deep link, which
+    // backgrounds Inaya the same way actually leaving it would — without
+    // this, App.js's AppLockGate re-locks the instant MetaMask opens and
+    // unmounts the whole app tree mid-request, which can orphan the
+    // in-flight request itself (MetaMask reporting "Request failed") on
+    // top of dropping the user back on Home once they unlock again. See
+    // appLockSuspend.js's header comment; this is the same fix already
+    // applied to Google sign-in, now covering every wallet interaction
+    // centrally instead of per-screen.
+    suspendAppLock();
     try {
       await client.connect([BNB_TESTNET_SCOPE], []);
       const newSession = await client.provider.getSession();
@@ -140,6 +151,7 @@ export function WalletProviderRoot({ children }) {
       }
     } finally {
       setConnecting(false);
+      resumeAppLock();
     }
   }, []);
 
@@ -154,7 +166,15 @@ export function WalletProviderRoot({ children }) {
   const invokeMethod = useCallback(async (request) => {
     const client = clientRef.current;
     if (!client) throw new Error('Wallet client not ready yet.');
-    return client.invokeMethod({ scope: BNB_TESTNET_SCOPE, request });
+    // Same reasoning as connect() above — this is the shared path every
+    // screen uses for personal_sign/eth_sendTransaction/etc, all of which
+    // open MetaMask via deep link.
+    suspendAppLock();
+    try {
+      return await client.invokeMethod({ scope: BNB_TESTNET_SCOPE, request });
+    } finally {
+      resumeAppLock();
+    }
   }, []);
 
   // Mirrors the web dApp's handleWeb3SignUp() (page.js) — signs a
@@ -169,6 +189,7 @@ export function WalletProviderRoot({ children }) {
     if (!client || !signAddress) throw new Error('Connect a wallet first.');
 
     setIsSigning(true);
+    suspendAppLock(); // same deep-link-backgrounds-the-app reasoning as connect()/invokeMethod() above
     try {
       const message = buildVerificationMessage(signAddress);
       await client.invokeMethod({
@@ -181,6 +202,7 @@ export function WalletProviderRoot({ children }) {
       setIsSignedUp(true);
     } finally {
       setIsSigning(false);
+      resumeAppLock();
     }
   }, [session]);
 
