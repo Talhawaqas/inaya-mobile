@@ -9,10 +9,11 @@
 // pattern better.
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, fonts } from '../theme';
 import { KNOWLEDGE_ARTICLES } from '../data/knowledgeArticles';
+import { openExternalLink } from '../utils/appLockSuspend';
 
 const FILTERS = ['All', 'Knowledge Base', 'Blog'];
 
@@ -49,7 +50,7 @@ export default function KnowledgeBaseScreen() {
           const isExpanded = expandedId === article.id;
           const isKnowledgeBase = article.category === 'Knowledge Base';
           const onPress = () => {
-            if (article.externalUrl) Linking.openURL(article.externalUrl);
+            if (article.externalUrl) openExternalLink(article.externalUrl);
             else setExpandedId(isExpanded ? null : article.id);
           };
 

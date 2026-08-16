@@ -9,6 +9,7 @@ import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import { InayaKernel } from '@inaya-network/custody-sdk';
 import { getReadOnlyCustody, fetchShardFromIPFS, MIME_EXTENSIONS } from './custody';
+import { suspendAppLock, resumeAppLock } from './appLockSuspend';
 
 /**
  * Reads the on-chain record, fetches both encrypted shards from IPFS,
@@ -43,7 +44,14 @@ export async function retrieveAndSaveFile({ fileHash, passkey, suggestedFilename
   file.write(base64Data, { encoding: 'base64' });
 
   if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: `Save ${filename}` });
+    // shareAsync's native "save/open with" sheet backgrounds the app —
+    // same AppLockGate re-lock risk as UploadScreen.js's document picker.
+    suspendAppLock();
+    try {
+      await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: `Save ${filename}` });
+    } finally {
+      resumeAppLock();
+    }
     onStatus?.('Choose where to save the file.');
   } else {
     onStatus?.(`Saved: ${file.uri}`);

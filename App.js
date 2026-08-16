@@ -13,7 +13,7 @@ import 'react-native-gesture-handler';
 import 'react-native-get-random-values'; // must be imported before ethers/crypto anywhere
 import './polyfills'; // must come immediately after react-native-get-random-values, before any MetaMask Connect code
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Linking, AppState, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, AppState, StyleSheet, Alert } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
@@ -62,7 +62,7 @@ import {
   setBiometricPromptDismissed,
   promptBiometricUnlock,
 } from './src/utils/biometric';
-import { isAppLockSuspended } from './src/utils/appLockSuspend';
+import { isAppLockSuspended, openExternalLink } from './src/utils/appLockSuspend';
 import { colors, fonts } from './src/theme';
 
 // General safety net for any render-time crash NOT already caught by
@@ -209,7 +209,7 @@ function CustomDrawerContent(props) {
         {SOCIAL_LINKS.map((social) => (
           <TouchableOpacity
             key={social.label}
-            onPress={() => Linking.openURL(social.href)}
+            onPress={() => openExternalLink(social.href)}
             accessibilityLabel={social.label}
             style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,242,254,0.08)', alignItems: 'center', justifyContent: 'center' }}
           >

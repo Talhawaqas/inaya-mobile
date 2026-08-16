@@ -14,12 +14,13 @@
 // reopened mid-session, not because of any local timer state.
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Switch, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts, glassCard } from '../theme';
 import { enrollPioneer, qualifyViaSocial, getPioneerStatus } from '../utils/watcherApi';
+import { openExternalLink } from '../utils/appLockSuspend';
 
 const X_POST_URL = 'https://x.com/InayaNetwork';
 const X_FOLLOW_URL = 'https://x.com/InayaNetwork';
@@ -151,7 +152,7 @@ export default function WatcherPioneerScreen() {
               <Text style={styles.cardTitle}>Join the Program</Text>
               <Text style={styles.cardHint}>{status?.spotsRemaining ?? '—'} spots remaining out of 2,500.</Text>
 
-              <TouchableOpacity style={styles.attestRow} onPress={() => Linking.openURL(X_FOLLOW_URL)}>
+              <TouchableOpacity style={styles.attestRow} onPress={() => openExternalLink(X_FOLLOW_URL)}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.attestLabel}>Follow @InayaNetwork on X</Text>
                   <Text style={styles.attestLink}>Open X ↗</Text>
@@ -159,7 +160,7 @@ export default function WatcherPioneerScreen() {
                 <Switch value={followedX} onValueChange={setFollowedX} trackColor={{ true: colors.cyan }} />
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.attestRow} onPress={() => Linking.openURL(TELEGRAM_URL)}>
+              <TouchableOpacity style={styles.attestRow} onPress={() => openExternalLink(TELEGRAM_URL)}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.attestLabel}>Join the Telegram group</Text>
                   <Text style={styles.attestLink}>Open Telegram ↗</Text>
@@ -225,7 +226,7 @@ export default function WatcherPioneerScreen() {
                 <Text style={styles.buttonText}>Upload a File</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.button, styles.buttonSecondary]} onPress={() => Linking.openURL(X_POST_URL)}>
+              <TouchableOpacity style={[styles.button, styles.buttonSecondary]} onPress={() => openExternalLink(X_POST_URL)}>
                 <Text style={[styles.buttonText, styles.buttonSecondaryText]}>Open Latest X Post ↗</Text>
               </TouchableOpacity>
               <TouchableOpacity

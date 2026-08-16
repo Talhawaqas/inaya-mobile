@@ -26,6 +26,7 @@ import { InayaKernel } from '@inaya-network/custody-sdk';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch } from '../../utils/orgApi';
 import { fetchShardFromIPFS } from '../../utils/custody';
+import { suspendAppLock, resumeAppLock } from '../../utils/appLockSuspend';
 
 const SHARE_PRESETS = ['1h', '24h', '7d', '30d'];
 
@@ -114,7 +115,14 @@ export default function DocumentDetailScreen({ route, navigation }) {
       file.write(base64Data, { encoding: 'base64' });
 
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: `Save ${meta.filename || filename}` });
+        // Same AppLockGate risk as the document picker in UploadScreen.js —
+        // shareAsync's native "save/open with" sheet backgrounds the app.
+        suspendAppLock();
+        try {
+          await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: `Save ${meta.filename || filename}` });
+        } finally {
+          resumeAppLock();
+        }
         setOpenStatus('Choose where to save the file.');
       } else {
         setOpenStatus(`Saved: ${file.uri}`);
@@ -135,6 +143,7 @@ export default function DocumentDetailScreen({ route, navigation }) {
         method: 'POST',
         body: { orgId, expirationPreset: preset },
       });
+      suspendAppLock(); // Share sheet is a separate Android Activity — same AppLockGate risk as above
       Share.share({ message: `Shared document link (expires ${new Date(data.expiresAt).toLocaleString()}): ${data.shareUrl}` });
       loadShares();
     } catch (err) {

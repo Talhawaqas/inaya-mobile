@@ -23,10 +23,11 @@
 // already hands off to external URLs elsewhere (e.g. BscScan links).
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Linking, Share } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, radius, fonts, glassCard } from '../theme';
+import { openExternalLink, suspendAppLock } from '../utils/appLockSuspend';
 
 const API_BASE = 'https://www.inayanetwork.com';
 
@@ -216,6 +217,7 @@ export default function ReferralScreen() {
 
   function shareReferralLink() {
     const link = `${API_BASE}/?ref=${referrerStatus.referralCode}`;
+    suspendAppLock(); // Share sheet is a separate Android Activity — same AppLockGate risk as openExternalLink()
     Share.share({ message: `Join Inaya Network using my referral code ${referrerStatus.referralCode}: ${link}` });
   }
 
@@ -256,7 +258,7 @@ export default function ReferralScreen() {
           </TouchableOpacity>
           {redeemError ? <Text style={styles.error}>{redeemError}</Text> : null}
           {redeemUrl ? (
-            <TouchableOpacity onPress={() => Linking.openURL(redeemUrl)} style={styles.linkBox}>
+            <TouchableOpacity onPress={() => openExternalLink(redeemUrl)} style={styles.linkBox}>
               <Text style={styles.linkBoxLabel}>Complete your verification:</Text>
               <Text style={styles.linkBoxUrl}>{redeemUrl}</Text>
             </TouchableOpacity>
@@ -296,7 +298,7 @@ export default function ReferralScreen() {
         {activationError ? <Text style={styles.error}>{activationError}</Text> : null}
 
         {kycUrl && referrerStatus?.status === 'pending' ? (
-          <TouchableOpacity onPress={() => Linking.openURL(kycUrl)} style={styles.linkBox}>
+          <TouchableOpacity onPress={() => openExternalLink(kycUrl)} style={styles.linkBox}>
             <Text style={styles.linkBoxLabel}>Complete your verification:</Text>
             <Text style={styles.linkBoxUrl}>{kycUrl}</Text>
           </TouchableOpacity>
@@ -343,7 +345,7 @@ export default function ReferralScreen() {
           </TouchableOpacity>
           {inviteError ? <Text style={styles.error}>{inviteError}</Text> : null}
           {inviteUrl ? (
-            <TouchableOpacity onPress={() => Linking.openURL(inviteUrl)} style={styles.linkBox}>
+            <TouchableOpacity onPress={() => openExternalLink(inviteUrl)} style={styles.linkBox}>
               <Text style={styles.linkBoxLabel}>Share this verification link with them:</Text>
               <Text style={styles.linkBoxUrl}>{inviteUrl}</Text>
             </TouchableOpacity>

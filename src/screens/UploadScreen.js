@@ -18,6 +18,7 @@ import BackgroundGlow from '../components/BackgroundGlow';
 import { CUSTODY_ADDRESS, custodyInterface, pinShardToIPFS } from '../utils/custody';
 import { waitForReceipt } from '../utils/waitForReceipt';
 import { qualifyViaUpload } from '../utils/watcherApi';
+import { suspendAppLock, resumeAppLock } from '../utils/appLockSuspend';
 
 export default function UploadScreen() {
   const tabBarHeight = useSafeAreaInsets().bottom;
@@ -34,7 +35,17 @@ export default function UploadScreen() {
     setIsUploading(true);
     try {
       setStatus('Picking a file...');
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+      // The native document picker backgrounds the app the same way the
+      // Google sign-in browser / MetaMask requests do — without this,
+      // AppLockGate re-locks mid-pick and unmounts this whole screen,
+      // dropping the typed passkey and the pick itself. See appLockSuspend.js.
+      suspendAppLock();
+      let result;
+      try {
+        result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+      } finally {
+        resumeAppLock();
+      }
       if (result.canceled || !result.assets?.[0]) { setStatus(''); setIsUploading(false); return; }
       const picked = result.assets[0];
 

@@ -15,6 +15,16 @@
 // AppLockGate's re-lock check can skip itself for that window. The bounded
 // auto-resume is a safety net: an abandoned/failed flow that never calls
 // resumeAppLock() itself shouldn't leave the app permanently unlockable.
+//
+// Same root cause, different trigger: Linking.openURL() (X/Telegram/KYC
+// links, share sheets) launches a separate Android Activity, backgrounding
+// Inaya exactly like MetaMask/Google did — see openExternalLink() below.
+// Unlike a wallet request, there's no "response received" moment to pair
+// with an explicit resumeAppLock(), since openURL() resolves as soon as the
+// other app launches, not when the user comes back — so for these, the
+// safety timeout above IS the resume mechanism, not a fallback for one.
+
+import { Linking } from 'react-native';
 
 let suspended = false;
 let safetyTimer = null;
@@ -37,4 +47,12 @@ export function resumeAppLock() {
 
 export function isAppLockSuspended() {
   return suspended;
+}
+
+// Opens an external app/browser the same way every X/Telegram/KYC link and
+// share-sheet call in this app should — suspending AppLockGate first so
+// tapping it doesn't re-lock and unmount the screen the user was on.
+export function openExternalLink(url) {
+  suspendAppLock();
+  return Linking.openURL(url);
 }
