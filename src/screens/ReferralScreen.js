@@ -90,7 +90,14 @@ export default function ReferralScreen() {
     try {
       const res = await fetch(`${API_BASE}/api/referrals/status?email=${encodeURIComponent(targetEmail)}`);
       const data = await res.json();
-      if (res.ok) setReferrerStatus(data);
+      if (res.ok) {
+        setReferrerStatus(data);
+        // Lets a returning user (fresh app open, or after being backgrounded)
+        // resume an already-created session's link without re-POSTing
+        // /activate — that route would otherwise mint a wasteful duplicate
+        // Didit session just to show them the same link again.
+        if (data.url) setKycUrl(data.url);
+      }
     } catch {
       // Background poll — errors here don't need surfacing, the activate
       // flow's own error state already covers anything actionable.

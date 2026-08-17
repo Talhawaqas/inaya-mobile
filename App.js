@@ -43,6 +43,7 @@ import WalletBalanceScreen from './src/screens/WalletBalanceScreen';
 import UploadScreen from './src/screens/UploadScreen';
 import DownloadScreen from './src/screens/DownloadScreen';
 import MyFilesScreen from './src/screens/MyFilesScreen';
+import FaucetScreen from './src/screens/FaucetScreen';
 import BusinessModelScreen from './src/screens/BusinessModelScreen';
 import StakingScreen from './src/screens/StakingScreen';
 import MyDashboardScreen from './src/screens/MyDashboardScreen';
@@ -130,6 +131,7 @@ function HomeStack() {
 
 const DRAWER_ICONS = {
   Home: 'home-outline',
+  Faucet: 'water-outline',
   Business: 'briefcase-outline',
   Workspace: 'lock-closed-outline',
   SaaSRoadmap: 'map-outline',
@@ -145,6 +147,7 @@ const DRAWER_ICONS = {
 
 const DRAWER_LABELS = {
   Home: 'Home',
+  Faucet: 'Testnet Faucet',
   Business: 'Business',
   Workspace: 'Business Workspace',
   SaaSRoadmap: 'Business SaaS Roadmap',
@@ -250,6 +253,7 @@ function AppNavigator() {
         })}
       >
         <Drawer.Screen name="Home" component={HomeStack} options={{ title: DRAWER_LABELS.Home }} />
+        <Drawer.Screen name="Faucet" component={FaucetScreen} options={{ title: DRAWER_LABELS.Faucet }} />
         <Drawer.Screen name="Business" component={BusinessModelScreen} options={{ title: DRAWER_LABELS.Business }} />
         <Drawer.Screen name="Workspace" component={BusinessWorkspaceStack} options={{ title: DRAWER_LABELS.Workspace }} />
         <Drawer.Screen name="SaaSRoadmap" component={SaaSRoadmapScreen} options={{ title: DRAWER_LABELS.SaaSRoadmap }} />
