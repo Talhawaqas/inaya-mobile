@@ -13,6 +13,16 @@ export const custodyInterface = new ethers.Interface([
   'function batchRegisterAssets(bytes32[] fileHashes, uint256[] fileSizes, string[] shardACIDs, string[] shardBCIDs) external',
 ]);
 
+// InayaProofRegistry — redeployed 2026-08-17 (see contracts/InayaProofRegistry.sol) to fix a
+// front-running gap; registerMerkleRoot now cross-checks the caller against
+// CUSTODY_ADDRESS's own assets(fileHash).owner, so this must always point at whichever
+// ProofRegistry deployment is paired with CUSTODY_ADDRESS above — the two are not
+// independently swappable.
+export const PROOF_REGISTRY_ADDRESS = '0xEdF431857e92A00420444F27Ad105278b21CEBcB';
+export const proofRegistryInterface = new ethers.Interface([
+  'function registerMerkleRoot(bytes32 _fileHash, bytes32 _merkleRoot, uint256 _chunkCount, address _node) external',
+]);
+
 // Same BNB Testnet RPC WalletProvider.js uses for the wallet bridge — reading
 // assets(bytes32) is a plain view call, so retrieval deliberately uses its own
 // plain ethers.JsonRpcProvider instead of going through the connected wallet

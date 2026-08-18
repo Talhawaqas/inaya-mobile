@@ -15,7 +15,8 @@ import { useUploadsHistory } from '../hooks/useUploadsHistory';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import BackgroundGlow from '../components/BackgroundGlow';
-import { CUSTODY_ADDRESS, custodyInterface, pinShardToIPFS } from '../utils/custody';
+import { CUSTODY_ADDRESS, custodyInterface, PROOF_REGISTRY_ADDRESS, proofRegistryInterface, pinShardToIPFS } from '../utils/custody';
+import { buildProofOfStoragePayload } from '../utils/merkle';
 import { waitForReceipt } from '../utils/waitForReceipt';
 import { qualifyViaUpload } from '../utils/watcherApi';
 import { suspendAppLock, resumeAppLock } from '../utils/appLockSuspend';
@@ -99,6 +100,34 @@ export default function UploadScreen() {
 
       setStatus(`Uploaded — tx ${txHash.slice(0, 14)}...`);
       await persistUpload({ fileHash, filename: sharded.filename, sizeBytes, uploadedAt: Date.now() });
+
+      // --- Register this file's Merkle root on InayaProofRegistry ---
+      // Mirrors the web dApp's own page.js: a failure here does NOT roll back the custody
+      // registration above — the file is still safely registered/stored either way, it just
+      // won't have a proof-of-storage root yet. registerMerkleRoot itself verifies the caller
+      // against InayaCustody.assets(fileHash).owner (fixed 2026-08-17), so this only ever
+      // succeeds for the wallet that actually owns this fileHash — which is always true here,
+      // since `address` is who batchRegisterAssets above just registered it under.
+      try {
+        setStatus((prev) => `${prev} · Registering Merkle proof root...`);
+        // shardAlpha + shardBeta reconstructs the exact original cipherTextString — disperseAndSlice
+        // splits it at Math.ceil(length/2), so plain concatenation is lossless.
+        const cipherTextString = sharded.shardAlpha + sharded.shardBeta;
+        const { root, chunkCount } = buildProofOfStoragePayload(cipherTextString);
+
+        const rootData = proofRegistryInterface.encodeFunctionData('registerMerkleRoot', [
+          fileHash, root, chunkCount, ethers.ZeroAddress,
+        ]);
+        const rootTxHash = await invokeMethod({
+          method: 'eth_sendTransaction',
+          params: [{ from: address, to: PROOF_REGISTRY_ADDRESS, data: rootData }],
+        });
+        await waitForReceipt(invokeMethod, rootTxHash);
+        setStatus((prev) => `${prev} ✓`);
+      } catch (rootErr) {
+        console.warn('registerMerkleRoot failed (non-fatal, custody registration already succeeded):', rootErr?.message);
+        setStatus((prev) => `${prev} · Proof root registration failed (file is still safely stored)`);
+      }
 
       // Fire-and-forget: never blocks or breaks the upload flow above if
       // this fails, and the backend simply no-ops for wallets that aren't
