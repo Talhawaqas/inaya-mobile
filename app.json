@@ -42,7 +42,8 @@
         {
           "faceIDPermission": "Allow Inaya to use Face ID to unlock your Business Workspace."
         }
-      ]
+      ],
+      "./plugins/withGradleJvmArgs.js"
     ],
     "runtimeVersion": {
       "policy": "appVersion"
