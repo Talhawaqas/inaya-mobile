@@ -22,7 +22,11 @@
         "backgroundColor": "#0a0e14"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.inayanetworksteam.inayamobile"
+      "package": "com.inayanetworksteam.inayamobile",
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -39,6 +43,12 @@
           "faceIDPermission": "Allow Inaya to use Face ID to unlock your Business Workspace."
         }
       ]
-    ]
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d3ab3b26-0be8-4082-9f01-45a7b90d8f56"
+    }
   }
 }
