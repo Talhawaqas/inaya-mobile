@@ -39,6 +39,12 @@ const API_BASE = 'https://www.inayanetwork.com';
 // their code). Just an email address, not sensitive.
 const ACTIVATED_EMAIL_KEY = 'inaya_referral_activated_email';
 
+// Same reasoning as ACTIVATED_EMAIL_KEY, for a referred person who redeems a
+// code, backgrounds/closes the app before finishing Didit's Liveness step,
+// and comes back later with no way to get their link back short of
+// re-typing the exact code + email they used originally.
+const REDEEM_PENDING_KEY = 'inaya_referral_redeem_pending';
+
 function StatusPill({ status }) {
   const map = {
     verified: [colors.success, 'rgba(52,211,153,0.12)', '✅ Verified'],
@@ -80,6 +86,11 @@ export default function ReferralScreen() {
   const [redeeming, setRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
   const [redeemUrl, setRedeemUrl] = useState('');
+  const [redeemReferralId, setRedeemReferralId] = useState('');
+  const [redeemAwaitingStep, setRedeemAwaitingStep] = useState(null);
+  const [redeemResolvedStatus, setRedeemResolvedStatus] = useState(null); // 'verified' | 'rejected' | null (still pending)
+  const [redeemRejectionReason, setRedeemRejectionReason] = useState(null);
+  const redeemPollRef = useRef(null);
 
   const [history, setHistory] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -101,6 +112,25 @@ export default function ReferralScreen() {
     } catch {
       // Background poll — errors here don't need surfacing, the activate
       // flow's own error state already covers anything actionable.
+    }
+  }, []);
+
+  const refreshRedeemStatus = useCallback(async (referralId) => {
+    if (!referralId) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/referrals/status?referralId=${encodeURIComponent(referralId)}`);
+      const data = await res.json();
+      if (!res.ok) return;
+      if (data.status === 'pending') {
+        if (data.url) setRedeemUrl(data.url);
+        setRedeemAwaitingStep(data.awaitingStep || null);
+      } else {
+        setRedeemResolvedStatus(data.status);
+        setRedeemRejectionReason(data.rejectionReason || null);
+        await AsyncStorage.removeItem(REDEEM_PENDING_KEY);
+      }
+    } catch {
+      // Silent — background poll, same as refreshStatus above.
     }
   }, []);
 
@@ -138,6 +168,23 @@ export default function ReferralScreen() {
     })();
   }, [refreshStatus]);
 
+  // Same resume behavior for a referred person who redeemed a code and left
+  // before finishing — see REDEEM_PENDING_KEY's comment.
+  useEffect(() => {
+    (async () => {
+      let persisted;
+      try {
+        persisted = JSON.parse((await AsyncStorage.getItem(REDEEM_PENDING_KEY)) || 'null');
+      } catch {
+        persisted = null;
+      }
+      if (!persisted?.referralId) return;
+      setRedeemReferralId(persisted.referralId);
+      if (persisted.redeemEmail) setRedeemEmail(persisted.redeemEmail);
+      refreshRedeemStatus(persisted.referralId);
+    })();
+  }, [refreshRedeemStatus]);
+
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     if (activatedEmail && referrerStatus?.status === 'pending') {
@@ -145,6 +192,14 @@ export default function ReferralScreen() {
     }
     return () => pollRef.current && clearInterval(pollRef.current);
   }, [activatedEmail, referrerStatus?.status, refreshStatus]);
+
+  useEffect(() => {
+    if (redeemPollRef.current) clearInterval(redeemPollRef.current);
+    if (redeemReferralId && !redeemResolvedStatus) {
+      redeemPollRef.current = setInterval(() => refreshRedeemStatus(redeemReferralId), 5000);
+    }
+    return () => redeemPollRef.current && clearInterval(redeemPollRef.current);
+  }, [redeemReferralId, redeemResolvedStatus, refreshRedeemStatus]);
 
   useEffect(() => {
     if (referrerStatus?.status === 'verified' && activatedEmail) refreshHistory(activatedEmail);
@@ -206,6 +261,8 @@ export default function ReferralScreen() {
     setRedeeming(true);
     setRedeemError('');
     setRedeemUrl('');
+    setRedeemResolvedStatus(null);
+    setRedeemRejectionReason(null);
     try {
       const res = await fetch(`${API_BASE}/api/referrals/redeem`, {
         method: 'POST',
@@ -215,6 +272,10 @@ export default function ReferralScreen() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not start verification.');
       if (data.url) setRedeemUrl(data.url);
+      if (data.referralId) {
+        setRedeemReferralId(data.referralId);
+        await AsyncStorage.setItem(REDEEM_PENDING_KEY, JSON.stringify({ referralId: data.referralId, redeemEmail: trimmedEmail }));
+      }
     } catch (err) {
       setRedeemError(err.message || 'Something went wrong.');
     } finally {
@@ -239,10 +300,10 @@ export default function ReferralScreen() {
       </Text>
 
       {/* REDEEM A CODE */}
-      {!isVerifiedReferrer && (
+      {!isVerifiedReferrer && !redeemUrl && redeemResolvedStatus !== 'verified' && (
         <View style={[styles.card, { marginTop: spacing.lg }]}>
           <Text style={styles.cardTitle}>Have a referral code?</Text>
-          <Text style={styles.cardHint}>Enter it along with your email to start your own verification.</Text>
+          <Text style={styles.cardHint}>Enter it along with your email to start — or resume a verification you already started.</Text>
           <TextInput
             style={styles.input}
             value={redeemCode}
@@ -264,14 +325,33 @@ export default function ReferralScreen() {
             <Text style={styles.buttonText}>{redeeming ? 'Starting…' : 'Start verification'}</Text>
           </TouchableOpacity>
           {redeemError ? <Text style={styles.error}>{redeemError}</Text> : null}
-          {redeemUrl ? (
-            <TouchableOpacity onPress={() => openExternalLink(redeemUrl)} style={styles.linkBox}>
-              <Text style={styles.linkBoxLabel}>Complete your verification:</Text>
-              <Text style={styles.linkBoxUrl}>{redeemUrl}</Text>
-            </TouchableOpacity>
-          ) : null}
         </View>
       )}
+      {redeemUrl && redeemResolvedStatus !== 'verified' ? (
+        <View style={[styles.card, { marginTop: spacing.lg }]}>
+          <TouchableOpacity onPress={() => openExternalLink(redeemUrl)} style={styles.linkBox}>
+            <Text style={styles.linkBoxLabel}>
+              {redeemAwaitingStep === 'liveness'
+                ? '✅ ID approved — just one more step: complete the quick selfie/liveness check to finish.'
+                : 'Complete your verification:'}
+            </Text>
+            <Text style={styles.linkBoxUrl}>{redeemUrl}</Text>
+          </TouchableOpacity>
+          <Text style={styles.cardHint}>You can safely close the app and come back later — this link stays valid, and this page checks automatically every few seconds.</Text>
+        </View>
+      ) : null}
+      {redeemResolvedStatus === 'verified' ? (
+        <View style={[styles.card, { marginTop: spacing.lg, borderColor: colors.success }]}>
+          <Text style={[styles.cardTitle, { color: colors.success }]}>🎉 Verified! Your referral reward has been recorded.</Text>
+        </View>
+      ) : null}
+      {redeemResolvedStatus === 'rejected' ? (
+        <View style={[styles.card, { marginTop: spacing.lg, borderColor: colors.danger }]}>
+          <Text style={[styles.cardTitle, { color: colors.danger }]}>
+            Verification wasn't approved{redeemRejectionReason ? ` (${redeemRejectionReason})` : ''}.
+          </Text>
+        </View>
+      ) : null}
 
       {/* STEP 1: ACTIVATE AS A REFERRER */}
       <View style={[styles.card, { marginTop: spacing.lg }]}>
@@ -306,7 +386,11 @@ export default function ReferralScreen() {
 
         {kycUrl && referrerStatus?.status === 'pending' ? (
           <TouchableOpacity onPress={() => openExternalLink(kycUrl)} style={styles.linkBox}>
-            <Text style={styles.linkBoxLabel}>Complete your verification:</Text>
+            <Text style={styles.linkBoxLabel}>
+              {referrerStatus?.awaitingStep === 'liveness'
+                ? '✅ ID approved — just one more step: complete the quick selfie/liveness check to finish.'
+                : 'Complete your verification:'}
+            </Text>
             <Text style={styles.linkBoxUrl}>{kycUrl}</Text>
           </TouchableOpacity>
         ) : null}
