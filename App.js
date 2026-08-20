@@ -52,6 +52,7 @@ import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
 import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ReferralScreen from './src/screens/ReferralScreen';
 import WatcherPioneerScreen from './src/screens/WatcherPioneerScreen';
+import LearnStack from './src/screens/learn/LearnStack';
 import SettingsScreen from './src/screens/SettingsScreen';
 import BusinessWorkspaceStack from './src/screens/business/BusinessWorkspaceStack';
 import SaaSRoadmapScreen from './src/screens/SaaSRoadmapScreen';
@@ -142,6 +143,7 @@ const DRAWER_ICONS = {
   AIAssistant: 'chatbubble-ellipses-outline',
   Referrals: 'people-outline',
   WatcherPioneer: 'trophy-outline',
+  Learn: 'school-outline',
   Settings: 'settings-outline',
 };
 
@@ -158,6 +160,7 @@ const DRAWER_LABELS = {
   AIAssistant: 'Ask AI',
   Referrals: 'Referrals',
   WatcherPioneer: 'Watcher Pioneer Program',
+  Learn: 'Inaya Learn',
   Settings: 'Settings',
 };
 
@@ -239,7 +242,7 @@ function AppNavigator() {
         initialRouteName="Home"
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={({ route }) => ({
-          headerShown: route.name !== 'Home' && route.name !== 'Workspace',
+          headerShown: route.name !== 'Home' && route.name !== 'Workspace' && route.name !== 'Learn',
           headerStyle: { backgroundColor: colors.navBar },
           headerTintColor: colors.textPrimary,
           headerTitleStyle: { fontFamily: fonts.sansExtraBold, fontSize: 16 },
@@ -264,6 +267,7 @@ function AppNavigator() {
         <Drawer.Screen name="AIAssistant" component={AIAssistantScreen} options={{ title: DRAWER_LABELS.AIAssistant }} />
         <Drawer.Screen name="Referrals" component={ReferralScreen} options={{ title: DRAWER_LABELS.Referrals }} />
         <Drawer.Screen name="WatcherPioneer" component={WatcherPioneerScreen} options={{ title: DRAWER_LABELS.WatcherPioneer }} />
+        <Drawer.Screen name="Learn" component={LearnStack} options={{ title: DRAWER_LABELS.Learn }} />
         <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: DRAWER_LABELS.Settings }} />
       </Drawer.Navigator>
     </NavigationContainer>
