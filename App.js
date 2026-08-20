@@ -35,7 +35,8 @@ import {
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
 
-import { WalletProviderRoot } from './src/providers/WalletProvider';
+import { WalletProviderRoot, useWallet } from './src/providers/WalletProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CardCustomerProviderRoot } from './src/providers/CardCustomerProvider';
 import StorageDashboardScreen from './src/screens/StorageDashboardScreen';
 import NodeStatusScreen from './src/screens/NodeStatusScreen';
@@ -234,7 +235,42 @@ function CustomDrawerContent(props) {
 // duplicate header, and StorageDashboardScreen renders its own brand
 // header with a hamburger button (navigation.getParent()?.openDrawer())
 // instead.
+const ACTIVITY_API_BASE = 'https://www.inayanetwork.com';
+const DEVICE_ID_KEY = 'inaya_device_id';
+
+async function getOrCreateDeviceId() {
+  try {
+    let id = await AsyncStorage.getItem(DEVICE_ID_KEY);
+    if (!id) {
+      id = 'mobile-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      await AsyncStorage.setItem(DEVICE_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 function AppNavigator() {
+  // DAU/WAU activity ping — fire-and-forget, once on launch. Identity is
+  // the wallet address if already connected/restored, otherwise a stable
+  // device id cached in AsyncStorage — same reasoning as the web dApp's
+  // ping in src/app/page.js: most sessions start before a wallet is
+  // connected, so anonymous presence still needs to count.
+  const { address: walletAddress } = useWallet();
+  useEffect(() => {
+    (async () => {
+      const deviceId = await getOrCreateDeviceId();
+      const identityId = walletAddress || deviceId;
+      if (!identityId) return;
+      fetch(`${ACTIVITY_API_BASE}/api/activity/ping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ surface: 'mobile', identityId }),
+      }).catch(() => {});
+    })();
+  }, [walletAddress]);
+
   return (
     <NavigationContainer theme={navTheme}>
       <StatusBar style="light" />
