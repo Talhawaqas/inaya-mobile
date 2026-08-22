@@ -13,11 +13,11 @@
 // 2023 (see src/lib/youtube.js on the backend).
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Dimensions, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { colors, glassCard, spacing, radius, fonts } from '../../theme';
-import { getLearnVideo, reportLearnVideo, logLearnEvent } from '../../utils/learnApi';
+import { getLearnVideo, reportLearnVideo, logLearnEvent, askLearnTutor } from '../../utils/learnApi';
 import { useLearnLibrary } from './useLearnLibrary';
 import VideoCard from '../../components/learn/VideoCard';
 
@@ -41,6 +41,11 @@ export default function LearnVideoScreen({ route, navigation }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportSent, setReportSent] = useState(false);
   const [markedComplete, setMarkedComplete] = useState(false);
+
+  const [tutorOpen, setTutorOpen] = useState(false);
+  const [tutorMessages, setTutorMessages] = useState([]);
+  const [tutorInput, setTutorInput] = useState('');
+  const [tutorSending, setTutorSending] = useState(false);
 
   const { isVideoSaved, toggleSave, getVideoProgress, updateProgress, walletAddress } = useLearnLibrary();
   const playerRef = useRef(null);
@@ -136,6 +141,27 @@ export default function LearnVideoScreen({ route, navigation }) {
     }
   };
 
+  const handleSendTutorMessage = async () => {
+    const text = tutorInput.trim();
+    if (!text || tutorSending) return;
+    const nextMessages = [...tutorMessages, { role: 'user', content: text }];
+    setTutorMessages(nextMessages);
+    setTutorInput('');
+    setTutorSending(true);
+    try {
+      const { reply } = await askLearnTutor({
+        walletAddress,
+        videoContext: video ? { title: video.title, channelTitle: video.channelTitle, categoryId, description: video.description } : null,
+        messages: nextMessages,
+      });
+      setTutorMessages([...nextMessages, { role: 'assistant', content: reply || "Sorry, I couldn't come up with an answer for that." }]);
+    } catch (err) {
+      setTutorMessages([...nextMessages, { role: 'assistant', content: `The tutor is temporarily unavailable: ${err.message}` }]);
+    } finally {
+      setTutorSending(false);
+    }
+  };
+
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator color={colors.cyan} /></View>;
   }
@@ -192,6 +218,39 @@ export default function LearnVideoScreen({ route, navigation }) {
         <Text style={styles.description} numberOfLines={6}>{video.description}</Text>
       )}
 
+      <View style={styles.tutorCard}>
+        <TouchableOpacity onPress={() => setTutorOpen((v) => !v)}>
+          <Text style={styles.tutorTitle}>🎓 Ask AI Tutor {tutorOpen ? '▲' : '▼'}</Text>
+        </TouchableOpacity>
+        {tutorOpen && (
+          <>
+            <Text style={styles.tutorHint}>Ask a question about this video, or anything you're learning.</Text>
+            <FlatList
+              data={tutorMessages}
+              keyExtractor={(_, i) => String(i)}
+              style={{ maxHeight: 240, marginTop: spacing.sm }}
+              renderItem={({ item }) => (
+                <View style={[styles.chatBubble, item.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant]}>
+                  <Text style={styles.chatText}>{item.content}</Text>
+                </View>
+              )}
+            />
+            <View style={styles.checkRow}>
+              <TextInput
+                style={styles.input}
+                placeholder="Ask a question…"
+                placeholderTextColor={colors.textMuted}
+                value={tutorInput}
+                onChangeText={setTutorInput}
+              />
+              <TouchableOpacity style={styles.checkButton} onPress={handleSendTutorMessage} disabled={tutorSending || !tutorInput.trim()}>
+                {tutorSending ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.checkButtonText}>Send</Text>}
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </View>
+
       {more.length > 0 && (
         <View style={styles.moreSection}>
           <Text style={styles.moreTitle}>More like this</Text>
@@ -224,6 +283,21 @@ const styles = StyleSheet.create({
   reportOption: { paddingVertical: spacing.sm, paddingHorizontal: spacing.sm },
   reportOptionText: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 13 },
   description: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, marginHorizontal: spacing.lg, marginTop: spacing.lg },
+  tutorCard: { ...glassCard, marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: spacing.lg },
+  tutorTitle: { color: colors.textPrimary, fontFamily: fonts.sansBold, fontSize: 14 },
+  tutorHint: { color: colors.textMuted, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.xs, lineHeight: 16 },
+  checkRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm, alignItems: 'center' },
+  input: {
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: colors.border,
+    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 12,
+  },
+  checkButton: { backgroundColor: colors.cyan, borderRadius: radius.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, alignItems: 'center', justifyContent: 'center' },
+  checkButtonText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.bg, textTransform: 'uppercase', letterSpacing: 0.5 },
+  chatBubble: { padding: spacing.sm, borderRadius: radius.md, marginTop: spacing.xs, maxWidth: '90%' },
+  chatBubbleUser: { backgroundColor: colors.cyan, alignSelf: 'flex-end' },
+  chatBubbleAssistant: { backgroundColor: 'rgba(255,255,255,0.06)', alignSelf: 'flex-start' },
+  chatText: { fontFamily: fonts.sans, fontSize: 12, color: colors.textPrimary },
   moreSection: { marginTop: spacing.xl, paddingHorizontal: spacing.lg },
   moreTitle: { color: colors.textPrimary, fontFamily: fonts.sansBold, fontSize: 14, marginBottom: spacing.md },
 });

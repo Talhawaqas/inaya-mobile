@@ -81,3 +81,7 @@ export async function logLearnEvent({ event, categoryId, videoId }) {
     // analytics failures are silently ignored by design — see the route's own comment
   }
 }
+
+export async function askLearnTutor({ walletAddress, videoContext, messages }) {
+  return request('/api/ai/learn-chat', { method: 'POST', body: { walletAddress, videoContext, messages } });
+}
