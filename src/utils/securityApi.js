@@ -75,6 +75,12 @@ export async function getSecurityPolicy() {
   return getJson('/api/security/policy');
 }
 
+/** Network-wide, public-safe stats (confirmed threat count, reporting node count, average
+ *  reputation) — same route the web /security transparency page uses. */
+export async function getSecurityStats() {
+  return getJson('/api/security/stats');
+}
+
 export async function getSecurityFeed(sinceIso) {
   const qs = sinceIso ? `?since=${encodeURIComponent(sinceIso)}` : '';
   return getJson(`/api/security/feed${qs}`);

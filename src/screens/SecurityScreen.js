@@ -25,7 +25,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useWallet } from '../providers/WalletProvider';
 import { colors, spacing, radius, fonts, glassCard } from '../theme';
-import { checkThreat, getSecurityFeed, logSecurityEvent, getSecurityEvents, askSecurityAssistant } from '../utils/securityApi';
+import { checkThreat, getSecurityStats, getSecurityFeed, logSecurityEvent, getSecurityEvents, askSecurityAssistant } from '../utils/securityApi';
+
+const CATEGORIES = ['Unknown', 'Phishing', 'Malware', 'Scam', 'Botnet/C2', 'Spam', 'Other'];
+
+function formatPct(bps) {
+  return bps == null ? '—' : `${(bps / 100).toFixed(1)}%`;
+}
 
 const DEVICE_ID_KEY = 'inaya_security_device_id';
 const MODE_KEY = 'inaya_security_mode';
@@ -72,6 +78,9 @@ export default function SecurityScreen() {
   const [mode, setMode] = useState('protect');
   const [feedCount, setFeedCount] = useState(0);
   const [lastSync, setLastSync] = useState(null);
+
+  const [networkStats, setNetworkStats] = useState(null);
+  const [recentThreats, setRecentThreats] = useState([]);
 
   const [checkInput, setCheckInput] = useState('');
   const [checking, setChecking] = useState(false);
@@ -126,6 +135,25 @@ export default function SecurityScreen() {
     const interval = setInterval(syncFeed, FEED_SYNC_MS);
     return () => clearInterval(interval);
   }, [syncFeed]);
+
+  // Public, network-wide transparency data -- same routes the web /security
+  // page uses (GET /api/security/stats, GET /api/security/feed). No auth,
+  // no per-user scoping; just "is this network actually doing anything."
+  const loadNetworkOverview = useCallback(async () => {
+    try {
+      const [stats, feed] = await Promise.all([getSecurityStats(), getSecurityFeed()]);
+      setNetworkStats(stats);
+      setRecentThreats((feed.items || []).slice(0, 10));
+    } catch {
+      // best-effort -- the rest of the screen (checker, events, chat) works without this
+    }
+  }, []);
+
+  useEffect(() => {
+    loadNetworkOverview();
+    const interval = setInterval(loadNetworkOverview, FEED_SYNC_MS);
+    return () => clearInterval(interval);
+  }, [loadNetworkOverview]);
 
   const refreshEvents = useCallback(async () => {
     if (!identityId) return;
@@ -230,6 +258,42 @@ export default function SecurityScreen() {
         Decentralized threat intelligence backed by Inaya's node network — verified destinations are checked
         against reputation-weighted, on-chain-anchored reports.
       </Text>
+
+      <View style={[styles.card, { marginTop: spacing.lg }]}>
+        <Text style={styles.cardTitle}>Network overview</Text>
+        <Text style={styles.cardHint}>Public, network-wide — the same numbers anyone can see at inayanetwork.com/security.</Text>
+        <View style={styles.statsGrid}>
+          <View style={styles.statCell}>
+            <Text style={styles.statValue}>{networkStats ? networkStats.confirmedThreatsCount : '—'}</Text>
+            <Text style={styles.statLabel}>Confirmed Threats</Text>
+          </View>
+          <View style={styles.statCell}>
+            <Text style={styles.statValue}>{networkStats ? networkStats.reportingNodesCount : '—'}</Text>
+            <Text style={styles.statLabel}>Reporting Nodes</Text>
+          </View>
+          <View style={styles.statCell}>
+            <Text style={styles.statValue}>{networkStats ? formatPct(networkStats.avgReputationBps) : '—'}</Text>
+            <Text style={styles.statLabel}>Avg Reputation</Text>
+          </View>
+        </View>
+      </View>
+
+      {recentThreats.length > 0 && (
+        <View style={[styles.card, { marginTop: spacing.lg }]}>
+          <Text style={styles.cardTitle}>Recently confirmed threats</Text>
+          {recentThreats.map((t) => (
+            <View key={t._id} style={styles.eventRow}>
+              <Text style={styles.threatConfidence}>{formatPct(t.confidenceBps)}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.eventDestination}>{t.indicator}</Text>
+                <Text style={styles.eventReason}>
+                  {CATEGORIES[t.category] || 'Unknown'} · {(t.contributingNodes || []).length} independent reporter(s)
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
 
       <View style={[styles.card, { marginTop: spacing.lg }]}>
         <Text style={styles.cardTitle}>Protection mode</Text>
@@ -392,6 +456,11 @@ const styles = StyleSheet.create({
   card: { ...glassCard, padding: spacing.lg },
   cardTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.textPrimary },
   cardHint: { fontFamily: fonts.sans, fontSize: 11, color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.sm, lineHeight: 16 },
+  statsGrid: { flexDirection: 'row', marginTop: spacing.sm },
+  statCell: { flex: 1, alignItems: 'center' },
+  statValue: { fontFamily: fonts.sansExtraBold, fontSize: 18, color: colors.textPrimary },
+  statLabel: { fontFamily: fonts.sansMedium, fontSize: 9, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 2, textAlign: 'center' },
+  threatConfidence: { fontFamily: fonts.sansBold, fontSize: 10, color: colors.danger, width: 60 },
   modeRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   modeButton: {
     flex: 1, paddingVertical: spacing.sm, borderRadius: radius.md,
