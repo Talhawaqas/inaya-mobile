@@ -29,6 +29,13 @@ import { checkThreat, getSecurityStats, getSecurityFeed, logSecurityEvent, getSe
 
 const CATEGORIES = ['Unknown', 'Phishing', 'Malware', 'Scam', 'Botnet/C2', 'Spam', 'Other'];
 
+const SUGGESTED_QUESTIONS = [
+  'What is phishing?',
+  'How does node reputation work?',
+  'How are threats confirmed on-chain?',
+  'What should I do if a site is flagged?',
+];
+
 function formatPct(bps) {
   return bps == null ? '—' : `${(bps / 100).toFixed(1)}%`;
 }
@@ -93,7 +100,7 @@ export default function SecurityScreen() {
   const [blocklist, setBlocklist] = useState([]);
   const [listInput, setListInput] = useState('');
 
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatSending, setChatSending] = useState(false);
@@ -232,9 +239,9 @@ export default function SecurityScreen() {
     await writeList(storageKey, next);
   }
 
-  async function handleSendChat() {
-    const text = chatInput.trim();
-    if (!text || !identityId) return;
+  async function handleSendChat(overrideText) {
+    const text = (overrideText ?? chatInput).trim();
+    if (!text || !identityId || chatSending) return;
     const nextMessages = [...chatMessages, { role: 'user', content: text }];
     setChatMessages(nextMessages);
     setChatInput('');
@@ -258,6 +265,60 @@ export default function SecurityScreen() {
         Decentralized threat intelligence backed by Inaya's node network — verified destinations are checked
         against reputation-weighted, on-chain-anchored reports.
       </Text>
+
+      <View style={[styles.assistantCard, { marginTop: spacing.lg }]}>
+        <TouchableOpacity onPress={() => setChatOpen((v) => !v)} style={styles.assistantHeader}>
+          <View style={styles.assistantIcon}><Text style={{ fontSize: 18 }}>🛡️</Text></View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.assistantTitleRow}>
+              <Text style={styles.assistantTitle}>Ask the Security Assistant</Text>
+              <View style={styles.aiBadge}><Text style={styles.aiBadgeText}>AI-POWERED</Text></View>
+            </View>
+            <Text style={styles.cardHint}>Grounded in real network data — never invents evidence</Text>
+          </View>
+          <Text style={styles.chevron}>{chatOpen ? '▲' : '▼'}</Text>
+        </TouchableOpacity>
+
+        {chatOpen && (
+          <>
+            {chatMessages.length === 0 && (
+              <View style={{ marginTop: spacing.sm }}>
+                <Text style={styles.cardHint}>Not sure what to ask? Try one of these:</Text>
+                <View style={styles.chipRow}>
+                  {SUGGESTED_QUESTIONS.map((q) => (
+                    <TouchableOpacity key={q} style={styles.chip} onPress={() => handleSendChat(q)} disabled={chatSending}>
+                      <Text style={styles.chipText}>{q}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+            <FlatList
+              data={chatMessages}
+              keyExtractor={(_, i) => String(i)}
+              style={{ maxHeight: 240, marginTop: spacing.sm }}
+              renderItem={({ item }) => (
+                <View style={[styles.chatBubble, item.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant]}>
+                  <Text style={styles.chatText}>{item.content}</Text>
+                </View>
+              )}
+            />
+            {chatSending && <Text style={styles.cardHint}>Thinking…</Text>}
+            <View style={styles.checkRow}>
+              <TextInput
+                style={styles.input}
+                placeholder="Ask about a threat or event…"
+                placeholderTextColor={colors.textMuted}
+                value={chatInput}
+                onChangeText={setChatInput}
+              />
+              <TouchableOpacity style={styles.checkButton} onPress={() => handleSendChat()} disabled={chatSending || !chatInput.trim()}>
+                {chatSending ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Send</Text>}
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </View>
 
       <View style={[styles.card, { marginTop: spacing.lg }]}>
         <Text style={styles.cardTitle}>Network overview</Text>
@@ -409,38 +470,6 @@ export default function SecurityScreen() {
         )}
       </View>
 
-      <View style={[styles.card, { marginTop: spacing.lg }]}>
-        <TouchableOpacity onPress={() => setChatOpen((v) => !v)}>
-          <Text style={styles.cardTitle}>Ask the Security Assistant {chatOpen ? '▲' : '▼'}</Text>
-        </TouchableOpacity>
-        {chatOpen && (
-          <>
-            <Text style={styles.cardHint}>e.g. "Why was this blocked?" or "What is this threat?"</Text>
-            <FlatList
-              data={chatMessages}
-              keyExtractor={(_, i) => String(i)}
-              style={{ maxHeight: 240, marginTop: spacing.sm }}
-              renderItem={({ item }) => (
-                <View style={[styles.chatBubble, item.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant]}>
-                  <Text style={styles.chatText}>{item.content}</Text>
-                </View>
-              )}
-            />
-            <View style={styles.checkRow}>
-              <TextInput
-                style={styles.input}
-                placeholder="Ask about a threat or event…"
-                placeholderTextColor={colors.textMuted}
-                value={chatInput}
-                onChangeText={setChatInput}
-              />
-              <TouchableOpacity style={styles.checkButton} onPress={handleSendChat} disabled={chatSending || !chatInput.trim()}>
-                {chatSending ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>Send</Text>}
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-      </View>
     </ScrollView>
   );
 }
@@ -455,6 +484,17 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 12, fontFamily: fonts.sans, color: colors.textSecondary, marginTop: spacing.xs, lineHeight: 17 },
   card: { ...glassCard, padding: spacing.lg },
   cardTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.textPrimary },
+  assistantCard: { ...glassCard, padding: spacing.lg, borderColor: colors.cyan, borderWidth: 1 },
+  assistantHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  assistantIcon: { width: 36, height: 36, borderRadius: radius.md, backgroundColor: colors.cyan, alignItems: 'center', justifyContent: 'center' },
+  assistantTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
+  assistantTitle: { fontFamily: fonts.sansExtraBold, fontSize: 14, color: colors.textPrimary },
+  aiBadge: { backgroundColor: 'rgba(0,242,254,0.1)', borderWidth: 1, borderColor: 'rgba(0,242,254,0.3)', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 2 },
+  aiBadgeText: { fontFamily: fonts.sansBold, fontSize: 8, color: colors.cyan, letterSpacing: 0.5 },
+  chevron: { color: colors.textMuted, fontSize: 11 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  chip: { backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  chipText: { fontFamily: fonts.sansMedium, fontSize: 11, color: colors.textSecondary },
   cardHint: { fontFamily: fonts.sans, fontSize: 11, color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.sm, lineHeight: 16 },
   statsGrid: { flexDirection: 'row', marginTop: spacing.sm },
   statCell: { flex: 1, alignItems: 'center' },

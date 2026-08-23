@@ -7,15 +7,16 @@
 // screenOptions/header styling.
 
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fonts } from '../../theme';
+import { colors, fonts, spacing } from '../../theme';
 import LearnHomeScreen from './LearnHomeScreen';
 import LearnSearchResultsScreen from './LearnSearchResultsScreen';
 import LearnVideoScreen from './LearnVideoScreen';
 import LearnMyLearningScreen from './LearnMyLearningScreen';
 import LearnCategoryScreen from './LearnCategoryScreen';
+import AiTutorButton from '../../components/learn/AiTutorButton';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,7 @@ export default function LearnStack() {
         headerTintColor: colors.textPrimary,
         headerTitleStyle: { fontFamily: fonts.sansExtraBold, fontSize: 15 },
         headerShadowVisible: false,
+        headerRight: () => <AiTutorButton />,
       }}
     >
       <Stack.Screen
@@ -35,9 +37,12 @@ export default function LearnStack() {
         options={({ navigation }) => ({
           title: 'Inaya Learn',
           headerRight: () => (
-            <TouchableOpacity onPress={() => navigation.navigate('LearnMyLearning')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="library-outline" size={22} color={colors.textPrimary} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <AiTutorButton />
+              <TouchableOpacity onPress={() => navigation.navigate('LearnMyLearning')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="library-outline" size={22} color={colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
           ),
         })}
       />
