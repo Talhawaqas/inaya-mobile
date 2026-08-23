@@ -53,6 +53,7 @@ import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
 import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ReferralScreen from './src/screens/ReferralScreen';
 import WatcherPioneerScreen from './src/screens/WatcherPioneerScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 import SecurityScreen from './src/screens/SecurityScreen';
 import LearnStack from './src/screens/learn/LearnStack';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -145,6 +146,7 @@ const DRAWER_ICONS = {
   AIAssistant: 'chatbubble-ellipses-outline',
   Referrals: 'people-outline',
   WatcherPioneer: 'trophy-outline',
+  Notifications: 'notifications-outline',
   Learn: 'school-outline',
   Security: 'shield-checkmark-outline',
   Settings: 'settings-outline',
@@ -163,6 +165,7 @@ const DRAWER_LABELS = {
   AIAssistant: 'Ask AI',
   Referrals: 'Referrals',
   WatcherPioneer: 'Watcher Pioneer Program',
+  Notifications: 'Notifications',
   Learn: 'Inaya Learn',
   Security: 'Security',
   Settings: 'Settings',
@@ -306,6 +309,7 @@ function AppNavigator() {
         <Drawer.Screen name="AIAssistant" component={AIAssistantScreen} options={{ title: DRAWER_LABELS.AIAssistant }} />
         <Drawer.Screen name="Referrals" component={ReferralScreen} options={{ title: DRAWER_LABELS.Referrals }} />
         <Drawer.Screen name="WatcherPioneer" component={WatcherPioneerScreen} options={{ title: DRAWER_LABELS.WatcherPioneer }} />
+        <Drawer.Screen name="Notifications" component={NotificationsScreen} options={{ title: DRAWER_LABELS.Notifications }} />
         <Drawer.Screen name="Learn" component={LearnStack} options={{ title: DRAWER_LABELS.Learn }} />
         <Drawer.Screen name="Security" component={SecurityScreen} options={{ title: DRAWER_LABELS.Security }} />
         <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: DRAWER_LABELS.Settings }} />
