@@ -86,6 +86,38 @@ export default function OrgHomeScreen({ navigation }) {
 
             <TouchableOpacity
               style={styles.aiButton}
+              onPress={() => navigation.navigate('Tasks', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="checkbox-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>Tasks</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiButton}
+              onPress={() => navigation.navigate('CRM', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="people-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>CRM</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiButton}
+              onPress={() => navigation.navigate('Procurement', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="cart-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>Procurement</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiButton}
+              onPress={() => navigation.navigate('Inventory', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="cube-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>Inventory</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiButton}
               onPress={() => navigation.navigate('BusinessAI', { orgId: org.orgId, orgName: org.orgName })}
             >
               <Ionicons name="sparkles-outline" size={14} color={colors.cyan} />

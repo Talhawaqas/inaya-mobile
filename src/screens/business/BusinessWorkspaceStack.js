@@ -21,6 +21,14 @@ import DepartmentsScreen from './DepartmentsScreen';
 import ProjectsScreen from './ProjectsScreen';
 import DocumentsScreen from './DocumentsScreen';
 import DocumentDetailScreen from './DocumentDetailScreen';
+import TasksScreen from './TasksScreen';
+import TaskDetailScreen from './TaskDetailScreen';
+import CRMScreen from './CRMScreen';
+import DealDetailScreen from './DealDetailScreen';
+import ProcurementScreen from './ProcurementScreen';
+import OrderDetailScreen from './OrderDetailScreen';
+import InventoryScreen from './InventoryScreen';
+import ProductDetailScreen from './ProductDetailScreen';
 import BusinessAIScreen from './BusinessAIScreen';
 
 const Stack = createNativeStackNavigator();
@@ -90,6 +98,14 @@ export default function BusinessWorkspaceStack() {
         <Stack.Screen name="Projects" component={ProjectsScreen} />
         <Stack.Screen name="Documents" component={DocumentsScreen} />
         <Stack.Screen name="DocumentDetail" component={DocumentDetailScreen} />
+        <Stack.Screen name="Tasks" component={TasksScreen} />
+        <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
+        <Stack.Screen name="CRM" component={CRMScreen} />
+        <Stack.Screen name="DealDetail" component={DealDetailScreen} />
+        <Stack.Screen name="Procurement" component={ProcurementScreen} />
+        <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+        <Stack.Screen name="Inventory" component={InventoryScreen} />
+        <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
         <Stack.Screen name="BusinessAI" component={BusinessAIScreen} options={{ title: 'AI Assistant' }} />
       </Stack.Navigator>
     </BusinessSessionProvider>
