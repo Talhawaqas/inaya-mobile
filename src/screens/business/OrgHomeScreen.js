@@ -118,6 +118,22 @@ export default function OrgHomeScreen({ navigation }) {
 
             <TouchableOpacity
               style={styles.aiButton}
+              onPress={() => navigation.navigate('Finance', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="cash-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>Finance</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiButton}
+              onPress={() => navigation.navigate('HR', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="id-card-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>HR</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiButton}
               onPress={() => navigation.navigate('BusinessAI', { orgId: org.orgId, orgName: org.orgName })}
             >
               <Ionicons name="sparkles-outline" size={14} color={colors.cyan} />

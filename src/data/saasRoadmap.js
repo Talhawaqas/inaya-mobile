@@ -25,8 +25,17 @@
 // activity log, dashboard summaries, AI tools, and web+mobile UI. See
 // inaya-network-dapp/BUSINESS_OPERATIONS_TASKS.md, _CRM.md,
 // _PROCUREMENT.md, and _INVENTORY.md for what each module covers and
-// what's explicitly still out of scope. Stages 7-8 have no
-// implementation anywhere — roadmap direction only.
+// what's explicitly still out of scope. Stage 7 (Finance & HR) is now
+// real and shipped too — Invoices, Expenses, Payments, CSV reporting,
+// Employee records, Employee documents, Leave management, and Department
+// Administration all have a real schema, workflow/permission
+// enforcement, API routes, an org-wide activity log, dashboard
+// summaries, AI tools, and web+mobile UI. See
+// inaya-network-dapp/BUSINESS_OPERATIONS_FINANCE.md and _HR.md for what
+// each module covers and what's explicitly out of scope (no PDF invoice
+// generation, no payroll/tax processing, no regulated banking — a
+// testnet demonstration/validation layer). Stage 8 has no implementation
+// anywhere — roadmap direction only.
 
 export const ROADMAP_STATUS = {
   LIVE: 'LIVE',
@@ -202,8 +211,8 @@ export const ROADMAP_STAGES = [
   {
     number: 7,
     title: 'Finance & HR',
-    status: ROADMAP_STATUS.FUTURE,
-    description: 'Build secure financial and people-management capabilities directly into the Business Workspace.',
+    status: ROADMAP_STATUS.LIVE,
+    description: 'Secure financial and people-management capabilities built directly into the Business Workspace.',
     groups: [
       {
         title: 'Finance',
@@ -214,6 +223,8 @@ export const ROADMAP_STAGES = [
         items: ['Employee records', 'Employee documents', 'Leave management', 'HR workflows', 'Department administration'],
       },
     ],
+    notes:
+      'Both modules are real and shipped: invoices with a cron-driven overdue status, expense approval workflows, payment recording/approval, and CSV financial reporting; employee lifecycle management, computed leave balances, leave approval, and Department Manager assignment. A testnet demonstration/validation layer, not regulated banking, tax filing, or payroll processing — every Finance/HR screen carries a visible "Testnet / Beta" badge. See BUSINESS_OPERATIONS_FINANCE.md and _HR.md for what\'s covered and what\'s explicitly not yet (e.g. no PDF invoice generation, no multi-currency conversion).',
   },
   {
     number: 8,
