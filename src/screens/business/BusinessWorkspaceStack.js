@@ -33,6 +33,7 @@ import FinanceScreen from './FinanceScreen';
 import InvoiceDetailScreen from './InvoiceDetailScreen';
 import HRScreen from './HRScreen';
 import EmployeeDetailScreen from './EmployeeDetailScreen';
+import InsightsScreen from './InsightsScreen';
 import BusinessAIScreen from './BusinessAIScreen';
 
 const Stack = createNativeStackNavigator();
@@ -114,6 +115,7 @@ export default function BusinessWorkspaceStack() {
         <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} />
         <Stack.Screen name="HR" component={HRScreen} />
         <Stack.Screen name="EmployeeDetail" component={EmployeeDetailScreen} />
+        <Stack.Screen name="Insights" component={InsightsScreen} />
         <Stack.Screen name="BusinessAI" component={BusinessAIScreen} options={{ title: 'AI Assistant' }} />
       </Stack.Navigator>
     </BusinessSessionProvider>

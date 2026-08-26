@@ -134,6 +134,14 @@ export default function OrgHomeScreen({ navigation }) {
 
             <TouchableOpacity
               style={styles.aiButton}
+              onPress={() => navigation.navigate('Insights', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="bar-chart-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>Insights</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiButton}
               onPress={() => navigation.navigate('BusinessAI', { orgId: org.orgId, orgName: org.orgName })}
             >
               <Ionicons name="sparkles-outline" size={14} color={colors.cyan} />
