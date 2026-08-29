@@ -47,6 +47,7 @@ import MyFilesScreen from './src/screens/MyFilesScreen';
 import FaucetScreen from './src/screens/FaucetScreen';
 import BusinessModelScreen from './src/screens/BusinessModelScreen';
 import StakingScreen from './src/screens/StakingScreen';
+import BridgeScreen from './src/screens/BridgeScreen';
 import MyDashboardScreen from './src/screens/MyDashboardScreen';
 import WhitePaperScreen from './src/screens/WhitePaperScreen';
 import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
@@ -140,6 +141,7 @@ const DRAWER_ICONS = {
   Workspace: 'lock-closed-outline',
   SaaSRoadmap: 'map-outline',
   Staking: 'trending-up-outline',
+  Bridge: 'git-network-outline',
   Dashboard: 'grid-outline',
   WhitePaper: 'document-text-outline',
   KnowledgeBase: 'megaphone-outline',
@@ -159,6 +161,7 @@ const DRAWER_LABELS = {
   Workspace: 'Business Workspace',
   SaaSRoadmap: 'Business SaaS Roadmap',
   Staking: 'Staking',
+  Bridge: 'Cross-Chain Bridge',
   Dashboard: 'Dashboard',
   WhitePaper: 'White Paper',
   KnowledgeBase: 'Knowledge Base',
@@ -303,6 +306,7 @@ function AppNavigator() {
         <Drawer.Screen name="Workspace" component={BusinessWorkspaceStack} options={{ title: DRAWER_LABELS.Workspace }} />
         <Drawer.Screen name="SaaSRoadmap" component={SaaSRoadmapScreen} options={{ title: DRAWER_LABELS.SaaSRoadmap }} />
         <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />
+        <Drawer.Screen name="Bridge" component={BridgeScreen} options={{ title: DRAWER_LABELS.Bridge }} />
         <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />
         <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />
         <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />
