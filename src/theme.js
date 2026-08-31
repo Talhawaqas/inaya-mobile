@@ -8,6 +8,19 @@
 // @expo-google-fonts/jetbrains-mono, loaded once via useFonts() in App.js —
 // Inter/JetBrains Mono stand in for Geist Sans/Mono, which aren't
 // distributed as loadable font files for React Native.
+//
+// PHASE 7 (Theme Switch) SCOPE NOTE: `colors` below stays the static,
+// unchanged dark palette every one of the app's 58 screens already
+// imports directly — none of them were touched, zero regression risk.
+// THEME_TOKENS + useTheme() (bottom of this file) are the NEW, additive
+// live-switchable layer: App.js's navigator chrome (drawer, headers, nav
+// theme, lock screen) and the Settings screen's own picker read from the
+// hook and genuinely respond to White/Dark/Neon. Reskinning the other 57
+// screens live would mean migrating every one of them off the static
+// import and moving their `StyleSheet.create()` calls from module scope
+// into the component body (so they re-evaluate per theme change) — a
+// real, mechanical but large migration explicitly out of scope for this
+// pass, stated plainly rather than silently claimed as "done everywhere."
 
 export const colors = {
   bg: '#060913',
@@ -84,3 +97,35 @@ export const glow = (color = colors.cyan, opacity = 0.35, radiusPx = 16) => ({
   shadowRadius: radiusPx,
   elevation: 8,
 });
+
+// ============================================================
+// PHASE 7 — live-switchable theme layer (additive, see header note).
+// Each variant carries exactly the fields App.js's navigator chrome and
+// the Settings picker itself actually read — not a full re-derivation of
+// every token above (bg/surface/navBar/border/cyan/blue/textPrimary/
+// textSecondary/textMuted/danger), matching the web side's identical
+// "~8 most-repeated colors" scope.
+// ============================================================
+export const THEMES = ['white', 'dark', 'neon'];
+export const THEME_LABELS = { white: 'White', dark: 'Dark', neon: 'Neon' };
+
+export const THEME_TOKENS = {
+  dark: {
+    bg: colors.bg, surface: colors.surface, navBar: colors.navBar, border: colors.border,
+    accent: colors.cyan, accent2: colors.blue,
+    textPrimary: colors.textPrimary, textSecondary: colors.textSecondary, textMuted: colors.textMuted,
+    danger: colors.danger,
+  },
+  white: {
+    bg: '#f4f6fb', surface: '#ffffff', navBar: '#ffffff', border: 'rgba(15,23,42,0.10)',
+    accent: '#0284c7', accent2: '#0ea5e9',
+    textPrimary: '#0f172a', textSecondary: '#334155', textMuted: '#64748b',
+    danger: '#dc2626',
+  },
+  neon: {
+    bg: '#050014', surface: '#0d0221', navBar: '#0d0221', border: 'rgba(255,0,229,0.25)',
+    accent: '#00ffe1', accent2: '#ff00e5',
+    textPrimary: '#f5f3ff', textSecondary: '#c4b5fd', textMuted: '#b8a9e0',
+    danger: '#ff4d6d',
+  },
+};

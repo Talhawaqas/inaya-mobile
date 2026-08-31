@@ -16,12 +16,14 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createPasskeyBackup, restorePasskeyBackup, isPasskeyBackupEnvelope } from '@inaya-network/custody-sdk';
-import { colors, spacing, radius, fonts, glassCard } from '../theme';
+import { colors, spacing, radius, fonts, glassCard, THEMES, THEME_LABELS } from '../theme';
+import { useTheme } from '../providers/ThemeProvider';
 import { isBiometricAvailable, getBiometricEnabled, setBiometricEnabled } from '../utils/biometric';
 import { setStoredPasskey, getStoredPasskey, clearStoredPasskey, hasStoredPasskey } from '../utils/passkeyStorage';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const { theme, setTheme } = useTheme();
 
   // Hidden entirely on a device with no Face ID/fingerprint enrolled —
   // never show a toggle for a capability that isn't there.
@@ -204,6 +206,35 @@ export default function SettingsScreen() {
           />
         </View>
       )}
+
+      {/* ============================================================
+          🎨 APP THEME (Phase 7) — White/Dark/Neon, persisted via
+          AsyncStorage (ThemeProvider.js). Applies live to the drawer,
+          headers, and nav chrome (App.js); see theme.js's header note
+          for what's in scope vs. deferred for this pass.
+         ============================================================ */}
+      <Text style={[styles.sectionLabel, { marginTop: spacing.xxl }]}>🎨 App Theme</Text>
+      <View style={[styles.card, styles.row, { marginTop: spacing.sm }]}>
+        {THEMES.map((t) => (
+          <TouchableOpacity
+            key={t}
+            onPress={() => setTheme(t)}
+            style={{
+              flex: 1,
+              paddingVertical: spacing.sm,
+              borderRadius: radius.sm,
+              alignItems: 'center',
+              backgroundColor: theme === t ? 'rgba(0,242,254,0.15)' : 'transparent',
+              borderWidth: 1,
+              borderColor: theme === t ? colors.cyan : 'transparent',
+            }}
+          >
+            <Text style={{ fontFamily: fonts.sansBold, fontSize: 12, color: theme === t ? colors.cyan : colors.textMuted }}>
+              {THEME_LABELS[t]}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {/* ============================================================
           🔐 MASTER NODE PASSKEY — BACKUP & RECOVERY

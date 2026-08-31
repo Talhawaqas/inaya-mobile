@@ -70,6 +70,7 @@ import {
 } from './src/utils/biometric';
 import { isAppLockSuspended, openExternalLink } from './src/utils/appLockSuspend';
 import { colors, fonts } from './src/theme';
+import { ThemeProviderRoot, useTheme } from './src/providers/ThemeProvider';
 
 // General safety net for any render-time crash NOT already caught by
 // WalletProvider's own try/catch around createAppKit() — shows the real
@@ -115,11 +116,12 @@ const Drawer = createDrawerNavigator();
 // StorageDashboardScreen renders its own brand header with the hamburger
 // button that opens the drawer — showing both would double up.
 function HomeStack() {
+  const { tokens } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.navBar },
-        headerTintColor: colors.textPrimary,
+        headerStyle: { backgroundColor: tokens.navBar },
+        headerTintColor: tokens.textPrimary,
         headerTitleStyle: { fontFamily: fonts.sansExtraBold, fontSize: 16 },
         headerShadowVisible: false,
       }}
@@ -178,19 +180,29 @@ const DRAWER_LABELS = {
 // object from scratch — v7 made `fonts` a required theme property, and a
 // hand-written theme missing it causes exactly this crash:
 // "Cannot read property 'regular' of undefined" inside useHeaderConfigProps.
-const navTheme = {
-  ...DarkTheme,
-  dark: true,
-  colors: {
-    ...DarkTheme.colors,
-    primary: colors.cyan,
-    background: colors.bg,
-    card: colors.navBar,
-    text: colors.textPrimary,
-    border: colors.border,
-    notification: colors.warning,
-  },
-};
+//
+// Built inside AppNavigator (below) rather than at module scope — Phase
+// 7 needs it to respond to useTheme(), and DarkTheme.dark stays true even
+// under the "white" token set: React Navigation's dark/light flag mainly
+// affects status-bar-icon contrast and a couple of native chrome
+// defaults, and this app already pins its own StatusBar style separately
+// (see AppNavigator's <StatusBar style="light" />) — the actual visible
+// colors all come from the explicit overrides below regardless.
+function buildNavTheme(tokens) {
+  return {
+    ...DarkTheme,
+    dark: true,
+    colors: {
+      ...DarkTheme.colors,
+      primary: tokens.accent,
+      background: tokens.bg,
+      card: tokens.navBar,
+      text: tokens.textPrimary,
+      border: tokens.border,
+      notification: colors.warning,
+    },
+  };
+}
 
 // Same three community links as the web dApp's socialLinksList
 // (inaya-network-dapp/src/app/page.js) — kept in sync manually, same as
@@ -210,18 +222,19 @@ const SOCIAL_LINKS = [
 // custom parts; DrawerItemList in between handles everything else
 // (active/inactive styling comes from screenOptions in AppNavigator).
 function CustomDrawerContent(props) {
+  const { tokens } = useTheme();
   return (
-    <DrawerContentScrollView {...props} contentContainerStyle={{ backgroundColor: colors.navBar, flexGrow: 1, paddingTop: 0 }}>
-      <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 8 }}>
-        <Text style={{ fontFamily: fonts.sansExtraBold, fontSize: 18, color: colors.textPrimary, letterSpacing: 1 }}>INAYA</Text>
-        <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 10, color: colors.cyan, letterSpacing: 2, marginTop: -2 }}>NETWORK</Text>
+    <DrawerContentScrollView {...props} contentContainerStyle={{ backgroundColor: tokens.navBar, flexGrow: 1, paddingTop: 0 }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: tokens.border, marginBottom: 8 }}>
+        <Text style={{ fontFamily: fonts.sansExtraBold, fontSize: 18, color: tokens.textPrimary, letterSpacing: 1 }}>INAYA</Text>
+        <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 10, color: tokens.accent, letterSpacing: 2, marginTop: -2 }}>NETWORK</Text>
       </View>
       <DrawerItemList {...props} />
       <View style={{ flex: 1 }} />
-      <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 10, color: colors.textMuted, letterSpacing: 1.5, textAlign: 'center', textTransform: 'uppercase', marginTop: 8 }}>
+      <Text style={{ fontFamily: fonts.sansSemiBold, fontSize: 10, color: tokens.textMuted, letterSpacing: 1.5, textAlign: 'center', textTransform: 'uppercase', marginTop: 8 }}>
         Official Channels
       </Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingTop: 10, paddingBottom: 20, borderTopWidth: 1, borderTopColor: colors.border }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingTop: 10, paddingBottom: 20, borderTopWidth: 1, borderTopColor: tokens.border }}>
         {SOCIAL_LINKS.map((social) => (
           <TouchableOpacity
             key={social.label}
@@ -229,7 +242,7 @@ function CustomDrawerContent(props) {
             accessibilityLabel={social.label}
             style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,242,254,0.08)', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Ionicons name={social.icon} color={colors.textMuted} size={18} />
+            <Ionicons name={social.icon} color={tokens.textMuted} size={18} />
           </TouchableOpacity>
         ))}
       </View>
@@ -261,6 +274,9 @@ async function getOrCreateDeviceId() {
 }
 
 function AppNavigator() {
+  const { tokens } = useTheme();
+  const navTheme = buildNavTheme(tokens);
+
   // DAU/WAU activity ping — fire-and-forget, once on launch. Identity is
   // the wallet address if already connected/restored, otherwise a stable
   // device id cached in AsyncStorage — same reasoning as the web dApp's
@@ -288,13 +304,13 @@ function AppNavigator() {
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={({ route }) => ({
           headerShown: route.name !== 'Home' && route.name !== 'Workspace' && route.name !== 'Learn',
-          headerStyle: { backgroundColor: colors.navBar },
-          headerTintColor: colors.textPrimary,
+          headerStyle: { backgroundColor: tokens.navBar },
+          headerTintColor: tokens.textPrimary,
           headerTitleStyle: { fontFamily: fonts.sansExtraBold, fontSize: 16 },
           headerShadowVisible: false,
-          drawerStyle: { backgroundColor: colors.navBar, width: 260 },
-          drawerActiveTintColor: colors.cyan,
-          drawerInactiveTintColor: colors.textMuted,
+          drawerStyle: { backgroundColor: tokens.navBar, width: 260 },
+          drawerActiveTintColor: tokens.accent,
+          drawerInactiveTintColor: tokens.textMuted,
           drawerActiveBackgroundColor: 'rgba(0,242,254,0.08)',
           drawerLabelStyle: { fontFamily: fonts.sansSemiBold, fontSize: 13, marginLeft: -8 },
           drawerIcon: ({ color, size }) => <Ionicons name={DRAWER_ICONS[route.name]} color={color} size={size ?? 20} />,
@@ -462,11 +478,13 @@ export default function App() {
       <SafeAreaProvider>
         <ErrorBoundary>
           <AppLockGate>
-            <WalletProviderRoot>
-              <CardCustomerProviderRoot>
-                <AppNavigator />
-              </CardCustomerProviderRoot>
-            </WalletProviderRoot>
+            <ThemeProviderRoot>
+              <WalletProviderRoot>
+                <CardCustomerProviderRoot>
+                  <AppNavigator />
+                </CardCustomerProviderRoot>
+              </WalletProviderRoot>
+            </ThemeProviderRoot>
           </AppLockGate>
         </ErrorBoundary>
       </SafeAreaProvider>
