@@ -11,9 +11,16 @@
 // Sepolia/Amoy/Fuji/Solana, or staking directly from another chain, isn't possible from mobile
 // yet -- would need WalletProvider extended with more scopes first. Solana is out of scope here
 // entirely (recipient encoding differs, no Solana wallet integration on mobile).
+//
+// Multi-chain SOW, Phase 1: the destination-chain list used to be a hardcoded DEST_CHAINS/
+// CHAIN_NAMES pair here -- the third of three places (alongside the dApp's chains.js and
+// bridge-sdk's chains.js) that had to be manually kept in sync with whatever chains are actually
+// deployed. Now fetched live from GET /api/bridge/supported-chains (the same endpoint the web
+// /bridge page already uses) -- a chain added there shows up here automatically, no app update
+// needed, and a chain that's removed/renamed can't silently drift out of sync either.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { ethers } from 'ethers';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWallet } from '../providers/WalletProvider';
@@ -30,14 +37,6 @@ const INAYA_TOKEN_ADDRESS = '0x3966a3378c8d9e6bb34dd0b8458eef4b878ce94e';
 const BRIDGE_HOME_ADDRESS = '0xaF1341ea8a5284D561aD2F1287698DAFE180c484';
 const TRANSFER_FEE = 100000000000000n; // 0.0001 INAYA, InayaToken's flat transfer fee
 
-const DEST_CHAINS = [
-  { label: 'Sepolia', sublabel: 'ETH', value: 11155111 },
-  { label: 'Amoy', sublabel: 'Polygon', value: 80002 },
-  { label: 'Fuji', sublabel: 'Avalanche', value: 43113 },
-];
-
-const CHAIN_NAMES = { 97: 'BSC Testnet', 11155111: 'Ethereum Sepolia', 80002: 'Polygon Amoy', 43113: 'Avalanche Fuji', 1000000002: 'Solana Devnet' };
-
 const ERC20_ABI = [
   'function approve(address spender, uint256 amount) external returns (bool)',
 ];
@@ -50,7 +49,9 @@ const bridgeHome = new ethers.Interface(BRIDGE_HOME_ABI);
 export default function BridgeScreen() {
   const tabBarHeight = useSafeAreaInsets().bottom;
   const { address, isConnected, invokeMethod, connect, connecting } = useWallet();
-  const [destChainId, setDestChainId] = useState(DEST_CHAINS[0].value);
+  const [chains, setChains] = useState(null); // full list from the API, incl. home + Solana
+  const [chainsError, setChainsError] = useState('');
+  const [destChainId, setDestChainId] = useState(null);
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [position, setPosition] = useState(null);
@@ -58,8 +59,31 @@ export default function BridgeScreen() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/bridge/supported-chains`);
+        const data = await res.json();
+        if (!data.success) throw new Error('Could not load supported chains.');
+        setChains(data.chains);
+        const destChains = data.chains.filter((c) => !c.isHome && c.isEvm !== false);
+        if (destChains[0]) setDestChainId(destChains[0].chainId);
+      } catch (err) {
+        console.warn('Bridge chain list fetch failed:', err);
+        setChainsError('Could not load the list of destination chains — pull to retry.');
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     if (address) setRecipient((r) => r || address);
   }, [address]);
+
+  // Mobile only ever SIGNS on BSC Testnet (see header comment) -- destChains is
+  // everywhere the outbound bridgeOut() call can target; chainNames covers every
+  // chain (incl. home + Solana) for display purposes like the origin-chain breakdown.
+  const destChains = (chains || []).filter((c) => !c.isHome && c.isEvm !== false)
+    .map((c) => ({ label: c.name, value: c.chainId }));
+  const chainNames = Object.fromEntries((chains || []).map((c) => [c.chainId, c.name]));
 
   const refreshPosition = useCallback(async () => {
     if (!address) return;
@@ -81,7 +105,7 @@ export default function BridgeScreen() {
     if (!ethers.isAddress(recipient)) { setLog('❌ Enter a valid recipient address.'); return; }
 
     setBusy(true);
-    setLog(`🔄 Preparing to bridge ${amountNum} $INAYA to ${CHAIN_NAMES[destChainId]}...`);
+    setLog(`🔄 Preparing to bridge ${amountNum} $INAYA to ${chainNames[destChainId]}...`);
     try {
       const amountWei = ethers.parseUnits(amount, 18);
       const recipientBytes32 = ethers.zeroPadValue(recipient, 32);
@@ -92,13 +116,13 @@ export default function BridgeScreen() {
       setLog('⏳ Mining approval transaction...');
       await waitForReceipt(invokeMethod, approveTxHash);
 
-      setLog(`✍️ Signing bridge transaction to ${CHAIN_NAMES[destChainId]}...`);
+      setLog(`✍️ Signing bridge transaction to ${chainNames[destChainId]}...`);
       const bridgeData = bridgeHome.encodeFunctionData('bridgeOut', [destChainId, recipientBytes32, amountWei]);
       const txHash = await invokeMethod({ method: 'eth_sendTransaction', params: [{ from: address, to: BRIDGE_HOME_ADDRESS, data: bridgeData }] });
       setLog('⏳ Mining bridge transaction...');
       await waitForReceipt(invokeMethod, txHash);
 
-      setLog(`✅ Bridged ${amountNum} $INAYA to ${CHAIN_NAMES[destChainId]} — tx ${txHash.slice(0, 14)}... The relayer will deliver it shortly; track status on the web app's /bridge page.`);
+      setLog(`✅ Bridged ${amountNum} $INAYA to ${chainNames[destChainId]} — tx ${txHash.slice(0, 14)}... The relayer will deliver it shortly; track status on the web app's /bridge page.`);
       setAmount('');
       refreshPosition();
     } catch (err) {
@@ -130,7 +154,11 @@ export default function BridgeScreen() {
         <GlassCard style={{ marginBottom: spacing.lg }}>
           <Text style={styles.panelTitle}>Bridge from BSC Testnet</Text>
           <Text style={styles.lockTierLabel}>Destination</Text>
-          <SegmentedToggle options={DEST_CHAINS} value={destChainId} onChange={setDestChainId} style={{ marginBottom: spacing.lg }} />
+          {!chains && !chainsError && <ActivityIndicator color={colors.cyan} style={{ marginBottom: spacing.lg }} />}
+          {!!chainsError && <Text style={[styles.logText, { marginBottom: spacing.lg }]}>{chainsError}</Text>}
+          {destChains.length > 0 && (
+            <SegmentedToggle options={destChains} value={destChainId} onChange={setDestChainId} style={{ marginBottom: spacing.lg }} />
+          )}
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -147,7 +175,7 @@ export default function BridgeScreen() {
             onChangeText={setRecipient}
             autoCapitalize="none"
           />
-          <GradientButton title="Bridge" onPress={handleBridge} loading={busy} disabled={!isConnected || busy} />
+          <GradientButton title="Bridge" onPress={handleBridge} loading={busy} disabled={!isConnected || busy || !destChainId} />
         </GlassCard>
 
         {position && (
@@ -162,7 +190,7 @@ export default function BridgeScreen() {
                 <Text style={[styles.lockTierLabel, { marginTop: spacing.md }]}>By origin network (lifetime)</Text>
                 {position.byOriginChain.map((b) => (
                   <Text key={b.chainId} style={styles.originLine}>
-                    {CHAIN_NAMES[b.chainId] || `Chain ${b.chainId}`}: {Number(ethers.formatUnits(b.lifetimeStaked, 18)).toLocaleString()} INAYA
+                    {chainNames[b.chainId] || `Chain ${b.chainId}`}: {Number(ethers.formatUnits(b.lifetimeStaked, 18)).toLocaleString()} INAYA
                   </Text>
                 ))}
               </>
