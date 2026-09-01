@@ -151,6 +151,11 @@ export default function OrgHomeScreen({ navigation }) {
         ))
       )}
 
+      <TouchableOpacity style={styles.securityButton} onPress={() => navigation.navigate('MfaSettings')}>
+        <Ionicons name="shield-checkmark-outline" size={14} color={colors.cyan} />
+        <Text style={styles.securityButtonText}>Two-Step Verification</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
         <Text style={styles.signOutText}>Sign out</Text>
       </TouchableOpacity>
@@ -173,6 +178,11 @@ const styles = StyleSheet.create({
   },
   aiButtonText: { fontFamily: fonts.sansMedium, fontSize: 12, color: colors.cyan },
   emptyText: { fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+  securityButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs,
+    marginTop: spacing.xl, paddingVertical: spacing.sm, ...glassCard,
+  },
+  securityButtonText: { fontFamily: fonts.sansMedium, fontSize: 12, color: colors.cyan },
   signOutButton: { marginTop: spacing.xxl, alignItems: 'center', paddingVertical: spacing.sm },
   signOutText: { fontFamily: fonts.sansMedium, fontSize: 12, color: colors.danger },
   input: {

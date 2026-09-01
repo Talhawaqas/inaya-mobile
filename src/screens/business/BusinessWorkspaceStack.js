@@ -35,6 +35,7 @@ import HRScreen from './HRScreen';
 import EmployeeDetailScreen from './EmployeeDetailScreen';
 import InsightsScreen from './InsightsScreen';
 import BusinessAIScreen from './BusinessAIScreen';
+import MfaSettingsScreen from './MfaSettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -117,6 +118,7 @@ export default function BusinessWorkspaceStack() {
         <Stack.Screen name="EmployeeDetail" component={EmployeeDetailScreen} />
         <Stack.Screen name="Insights" component={InsightsScreen} />
         <Stack.Screen name="BusinessAI" component={BusinessAIScreen} options={{ title: 'AI Assistant' }} />
+        <Stack.Screen name="MfaSettings" component={MfaSettingsScreen} options={{ title: 'Two-Step Verification' }} />
       </Stack.Navigator>
     </BusinessSessionProvider>
   );

@@ -20,6 +20,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch, setStoredSessionToken } from '../../utils/orgApi';
 import { suspendAppLock, resumeAppLock } from '../../utils/appLockSuspend';
+import MfaVerifyScreen from './MfaVerifyScreen';
 
 // Required once so the in-app browser session Google sign-in opens
 // properly hands control back to the app when it completes — see Expo's
@@ -180,12 +181,28 @@ function GoogleSignInButton({ onIdToken }) {
 export default function BusinessAuthScreen({ onAuthenticated }) {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState('signin'); // 'signin' | 'create'
+  const [mfaPendingToken, setMfaPendingToken] = useState(null);
 
   async function handleGoogleIdToken(idToken) {
     const data = await orgFetch('/api/orgs/login/google', { method: 'POST', body: { idToken } });
+    if (data.mfaRequired) {
+      setMfaPendingToken(data.mfaPendingToken);
+      return;
+    }
     await setStoredSessionToken(data.sessionToken);
     const session = await orgFetch('/api/orgs/session');
     onAuthenticated(session);
+  }
+
+  async function handleMfaVerified(sessionToken) {
+    await setStoredSessionToken(sessionToken);
+    const session = await orgFetch('/api/orgs/session');
+    setMfaPendingToken(null);
+    onAuthenticated(session);
+  }
+
+  if (mfaPendingToken) {
+    return <MfaVerifyScreen mfaPendingToken={mfaPendingToken} onVerified={handleMfaVerified} onCancel={() => setMfaPendingToken(null)} />;
   }
 
   const [email, setEmail] = useState('');
@@ -231,6 +248,10 @@ export default function BusinessAuthScreen({ onAuthenticated }) {
     setConsumeError('');
     try {
       const data = await orgFetch('/api/orgs/login/consume-token', { method: 'POST', body: { token: trimmed } });
+      if (data.mfaRequired) {
+        setMfaPendingToken(data.mfaPendingToken);
+        return;
+      }
       await setStoredSessionToken(data.sessionToken);
       const session = await orgFetch('/api/orgs/session');
       onAuthenticated(session);
