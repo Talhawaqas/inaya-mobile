@@ -26,9 +26,16 @@ import { isBiometricAvailable, promptBiometricUnlock } from './biometric';
 
 const PASSKEY_KEY = 'inaya_master_node_passkey';
 
+// WHEN_UNLOCKED_THIS_DEVICE_ONLY, explicitly -- SecureStore's own default (WHEN_UNLOCKED) allows
+// the item to migrate to a new device during a backup/restore (e.g. iCloud Keychain sync), which
+// is the wrong property for a secret whose whole purpose is being tied to one device's keychain.
+// Doesn't depend on biometric enrollment either way -- this option governs the OS keychain's own
+// protection level, independent of the app-level biometric gate on reads (getStoredPasskey below).
+const SECURE_STORE_OPTIONS = { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY };
+
 async function readRaw() {
   if (Platform.OS === 'web') return AsyncStorage.getItem(PASSKEY_KEY);
-  return SecureStore.getItemAsync(PASSKEY_KEY);
+  return SecureStore.getItemAsync(PASSKEY_KEY, SECURE_STORE_OPTIONS);
 }
 
 /** Writes (or clears, with a falsy value) the passkey to OS-backed secure
@@ -40,8 +47,8 @@ export async function setStoredPasskey(passkey) {
     else await AsyncStorage.removeItem(PASSKEY_KEY);
     return;
   }
-  if (passkey) await SecureStore.setItemAsync(PASSKEY_KEY, passkey);
-  else await SecureStore.deleteItemAsync(PASSKEY_KEY);
+  if (passkey) await SecureStore.setItemAsync(PASSKEY_KEY, passkey, SECURE_STORE_OPTIONS);
+  else await SecureStore.deleteItemAsync(PASSKEY_KEY, SECURE_STORE_OPTIONS);
 }
 
 /** True if a passkey is currently stored, without needing biometric

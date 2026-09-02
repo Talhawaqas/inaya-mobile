@@ -34,16 +34,37 @@ function extractIdTokenFromUrl(url) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+function extractStateFromUrl(url) {
+  const match = url.match(/[#&]state=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// SECURITY: see MfaSettingsScreen.js's identical comment -- inayamobile://
+// isn't exclusive to this app, so a nonce generated per attempt and echoed
+// back by the bounce page is what makes an unsolicited/spoofed deep link
+// (carrying an attacker's own Firebase-verified phone idToken) rejectable
+// here, rather than being submitted to /api/orgs/mfa/verify unconditionally.
+function generateNonce() {
+  return Array.from({ length: 4 }, () => Math.random().toString(36).slice(2)).join('');
+}
+
 export default function MfaVerifyScreen({ mfaPendingToken, onVerified, onCancel }) {
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const handledRef = useRef(false);
+  const pendingStateRef = useRef(null);
 
   useEffect(() => {
     const handler = ({ url }) => {
       if (!url || !url.startsWith(APP_PHONE_BOUNCE_PREFIX)) return;
+      const inboundState = extractStateFromUrl(url);
+      if (!pendingStateRef.current || inboundState !== pendingStateRef.current) {
+        setError('Phone verification failed.');
+        return;
+      }
+      pendingStateRef.current = null; // one-shot -- a replayed/duplicate callback shouldn't match again
       const idToken = extractIdTokenFromUrl(url);
       if (idToken) {
         submitCode(idToken);
@@ -80,7 +101,9 @@ export default function MfaVerifyScreen({ mfaPendingToken, onVerified, onCancel 
   function handlePhoneVerify() {
     setError('');
     suspendAppLock();
-    WebBrowser.openBrowserAsync(`${PHONE_AUTH_URL}?callback=${encodeURIComponent(APP_PHONE_BOUNCE_PREFIX)}`);
+    const nonce = generateNonce();
+    pendingStateRef.current = nonce;
+    WebBrowser.openBrowserAsync(`${PHONE_AUTH_URL}?callback=${encodeURIComponent(APP_PHONE_BOUNCE_PREFIX)}&state=${encodeURIComponent(nonce)}`);
   }
 
   return (

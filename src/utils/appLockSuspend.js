@@ -24,7 +24,7 @@
 // other app launches, not when the user comes back — so for these, the
 // safety timeout above IS the resume mechanism, not a fallback for one.
 
-import { Linking } from 'react-native';
+import { Linking, AppState } from 'react-native';
 
 let suspended = false;
 let safetyTimer = null;
@@ -52,7 +52,28 @@ export function isAppLockSuspended() {
 // Opens an external app/browser the same way every X/Telegram/KYC link and
 // share-sheet call in this app should — suspending AppLockGate first so
 // tapping it doesn't re-lock and unmount the screen the user was on.
+//
+// SECURITY: leaving the full MAX_SUSPEND_MS (2 min) grace in effect the
+// whole time — as the module comment above says was the design for this
+// case — means EVERY background/foreground cycle in that window skips the
+// re-lock check (AppLockGate's isAppLockSuspended() guard), not just the
+// one expected hop out to Telegram/X and back. A phone grabbed anywhere in
+// that 2-minute window, after nothing more than an ordinary social-link
+// tap, unlocks with zero biometric prompt. Resuming as soon as the app is
+// observed returning to the foreground closes that window down to the one
+// real transition it was meant to cover; the timer stays as a backstop
+// for the rare case this listener never fires (e.g. the OS reclaims the
+// app while it's backgrounded, dropping the pending AppState subscription
+// along with it).
 export function openExternalLink(url) {
   suspendAppLock();
+  let previousState = AppState.currentState;
+  const sub = AppState.addEventListener('change', (nextState) => {
+    if (previousState !== 'active' && nextState === 'active') {
+      resumeAppLock();
+      sub.remove();
+    }
+    previousState = nextState;
+  });
   return Linking.openURL(url);
 }

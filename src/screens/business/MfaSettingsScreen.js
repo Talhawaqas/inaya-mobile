@@ -39,6 +39,24 @@ function extractIdTokenFromUrl(url) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+function extractStateFromUrl(url) {
+  const match = url.match(/[#&]state=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// SECURITY: inayamobile:// isn't exclusive to this app -- any other app (or
+// a webpage) on the same device can fire inayamobile://mfa-phone-bounce
+// with an attacker-controlled idToken, and the /mfa/phone-auth page itself
+// has no way to authenticate who opened it. Generating a nonce per attempt,
+// sending it out as `state`, and requiring the inbound deep link to echo it
+// back exactly is what makes an unsolicited/spoofed deep link rejectable —
+// see BusinessAuthScreen.js's GoogleSignInButton for the same pattern
+// (there, Google/expo-auth-session generate and check the nonce; here,
+// nothing upstream does it for us, so this screen owns both ends).
+function generateNonce() {
+  return Array.from({ length: 4 }, () => Math.random().toString(36).slice(2)).join('');
+}
+
 export default function MfaSettingsScreen() {
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState(null);
@@ -51,6 +69,7 @@ export default function MfaSettingsScreen() {
   const [disableCode, setDisableCode] = useState('');
   const [busy, setBusy] = useState('');
   const handledRef = useRef(false);
+  const pendingStateRef = useRef(null);
 
   const load = useCallback(async () => {
     try {
@@ -65,6 +84,12 @@ export default function MfaSettingsScreen() {
   useEffect(() => {
     const handler = ({ url }) => {
       if (!url || !url.startsWith(APP_PHONE_BOUNCE_PREFIX)) return;
+      const inboundState = extractStateFromUrl(url);
+      if (!pendingStateRef.current || inboundState !== pendingStateRef.current) {
+        setError('Phone verification failed.');
+        return;
+      }
+      pendingStateRef.current = null; // one-shot -- a replayed/duplicate callback shouldn't match again
       const idToken = extractIdTokenFromUrl(url);
       if (idToken) {
         handlePhoneIdToken(idToken);
@@ -79,7 +104,9 @@ export default function MfaSettingsScreen() {
   function openPhoneVerify() {
     setError('');
     suspendAppLock();
-    WebBrowser.openBrowserAsync(`${PHONE_AUTH_URL}?callback=${encodeURIComponent(APP_PHONE_BOUNCE_PREFIX)}`);
+    const nonce = generateNonce();
+    pendingStateRef.current = nonce;
+    WebBrowser.openBrowserAsync(`${PHONE_AUTH_URL}?callback=${encodeURIComponent(APP_PHONE_BOUNCE_PREFIX)}&state=${encodeURIComponent(nonce)}`);
   }
 
   async function handlePhoneIdToken(idToken) {

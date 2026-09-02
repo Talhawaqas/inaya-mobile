@@ -78,10 +78,27 @@ const APP_REDIRECT_PREFIX = 'inayamobile://oauth2redirect';
 
 // Manual fragment parse rather than URLSearchParams — not guaranteed
 // available in this RN/Hermes setup (see polyfills.js, which doesn't
-// shim it), and this only ever needs one specific key out of a URL we
+// shim it), and this only ever needs specific keys out of a URL we
 // constructed ourselves in the oauth2redirect page.
 function extractIdTokenFromUrl(url) {
   const match = url.match(/[#&]id_token=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// SECURITY: inayamobile:// is a custom URL scheme, not exclusive to this app —
+// any other app (or a webpage, via Linking.openURL from JS run in a browser)
+// can fire `inayamobile://oauth2redirect#id_token=<attacker-controlled token>`
+// on the same device with no way for the OS to stop it. Without checking that
+// the inbound `state` matches the nonce THIS app generated for the request it
+// actually sent, the Linking listener below would silently accept a
+// stranger's Google id_token and log the victim into the attacker's own
+// Business Workspace account. expo-auth-session already generates a random
+// `state` per request (AuthRequest.js) and Google echoes it back verbatim —
+// this just extracts and checks it, since the native path below bypasses the
+// library's own response object (see its comment) and does everything by
+// hand from the raw URL.
+function extractStateFromUrl(url) {
+  const match = url.match(/[#&]state=([^&]+)/);
   return match ? decodeURIComponent(match[1]) : null;
 }
 
@@ -108,6 +125,9 @@ function GoogleSignInButton({ onIdToken }) {
   const handledRef = useRef(false);
 
   useEffect(() => {
+    // response.params.state is already verified against request.state by expo-auth-session
+    // itself before `response` is ever set to 'success' on this (web) path — no extra check
+    // needed here, unlike the native Linking path below which bypasses that library validation.
     if (response?.type === 'success' && response.params?.id_token) {
       handleIdToken(response.params.id_token);
     } else if (response?.type === 'error') {
@@ -122,6 +142,12 @@ function GoogleSignInButton({ onIdToken }) {
   useEffect(() => {
     const handler = ({ url }) => {
       if (!url || !url.startsWith(APP_REDIRECT_PREFIX)) return;
+      // Reject any inbound URL whose state doesn't match the nonce THIS
+      // in-flight request generated — see extractStateFromUrl's comment.
+      if (!request?.state || extractStateFromUrl(url) !== request.state) {
+        setError('Google sign-in failed.');
+        return;
+      }
       const idToken = extractIdTokenFromUrl(url);
       if (idToken) {
         handleIdToken(idToken);
@@ -131,7 +157,10 @@ function GoogleSignInButton({ onIdToken }) {
     };
     const sub = Linking.addEventListener('url', handler);
     return () => sub.remove();
-  }, []);
+    // request starts null and is populated asynchronously by the hook -- re-subscribing whenever
+    // it changes (in practice: once, null -> populated) keeps the closure's request.state check
+    // from being permanently stuck on a stale null and rejecting every real sign-in.
+  }, [request]);
 
   async function handleIdToken(idToken) {
     if (handledRef.current) return;
