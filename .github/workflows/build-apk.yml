@@ -3,7 +3,11 @@ name: Build Android APK
 on:
   push:
     branches: [main]
+    tags: ["v*"] # a version tag additionally publishes a GitHub Release with a SHA-256 checksum -- see the last two steps below. An ordinary main push still only produces the dev-loop artifact, same as before.
   workflow_dispatch: # lets you trigger this manually from GitHub's Actions tab
+
+permissions:
+  contents: write # only needed for the tag-triggered GitHub Release publish step below
 
 jobs:
   build:
@@ -74,3 +78,26 @@ jobs:
           name: inaya-mobile-release-apk
           path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+      # Verifiable Inaya Client SOW: the two steps below only ever run on a real version
+      # tag (not every ordinary main push) so routine dev-loop builds don't spam GitHub
+      # Releases. This is also what actually gets a build into GitHub Releases at all --
+      # nothing previously did, despite the admin dashboard already summing GitHub
+      # Releases download counts for .apk assets.
+      - name: Compute APK SHA-256
+        if: startsWith(github.ref, 'refs/tags/')
+        id: hash
+        run: |
+          APK=$(find android/app/build/outputs/apk/release -name "*.apk")
+          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$APK" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.hash.outputs.apk_path }}
+          body: |
+            **SHA-256:** `${{ steps.hash.outputs.sha256 }}`
+
+            Verify: `sha256sum <downloaded-apk>` should output the hash above.
