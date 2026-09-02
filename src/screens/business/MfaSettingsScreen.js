@@ -5,18 +5,39 @@
 // every org they belong to, not just one. User's choice: nothing here is
 // mandatory, this screen exists precisely so a member can opt in
 // (Two-Step Verification button on OrgHomeScreen). Same backend as web,
-// same two methods (TOTP/QR code, SMS), same "disabling requires a live
-// code first" rule.
+// same two methods: TOTP/QR code, and SMS — the latter backed by
+// Firebase Phone Auth (see inaya-network-dapp's firebaseAdmin.js), which
+// needs a real browser context (Firebase's client SDK + invisible
+// reCAPTCHA) that a bare RN screen can't provide. Same web-bounce
+// mechanism BusinessAuthScreen's GoogleSignInButton already uses for
+// Google sign-in: open the web app's /mfa/phone-auth page, it runs the
+// real flow, then bounces back into the app via its own custom URL
+// scheme carrying the resulting Firebase ID token, caught below by the
+// Linking listener. Same "disabling requires a live code first" rule.
 //
 // QR rendering: the qrDataUri the backend returns is a plain
 // data:image/png;base64,... string — <Image source={{ uri }}> renders a
 // data URI directly, no extra QR-scanning/rendering library needed here.
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Image, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch } from '../../utils/orgApi';
+import { suspendAppLock, resumeAppLock } from '../../utils/appLockSuspend';
+
+// Same mechanism as BusinessAuthScreen's GoogleSignInButton (see its own
+// header comment for the full explanation of why a Linking listener,
+// not WebBrowser's own promise, is what actually catches the result) —
+// just a different bounce page and a different custom-scheme suffix.
+const PHONE_AUTH_URL = 'https://www.inayanetwork.com/mfa/phone-auth';
+const APP_PHONE_BOUNCE_PREFIX = 'inayamobile://mfa-phone-bounce';
+
+function extractIdTokenFromUrl(url) {
+  const match = url.match(/[#&]idToken=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export default function MfaSettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -25,12 +46,11 @@ export default function MfaSettingsScreen() {
 
   const [totpEnrollment, setTotpEnrollment] = useState(null);
   const [totpCode, setTotpCode] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [smsPending, setSmsPending] = useState(false);
-  const [smsCode, setSmsCode] = useState('');
+  const [smsVerifying, setSmsVerifying] = useState(false);
   const [recoveryCodes, setRecoveryCodes] = useState(null);
   const [disableCode, setDisableCode] = useState('');
   const [busy, setBusy] = useState('');
+  const handledRef = useRef(false);
 
   const load = useCallback(async () => {
     try {
@@ -41,6 +61,43 @@ export default function MfaSettingsScreen() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const handler = ({ url }) => {
+      if (!url || !url.startsWith(APP_PHONE_BOUNCE_PREFIX)) return;
+      const idToken = extractIdTokenFromUrl(url);
+      if (idToken) {
+        handlePhoneIdToken(idToken);
+      } else {
+        setError('Phone verification failed.');
+      }
+    };
+    const sub = Linking.addEventListener('url', handler);
+    return () => sub.remove();
+  }, []);
+
+  function openPhoneVerify() {
+    setError('');
+    suspendAppLock();
+    WebBrowser.openBrowserAsync(`${PHONE_AUTH_URL}?callback=${encodeURIComponent(APP_PHONE_BOUNCE_PREFIX)}`);
+  }
+
+  async function handlePhoneIdToken(idToken) {
+    if (handledRef.current) return;
+    handledRef.current = true;
+    setError(''); setSmsVerifying(true);
+    try {
+      const result = await orgFetch('/api/orgs/mfa/sms/enroll', { method: 'POST', body: { idToken } });
+      if (result.recoveryCodes) setRecoveryCodes(result.recoveryCodes);
+      await load();
+    } catch (err) {
+      setError(err.message || 'Could not verify your phone.');
+    } finally {
+      setSmsVerifying(false);
+      handledRef.current = false;
+      resumeAppLock();
+    }
+  }
 
   async function startTotpEnrollment() {
     setError(''); setBusy('totp-start');
@@ -61,36 +118,6 @@ export default function MfaSettingsScreen() {
       if (result.recoveryCodes) setRecoveryCodes(result.recoveryCodes);
       setTotpEnrollment(null);
       setTotpCode('');
-      await load();
-    } catch (err) {
-      setError(err.message || 'That code doesn’t match.');
-    } finally {
-      setBusy('');
-    }
-  }
-
-  async function startSmsEnrollment() {
-    if (!phoneNumber.trim()) return;
-    setError(''); setBusy('sms-start');
-    try {
-      await orgFetch('/api/orgs/mfa/sms/enroll', { method: 'POST', body: { phoneNumber: phoneNumber.trim() } });
-      setSmsPending(true);
-    } catch (err) {
-      setError(err.message || 'Could not send code.');
-    } finally {
-      setBusy('');
-    }
-  }
-
-  async function confirmSms() {
-    if (!smsCode.trim()) return;
-    setError(''); setBusy('sms-confirm');
-    try {
-      const result = await orgFetch('/api/orgs/mfa/sms/confirm', { method: 'POST', body: { code: smsCode.trim() } });
-      if (result.recoveryCodes) setRecoveryCodes(result.recoveryCodes);
-      setSmsPending(false);
-      setSmsCode('');
-      setPhoneNumber('');
       await load();
     } catch (err) {
       setError(err.message || 'That code doesn’t match.');
@@ -182,35 +209,10 @@ export default function MfaSettingsScreen() {
           {status.smsEnabled && <Text style={styles.badge}>Enabled • •••{status.smsPhoneLast4}</Text>}
         </View>
 
-        {!status.smsEnabled && !smsPending && (
-          <View style={{ marginTop: spacing.sm }}>
-            <TextInput
-              style={styles.input}
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              placeholder="+15551234567"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="phone-pad"
-              autoCapitalize="none"
-            />
-            <TouchableOpacity style={styles.actionButton} onPress={startSmsEnrollment} disabled={busy === 'sms-start'}>
-              {busy === 'sms-start' ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.actionButtonText}>Send code</Text>}
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {smsPending && (
-          <View style={{ marginTop: spacing.sm }}>
-            <TextInput
-              style={styles.input}
-              value={smsCode}
-              onChangeText={setSmsCode}
-              placeholder="6-digit code"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-            />
-            <TouchableOpacity style={styles.actionButton} onPress={confirmSms} disabled={busy === 'sms-confirm'}>
-              {busy === 'sms-confirm' ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.actionButtonText}>Confirm</Text>}
+        {!status.smsEnabled && (
+          <View style={{ marginTop: spacing.md }}>
+            <TouchableOpacity style={styles.actionButton} onPress={openPhoneVerify} disabled={smsVerifying}>
+              {smsVerifying ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.actionButtonText}>Verify via Web</Text>}
             </TouchableOpacity>
           </View>
         )}

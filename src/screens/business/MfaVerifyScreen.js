@@ -5,47 +5,82 @@
 // succeeds AND the account has MFA enrolled (mfaRequired in the
 // consume-token/google response). Same backend as web
 // (inaya-network-dapp's /api/orgs/mfa/*) — POST /api/orgs/mfa/verify
-// accepts a TOTP code, an SMS code, or a recovery code and, on success,
-// returns a real sessionToken in its JSON body (not just a cookie mobile
-// can't read — see orgApi.js's header comment for why mobile always needs
-// the token itself). Server-side rate limiting (5 attempts) means this
-// screen just relays whatever error comes back.
+// accepts a TOTP code, a Firebase Phone Auth ID token, or a recovery code
+// and, on success, returns a real sessionToken in its JSON body (not just
+// a cookie mobile can't read — see orgApi.js's header comment for why
+// mobile always needs the token itself). Server-side rate limiting (5
+// attempts) means this screen just relays whatever error comes back.
+//
+// "Verify via Web" reuses the exact same bounce mechanism as
+// MfaSettingsScreen's enrollment button and BusinessAuthScreen's
+// GoogleSignInButton — opens the web app's /mfa/phone-auth page (a real
+// browser context is what Firebase's client SDK + invisible reCAPTCHA
+// need), which bounces back into the app with a signed ID token that's
+// submitted here as the "code" itself.
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch } from '../../utils/orgApi';
+import { suspendAppLock, resumeAppLock } from '../../utils/appLockSuspend';
+
+const PHONE_AUTH_URL = 'https://www.inayanetwork.com/mfa/phone-auth';
+const APP_PHONE_BOUNCE_PREFIX = 'inayamobile://mfa-phone-bounce';
+
+function extractIdTokenFromUrl(url) {
+  const match = url.match(/[#&]idToken=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export default function MfaVerifyScreen({ mfaPendingToken, onVerified, onCancel }) {
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [smsSent, setSmsSent] = useState(false);
+  const handledRef = useRef(false);
 
-  async function handleVerify() {
-    if (!code.trim()) return;
+  useEffect(() => {
+    const handler = ({ url }) => {
+      if (!url || !url.startsWith(APP_PHONE_BOUNCE_PREFIX)) return;
+      const idToken = extractIdTokenFromUrl(url);
+      if (idToken) {
+        submitCode(idToken);
+      } else {
+        setError('Phone verification failed.');
+      }
+    };
+    const sub = Linking.addEventListener('url', handler);
+    return () => sub.remove();
+  }, []);
+
+  async function submitCode(rawCode) {
+    if (handledRef.current) return;
+    handledRef.current = true;
     setSubmitting(true);
     setError('');
     try {
-      const data = await orgFetch('/api/orgs/mfa/verify', { method: 'POST', body: { mfaPendingToken, code: code.trim() } });
+      const data = await orgFetch('/api/orgs/mfa/verify', { method: 'POST', body: { mfaPendingToken, code: rawCode } });
       await onVerified(data.sessionToken);
     } catch (err) {
       setError(err.message || 'Could not verify.');
     } finally {
       setSubmitting(false);
+      handledRef.current = false;
+      resumeAppLock();
     }
   }
 
-  async function handleSendSms() {
+  function handleVerify() {
+    if (!code.trim()) return;
+    submitCode(code.trim());
+  }
+
+  function handlePhoneVerify() {
     setError('');
-    try {
-      await orgFetch('/api/orgs/mfa/send-sms', { method: 'POST', body: { mfaPendingToken } });
-      setSmsSent(true);
-    } catch (err) {
-      setError(err.message || 'Could not send code.');
-    }
+    suspendAppLock();
+    WebBrowser.openBrowserAsync(`${PHONE_AUTH_URL}?callback=${encodeURIComponent(APP_PHONE_BOUNCE_PREFIX)}`);
   }
 
   return (
@@ -71,10 +106,8 @@ export default function MfaVerifyScreen({ mfaPendingToken, onVerified, onCancel 
         </TouchableOpacity>
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <TouchableOpacity style={styles.linkRow} onPress={handleSendSms} disabled={smsSent}>
-          <Text style={[styles.linkText, smsSent && styles.linkTextDisabled]}>
-            {smsSent ? 'Code sent — check your phone' : 'Text me a code instead'}
-          </Text>
+        <TouchableOpacity style={styles.linkRow} onPress={handlePhoneVerify} disabled={submitting}>
+          <Text style={styles.linkText}>Verify by phone instead</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.linkRow} onPress={onCancel}>
@@ -114,5 +147,4 @@ const styles = StyleSheet.create({
   error: { fontFamily: fonts.sans, fontSize: 11, color: colors.danger, marginTop: spacing.sm },
   linkRow: { marginTop: spacing.md, alignItems: 'center' },
   linkText: { fontFamily: fonts.sansMedium, fontSize: 11, color: colors.textMuted, textDecorationLine: 'underline' },
-  linkTextDisabled: { opacity: 0.5, textDecorationLine: 'none' },
 });
