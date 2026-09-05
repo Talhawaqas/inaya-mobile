@@ -100,6 +100,26 @@ export default function OrgHomeScreen({ navigation }) {
               <Text style={styles.aiButtonText}>CRM</Text>
             </TouchableOpacity>
 
+            {org.vertical === 'healthcare' && (
+              <TouchableOpacity
+                style={styles.aiButton}
+                onPress={() => navigation.navigate('Health', { orgId: org.orgId, orgName: org.orgName, role: org.role })}
+              >
+                <Ionicons name="medkit-outline" size={14} color={colors.cyan} />
+                <Text style={styles.aiButtonText}>Health OS</Text>
+              </TouchableOpacity>
+            )}
+
+            {org.vertical === 'legal' && (
+              <TouchableOpacity
+                style={styles.aiButton}
+                onPress={() => navigation.navigate('Legal', { orgId: org.orgId, orgName: org.orgName, role: org.role })}
+              >
+                <Ionicons name="briefcase-outline" size={14} color={colors.cyan} />
+                <Text style={styles.aiButtonText}>Legal OS</Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
               style={styles.aiButton}
               onPress={() => navigation.navigate('Procurement', { orgId: org.orgId, orgName: org.orgName })}

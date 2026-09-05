@@ -25,6 +25,10 @@ import TasksScreen from './TasksScreen';
 import TaskDetailScreen from './TaskDetailScreen';
 import CRMScreen from './CRMScreen';
 import DealDetailScreen from './DealDetailScreen';
+import HealthScreen from './HealthScreen';
+import PatientDetailScreen from './PatientDetailScreen';
+import LegalScreen from './LegalScreen';
+import MatterDetailScreen from './MatterDetailScreen';
 import ProcurementScreen from './ProcurementScreen';
 import OrderDetailScreen from './OrderDetailScreen';
 import InventoryScreen from './InventoryScreen';
@@ -108,6 +112,10 @@ export default function BusinessWorkspaceStack() {
         <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
         <Stack.Screen name="CRM" component={CRMScreen} />
         <Stack.Screen name="DealDetail" component={DealDetailScreen} />
+        <Stack.Screen name="Health" component={HealthScreen} options={{ title: 'Health OS' }} />
+        <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />
+        <Stack.Screen name="Legal" component={LegalScreen} options={{ title: 'Legal OS' }} />
+        <Stack.Screen name="MatterDetail" component={MatterDetailScreen} />
         <Stack.Screen name="Procurement" component={ProcurementScreen} />
         <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
         <Stack.Screen name="Inventory" component={InventoryScreen} />
