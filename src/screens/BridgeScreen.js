@@ -19,7 +19,7 @@
 // /bridge page already uses) -- a chain added there shows up here automatically, no app update
 // needed, and a chain that's removed/renamed can't silently drift out of sync either.
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { ethers } from 'ethers';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,8 +43,13 @@ const ERC20_ABI = [
 const BRIDGE_HOME_ABI = [
   'function bridgeOut(uint256 destChainId, bytes32 recipient, uint256 amount) external returns (bytes32 messageId)',
 ];
+const MESSENGER_SENT_ABI = [
+  'event MessageSent(bytes32 indexed messageId, tuple(uint256 sourceChainId, bytes32 sourceContract, uint256 destChainId, bytes32 destContract, uint256 nonce, uint8 msgType, bytes payload) message)',
+];
 const erc20 = new ethers.Interface(ERC20_ABI);
 const bridgeHome = new ethers.Interface(BRIDGE_HOME_ABI);
+const messengerIface = new ethers.Interface(MESSENGER_SENT_ABI);
+const BSC_TESTNET_CHAIN_ID = 97;
 
 export default function BridgeScreen() {
   const tabBarHeight = useSafeAreaInsets().bottom;
@@ -57,6 +62,8 @@ export default function BridgeScreen() {
   const [position, setPosition] = useState(null);
   const [log, setLog] = useState('');
   const [busy, setBusy] = useState(false);
+  const mounted = useRef(true);
+  useEffect(() => () => { mounted.current = false; }, []);
 
   useEffect(() => {
     (async () => {
@@ -98,6 +105,30 @@ export default function BridgeScreen() {
 
   useEffect(() => { refreshPosition(); }, [refreshPosition]);
 
+  // Polls the backend for the transfer's real delivery status and keeps the log line current.
+  async function trackTransfer(messageHash, baseText, destName) {
+    for (let i = 0; i < 60 && mounted.current; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      try {
+        const res = await fetch(`${API_BASE}/api/bridge/transfer-status/${messageHash}`);
+        const data = await res.json();
+        const t = data.transfer;
+        if (!data.success || !t || !mounted.current) continue;
+        if (t.status === 'completed') {
+          setLog(`✅ Delivered. Your $INAYA is now on ${destName}${t.destTxHash ? ` (tx ${t.destTxHash.slice(0, 14)}...)` : ''}.\n\n${baseText.split('\n\n').slice(1, 2).join('')}`);
+          return;
+        }
+        if (t.status === 'failed') {
+          setLog(`❌ Delivery to ${destName} failed: ${t.failureReason || 'unknown reason'}. Your $INAYA is still held safely on BSC Testnet; contact support with this transaction.`);
+          return;
+        }
+      } catch (err) {
+        console.warn('Bridge status poll failed:', err);
+      }
+    }
+    if (mounted.current) setLog(`${baseText}\n\nStill pending. It will be delivered automatically; reopen this screen later to check your ${destName} balance.`);
+  }
+
   async function handleBridge() {
     if (!isConnected || !address) { setLog('❌ Connect your wallet first.'); return; }
     const amountNum = parseFloat(amount);
@@ -114,17 +145,55 @@ export default function BridgeScreen() {
       const approveData = erc20.encodeFunctionData('approve', [BRIDGE_HOME_ADDRESS, amountWei + TRANSFER_FEE]);
       const approveTxHash = await invokeMethod({ method: 'eth_sendTransaction', params: [{ from: address, to: INAYA_TOKEN_ADDRESS, data: approveData }] });
       setLog('⏳ Mining approval transaction...');
-      await waitForReceipt(invokeMethod, approveTxHash);
+      const approveReceipt = await waitForReceipt(invokeMethod, approveTxHash);
+      if (approveReceipt.status === '0x0') throw new Error('The approval transaction was reverted on-chain. Nothing was bridged.');
 
       setLog(`✍️ Signing bridge transaction to ${chainNames[destChainId]}...`);
       const bridgeData = bridgeHome.encodeFunctionData('bridgeOut', [destChainId, recipientBytes32, amountWei]);
       const txHash = await invokeMethod({ method: 'eth_sendTransaction', params: [{ from: address, to: BRIDGE_HOME_ADDRESS, data: bridgeData }] });
       setLog('⏳ Mining bridge transaction...');
-      await waitForReceipt(invokeMethod, txHash);
+      const bridgeReceipt = await waitForReceipt(invokeMethod, txHash);
+      if (bridgeReceipt.status === '0x0') throw new Error('The bridge transaction was reverted on-chain. Your $INAYA was not moved.');
 
-      setLog(`✅ Bridged ${amountNum} $INAYA to ${chainNames[destChainId]} — tx ${txHash.slice(0, 14)}... The relayer will deliver it shortly; track status on the web app's /bridge page.`);
+      const destName = chainNames[destChainId];
+      const wrapped = chains?.find((c) => c.chainId === destChainId)?.contracts?.wrappedInaya;
+      const sent = (bridgeReceipt.logs || [])
+        .map((l) => { try { return messengerIface.parseLog(l); } catch { return null; } })
+        .find((e) => e && e.name === 'MessageSent');
+      const where =
+        `✅ ${amountNum} $INAYA is locked on BSC Testnet and on its way to ${destName} (tx ${txHash.slice(0, 14)}...).\n\n` +
+        `It arrives as bridged $INAYA on ${destName}, not on BSC, so your BSC balance stays lower. ` +
+        `To see it, switch your wallet to ${destName} and add this token: ${wrapped || 'see the Inaya docs for the bridged token address'}.\n\n` +
+        `Delivery is automatic and usually takes a few minutes.`;
+      setLog(where);
       setAmount('');
       refreshPosition();
+
+      if (sent) {
+        const m = sent.args.message;
+        fetch(`${API_BASE}/api/bridge/initiate-transfer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messageHash: sent.args.messageId,
+            sourceChainId: BSC_TESTNET_CHAIN_ID,
+            destChainId,
+            amount: amountWei.toString(),
+            userAddress: address,
+            sourceTxHash: txHash,
+            message: {
+              sourceChainId: m.sourceChainId.toString(),
+              sourceContract: m.sourceContract,
+              destChainId: m.destChainId.toString(),
+              destContract: m.destContract,
+              nonce: m.nonce.toString(),
+              msgType: m.msgType,
+              payload: m.payload,
+            },
+          }),
+        }).catch((err) => console.warn('Bridge register failed (indexer will still pick it up):', err));
+        trackTransfer(sent.args.messageId, where, destName);
+      }
     } catch (err) {
       console.error('Bridge failed:', err);
       setLog(`❌ Bridge failed: ${err?.message || err}`);
