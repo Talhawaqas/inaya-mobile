@@ -39,7 +39,9 @@ const TRANSFER_FEE = 100000000000000n; // 0.0001 INAYA, InayaToken's flat transf
 
 const ERC20_ABI = [
   'function approve(address spender, uint256 amount) external returns (bool)',
+  'function balanceOf(address account) view returns (uint256)',
 ];
+const BSC_TESTNET_RPC = 'https://bsc-testnet-rpc.publicnode.com'; // read-only balance lookups go straight to RPC so they never prompt the wallet
 const BRIDGE_HOME_ABI = [
   'function bridgeOut(uint256 destChainId, bytes32 recipient, uint256 amount) external returns (bytes32 messageId)',
 ];
@@ -62,6 +64,8 @@ export default function BridgeScreen() {
   const [position, setPosition] = useState(null);
   const [log, setLog] = useState('');
   const [busy, setBusy] = useState(false);
+  const [balance, setBalance] = useState(null); // bigint, null until known
+  const [history, setHistory] = useState([]);
   const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
 
@@ -105,6 +109,43 @@ export default function BridgeScreen() {
 
   useEffect(() => { refreshPosition(); }, [refreshPosition]);
 
+  const refreshBalance = useCallback(async () => {
+    if (!address) return null;
+    try {
+      const res = await fetch(BSC_TESTNET_RPC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: INAYA_TOKEN_ADDRESS, data: erc20.encodeFunctionData('balanceOf', [address]) }, 'latest'] }),
+      });
+      const json = await res.json();
+      if (!json.result) return null;
+      const value = BigInt(json.result);
+      if (mounted.current) setBalance(value);
+      return value;
+    } catch (err) {
+      console.warn('Bridge balance fetch failed:', err);
+      return null;
+    }
+  }, [address]);
+
+  const refreshHistory = useCallback(async () => {
+    if (!address) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/bridge/transfers/${address}`);
+      const data = await res.json();
+      if (data.success && mounted.current) setHistory(data.transfers.slice(0, 5));
+    } catch (err) {
+      console.warn('Bridge history fetch failed:', err);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    refreshBalance();
+    refreshHistory();
+    const interval = setInterval(refreshHistory, 20000);
+    return () => clearInterval(interval);
+  }, [refreshBalance, refreshHistory]);
+
   // Polls the backend for the transfer's real delivery status and keeps the log line current.
   async function trackTransfer(messageHash, baseText, destName) {
     for (let i = 0; i < 60 && mounted.current; i++) {
@@ -141,6 +182,14 @@ export default function BridgeScreen() {
       const amountWei = ethers.parseUnits(amount, 18);
       const recipientBytes32 = ethers.zeroPadValue(recipient, 32);
 
+      // The bridge pulls the amount PLUS InayaToken's flat fee, so bridging exactly your whole balance reverts.
+      const current = await refreshBalance();
+      const needed = amountWei + TRANSFER_FEE;
+      if (current !== null && current < needed) {
+        setLog(`❌ Your balance is ${ethers.formatUnits(current, 18)} INAYA. Bridging ${amountNum} needs ${ethers.formatUnits(needed, 18)} (the amount plus a ${ethers.formatUnits(TRANSFER_FEE, 18)} INAYA transfer fee).`);
+        return;
+      }
+
       setLog('✍️ Approving $INAYA for the bridge...');
       const approveData = erc20.encodeFunctionData('approve', [BRIDGE_HOME_ADDRESS, amountWei + TRANSFER_FEE]);
       const approveTxHash = await invokeMethod({ method: 'eth_sendTransaction', params: [{ from: address, to: INAYA_TOKEN_ADDRESS, data: approveData }] });
@@ -168,6 +217,8 @@ export default function BridgeScreen() {
       setLog(where);
       setAmount('');
       refreshPosition();
+      refreshBalance();
+      refreshHistory();
 
       if (sent) {
         const m = sent.args.message;
@@ -228,6 +279,9 @@ export default function BridgeScreen() {
           {destChains.length > 0 && (
             <SegmentedToggle options={destChains} value={destChainId} onChange={setDestChainId} style={{ marginBottom: spacing.lg }} />
           )}
+          {isConnected && balance !== null && (
+            <Text style={styles.balanceLine}>Your balance: {Number(ethers.formatUnits(balance, 18)).toLocaleString(undefined, { maximumFractionDigits: 4 })} INAYA (a {ethers.formatUnits(TRANSFER_FEE, 18)} INAYA fee is added)</Text>
+          )}
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -246,6 +300,23 @@ export default function BridgeScreen() {
           />
           <GradientButton title="Bridge" onPress={handleBridge} loading={busy} disabled={!isConnected || busy || !destChainId} />
         </GlassCard>
+
+        {isConnected && (
+          <GlassCard style={{ marginBottom: spacing.lg }}>
+            <Text style={styles.panelTitle}>Your recent transfers</Text>
+            {history.length === 0 && <Text style={styles.originLine}>No bridge transfers found for this wallet yet.</Text>}
+            {history.map((t) => (
+              <View key={t.messageHash} style={{ marginBottom: spacing.sm }}>
+                <Text style={styles.originLine}>
+                  {Number(ethers.formatUnits(t.amount || '0', 18)).toLocaleString(undefined, { maximumFractionDigits: 4 })} INAYA to {chainNames[t.destChainId] || `Chain ${t.destChainId}`}
+                </Text>
+                <Text style={styles.historyStatus}>
+                  {t.status === 'completed' ? '✅ Delivered' : t.status === 'failed' ? `❌ Failed${t.failureReason ? ': ' + t.failureReason : ''}` : '⏳ In progress, delivery is automatic'} · {new Date(t.createdAt).toLocaleString()}
+                </Text>
+              </View>
+            ))}
+          </GlassCard>
+        )}
 
         {position && (
           <GlassCard style={{ marginBottom: spacing.lg }}>
@@ -291,6 +362,8 @@ const styles = StyleSheet.create({
   },
   metricLabel: { fontFamily: fonts.sansSemiBold, fontSize: 11, color: colors.textSecondary },
   metricValue: { fontFamily: fonts.monoBold, fontSize: 18, color: colors.textPrimary, marginTop: spacing.xs },
+  balanceLine: { fontFamily: fonts.mono, fontSize: 11, color: colors.textSecondary, marginBottom: spacing.sm },
+  historyStatus: { fontFamily: fonts.sans, fontSize: 11, color: colors.textMuted, marginTop: 2 },
   originLine: { fontFamily: fonts.mono, fontSize: 12, color: colors.textSecondary, marginTop: spacing.xs },
   footnote: { fontFamily: fonts.sans, fontSize: 11, color: colors.textMuted, fontStyle: 'italic', textAlign: 'center', marginTop: spacing.sm },
 });
