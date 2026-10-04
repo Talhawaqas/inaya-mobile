@@ -88,15 +88,15 @@ export async function getPioneerStatus(address) {
 // Google's ID token authenticates each request (it lasts about an hour); a 401 means "sign in again" and is marked with err.status.
 // ---------------------------------------------------------------------------------------------------------------------
 
-async function socialRequest(path, { method = 'GET', idToken, body } = {}) {
+async function socialRequest(path, { method = 'GET', idToken, body, provider = 'google' } = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', ...(method === 'GET' ? { Authorization: `Bearer ${idToken}` } : {}) },
-    ...(method === 'POST' ? { body: JSON.stringify({ provider: 'google', idToken, ...body }) } : {}),
+    ...(method === 'POST' ? { body: JSON.stringify({ provider, idToken, ...body }) } : {}),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(res.status === 401 ? 'Your Google sign-in expired. Please sign in again.' : data.error || `Request failed (${res.status}).`);
+    const err = new Error(res.status === 401 ? `Your ${provider === 'telegram' ? 'Telegram' : 'Google'} sign-in expired. Please sign in again.` : data.error || `Request failed (${res.status}).`);
     err.status = res.status;
     err.activeSession = data.activeSession;
     throw err;
@@ -104,15 +104,15 @@ async function socialRequest(path, { method = 'GET', idToken, body } = {}) {
   return data;
 }
 
-export const enrollPioneerSocial = (idToken, { followedX, joinedTelegram }) => socialRequest('/api/watcher/enroll', { method: 'POST', idToken, body: { followedX, joinedTelegram } });
-export const qualifyViaSocialLogin = (idToken) => socialRequest('/api/watcher/qualify', { method: 'POST', idToken, body: { method: 'social', qualifyingRef: null } });
-export const getPioneerStatusSocial = (idToken) => socialRequest('/api/watcher/status?provider=google', { idToken });
+export const enrollPioneerSocial = (idToken, { followedX, joinedTelegram }, provider = 'google') => socialRequest('/api/watcher/enroll', { method: 'POST', idToken, provider, body: { followedX, joinedTelegram } });
+export const qualifyViaSocialLogin = (idToken, provider = 'google') => socialRequest('/api/watcher/qualify', { method: 'POST', idToken, provider, body: { method: 'social', qualifyingRef: null } });
+export const getPioneerStatusSocial = (idToken, provider = 'google') => socialRequest(`/api/watcher/status?provider=${provider}`, { idToken, provider });
 
 /** Connects the signed-in Google account to a wallet. Needs BOTH proofs: the Google token and a signature from the wallet. */
-export async function linkWalletToLogin(invokeMethod, address, idToken, subject) {
+export async function linkWalletToLogin(invokeMethod, address, idToken, subject, provider = 'google') {
   // The message binds the link to this exact Google account (provider + its stable account id), so a signature cannot be reused for another one.
-  const { message, signature, timestamp } = await signWatcherAction(invokeMethod, address, { action: 'link_social', extra: { provider: 'google', subject } });
-  return socialRequest('/api/watcher/link', { method: 'POST', idToken, body: { walletAddress: address, message, signature, timestamp } });
+  const { message, signature, timestamp } = await signWatcherAction(invokeMethod, address, { action: 'link_social', extra: { provider, subject } });
+  return socialRequest('/api/watcher/link', { method: 'POST', idToken, provider, body: { walletAddress: address, message, signature, timestamp } });
 }
 
 /** The Google account id (`sub`) is inside the ID token. It is only used to build the message the wallet signs; the server verifies the token itself
@@ -127,3 +127,14 @@ export function googleSubjectFromIdToken(idToken) {
     return JSON.parse(out).sub || null;
   } catch { return null; }
 }
+
+// ---- Telegram sign-in: the app opens the bot, the person presses Start and confirms, and the app polls for a session token (valid ~30 days). ----
+async function telegramJson(path, init) {
+  const res = await fetch(`${API_BASE}${path}`, init);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.error || `Request failed (${res.status}).`), { status: res.status });
+  return data;
+}
+export const isTelegramSignInEnabled = async () => { try { return !!(await telegramJson('/api/watcher/telegram/start')).enabled; } catch { return false; } };
+export const startTelegramLogin = () => telegramJson('/api/watcher/telegram/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+export const pollTelegramLogin = (code) => telegramJson(`/api/watcher/telegram/poll?code=${encodeURIComponent(code)}`);

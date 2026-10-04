@@ -25,8 +25,10 @@ import {
 } from '../utils/watcherApi';
 import { openExternalLink } from '../utils/appLockSuspend';
 import GoogleSignInButton, { isGoogleSignInConfigured } from '../components/GoogleSignInButton';
+import TelegramSignInButton from '../components/TelegramSignInButton';
 
-// The Google sign-in is kept for the life of the app process only (its token lasts about an hour); it is never written to storage.
+// The social sign-in (Google or Telegram) is kept for the life of the app process only; it is never written to storage. Google's token lasts about an hour,
+// Telegram's about 30 days. Shape: { provider: 'google' | 'telegram', idToken, subject }.
 let rememberedGoogle = null;
 
 const X_POST_URL = 'https://x.com/InayaNetwork';
@@ -79,12 +81,14 @@ export default function WatcherPioneerScreen() {
   const [nowTick, setNowTick] = useState(Date.now());
   // Social login: when signed in with Google the program is used through that account (it resolves to the right record whether the person
   // started with Google, or started with a wallet and attached Google). Otherwise everything below behaves exactly as it always has.
-  const [google, setGoogleState] = useState(rememberedGoogle); // { idToken, subject } | null
+  const [google, setGoogleState] = useState(rememberedGoogle); // { provider, idToken, subject } | null  (named for the first provider; it holds either)
   const [notice, setNotice] = useState('');
   const [linking, setLinking] = useState(false);
   const setGoogle = (g) => { rememberedGoogle = g; setGoogleState(g); };
   const googleOn = !!google;
-  const identityKey = googleOn ? `google:${google.subject}` : address;
+  const provider = google?.provider || 'google';
+  const providerLabel = provider === 'telegram' ? 'Telegram' : 'Google';
+  const identityKey = googleOn ? `${provider}:${google.subject}` : address;
 
   const pollRef = useRef(null);
   const tickRef = useRef(null);
@@ -92,7 +96,7 @@ export default function WatcherPioneerScreen() {
   const refreshStatus = useCallback(async () => {
     if (!identityKey) return;
     try {
-      const data = googleOn ? await getPioneerStatusSocial(google.idToken) : await getPioneerStatus(address);
+      const data = googleOn ? await getPioneerStatusSocial(google.idToken, provider) : await getPioneerStatus(address);
       setStatus(data);
       setError('');
     } catch (err) {
@@ -101,7 +105,7 @@ export default function WatcherPioneerScreen() {
     } finally {
       setLoading(false);
     }
-  }, [identityKey, googleOn, google, address]);
+  }, [identityKey, googleOn, google, address, provider]);
 
   useEffect(() => {
     if (!identityKey) { setLoading(false); return; }
@@ -123,7 +127,7 @@ export default function WatcherPioneerScreen() {
     setEnrolling(true);
     setError('');
     try {
-      if (googleOn) await enrollPioneerSocial(google.idToken, { followedX, joinedTelegram });
+      if (googleOn) await enrollPioneerSocial(google.idToken, { followedX, joinedTelegram }, provider);
       else await enrollPioneer(invokeMethod, address, { followedX, joinedTelegram });
       await refreshStatus();
     } catch (err) {
@@ -137,7 +141,7 @@ export default function WatcherPioneerScreen() {
     setQualifying(true);
     setError('');
     try {
-      if (googleOn) await qualifyViaSocialLogin(google.idToken);
+      if (googleOn) await qualifyViaSocialLogin(google.idToken, provider);
       else await qualifyViaSocial(invokeMethod, address);
       await refreshStatus();
     } catch (err) {
@@ -151,7 +155,21 @@ export default function WatcherPioneerScreen() {
     const subject = googleSubjectFromIdToken(idToken);
     if (!subject) throw new Error('Could not read your Google account. Please try again.');
     setError(''); setNotice('');
-    setGoogle({ idToken, subject });
+    setGoogle({ provider: 'google', idToken, subject });
+  }
+
+  async function handleTelegramLogin({ idToken, subject }) {
+    setError(''); setNotice('');
+    setGoogle({ provider: 'telegram', idToken, subject });
+  }
+
+  // A wallet participant adds Telegram to the SAME account: Telegram confirms who they are, the wallet signs the link.
+  async function handleAddTelegramToWallet({ idToken, subject }) {
+    setError(''); setNotice('');
+    try {
+      await linkWalletToLogin(invokeMethod, address, idToken, subject, 'telegram');
+      setNotice('Telegram sign-in added. You can now open this account with Telegram or with your wallet.');
+    } catch (err) { setError(err.message || 'Could not add Telegram sign-in.'); }
   }
 
   // A wallet participant adds Google sign-in to the SAME account (needs a wallet signature as well as the Google token). Stays in wallet view.
@@ -169,7 +187,7 @@ export default function WatcherPioneerScreen() {
     if (!isConnected) { connect(); return; }
     setLinking(true);
     try {
-      await linkWalletToLogin(invokeMethod, address, google.idToken, google.subject);
+      await linkWalletToLogin(invokeMethod, address, google.idToken, google.subject, provider);
       setNotice('Wallet linked. Your points and sessions are unchanged.');
       await refreshStatus();
     } catch (err) {
@@ -194,6 +212,7 @@ export default function WatcherPioneerScreen() {
           <View style={{ marginTop: spacing.lg }}>
             <Text style={[styles.cardHint, { textAlign: 'center' }]}>or</Text>
             <GoogleSignInButton onIdToken={handleGoogleSignIn} />
+            <TelegramSignInButton onLogin={handleTelegramLogin} />
             <Text style={[styles.cardHint, { textAlign: 'center' }]}>No wallet needed. You can link one later to receive rewards.</Text>
           </View>
         )}
@@ -221,10 +240,10 @@ export default function WatcherPioneerScreen() {
 
       {googleOn && (
         <View style={[styles.card, { marginTop: spacing.md }]}>
-          <Text style={styles.cardTitle}>Signed in with Google</Text>
-          <Text style={styles.cardHint}>{status?.email || 'Your Google account'}</Text>
+          <Text style={styles.cardTitle}>Signed in with {providerLabel}</Text>
+          <Text style={styles.cardHint}>{status?.email || `Your ${providerLabel} account`}</Text>
           <TouchableOpacity style={[styles.button, styles.buttonSecondary]} onPress={() => { setGoogle(null); setNotice(''); }}>
-            <Text style={styles.buttonText}>Sign out of Google</Text>
+            <Text style={styles.buttonText}>Sign out of {providerLabel}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -241,9 +260,10 @@ export default function WatcherPioneerScreen() {
 
       {!googleOn && status?.enrolled && isGoogleSignInConfigured() && (
         <View style={[styles.card, { marginTop: spacing.md }]}>
-          <Text style={styles.cardTitle}>Also sign in with Google</Text>
-          <Text style={styles.cardHint}>Add Google to this same account so you can open it either way. Your points and sessions stay exactly as they are.</Text>
+          <Text style={styles.cardTitle}>Add another way to sign in</Text>
+          <Text style={styles.cardHint}>Add Google or Telegram to this same account so you can open it either way. Your points and sessions stay exactly as they are.</Text>
           <GoogleSignInButton label="Add Google sign-in" onIdToken={handleAddGoogleToWallet} />
+          <TelegramSignInButton label="Add Telegram sign-in" onLogin={handleAddTelegramToWallet} />
         </View>
       )}
 
