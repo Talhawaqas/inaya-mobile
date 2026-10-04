@@ -81,3 +81,49 @@ export async function getPioneerStatus(address) {
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status}).`);
   return data;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Social login (Google). Same program, same server, same points: a participant can use a wallet OR a Google account (and link the two).
+// These are separate functions; nothing above this line changed, so wallet participants and older app builds behave exactly as before.
+// Google's ID token authenticates each request (it lasts about an hour); a 401 means "sign in again" and is marked with err.status.
+// ---------------------------------------------------------------------------------------------------------------------
+
+async function socialRequest(path, { method = 'GET', idToken, body } = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(method === 'GET' ? { Authorization: `Bearer ${idToken}` } : {}) },
+    ...(method === 'POST' ? { body: JSON.stringify({ provider: 'google', idToken, ...body }) } : {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(res.status === 401 ? 'Your Google sign-in expired. Please sign in again.' : data.error || `Request failed (${res.status}).`);
+    err.status = res.status;
+    err.activeSession = data.activeSession;
+    throw err;
+  }
+  return data;
+}
+
+export const enrollPioneerSocial = (idToken, { followedX, joinedTelegram }) => socialRequest('/api/watcher/enroll', { method: 'POST', idToken, body: { followedX, joinedTelegram } });
+export const qualifyViaSocialLogin = (idToken) => socialRequest('/api/watcher/qualify', { method: 'POST', idToken, body: { method: 'social', qualifyingRef: null } });
+export const getPioneerStatusSocial = (idToken) => socialRequest('/api/watcher/status?provider=google', { idToken });
+
+/** Connects the signed-in Google account to a wallet. Needs BOTH proofs: the Google token and a signature from the wallet. */
+export async function linkWalletToLogin(invokeMethod, address, idToken, subject) {
+  // The message binds the link to this exact Google account (provider + its stable account id), so a signature cannot be reused for another one.
+  const { message, signature, timestamp } = await signWatcherAction(invokeMethod, address, { action: 'link_social', extra: { provider: 'google', subject } });
+  return socialRequest('/api/watcher/link', { method: 'POST', idToken, body: { walletAddress: address, message, signature, timestamp } });
+}
+
+/** The Google account id (`sub`) is inside the ID token. It is only used to build the message the wallet signs; the server verifies the token itself
+ *  and refuses the link if the signed subject is not the verified one, so reading it here without checking the signature is safe. */
+export function googleSubjectFromIdToken(idToken) {
+  try {
+    const payload = idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    // small dependency-free base64 decoder (atob / Buffer are not guaranteed in every React Native runtime)
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let bits = 0, acc = 0, out = '';
+    for (const ch of payload.replace(/=+$/, '')) { const v = chars.indexOf(ch); if (v < 0) return null; acc = (acc << 6) | v; bits += 6; if (bits >= 8) { bits -= 8; out += String.fromCharCode((acc >> bits) & 0xff); } }
+    return JSON.parse(out).sub || null;
+  } catch { return null; }
+}
