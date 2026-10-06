@@ -40,6 +40,7 @@ import EmployeeDetailScreen from './EmployeeDetailScreen';
 import InsightsScreen from './InsightsScreen';
 import BusinessAIScreen from './BusinessAIScreen';
 import MfaSettingsScreen from './MfaSettingsScreen';
+import { PLAY_EDITION } from '../../utils/edition';
 
 const Stack = createNativeStackNavigator();
 
@@ -112,8 +113,8 @@ export default function BusinessWorkspaceStack() {
         <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
         <Stack.Screen name="CRM" component={CRMScreen} />
         <Stack.Screen name="DealDetail" component={DealDetailScreen} />
-        <Stack.Screen name="Health" component={HealthScreen} options={{ title: 'Health OS' }} />
-        <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />
+        {!PLAY_EDITION && <Stack.Screen name="Health" component={HealthScreen} options={{ title: 'Health OS' }} />}
+        {!PLAY_EDITION && <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />}
         <Stack.Screen name="Legal" component={LegalScreen} options={{ title: 'Legal OS' }} />
         <Stack.Screen name="MatterDetail" component={MatterDetailScreen} />
         <Stack.Screen name="Procurement" component={ProcurementScreen} />

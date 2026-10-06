@@ -10,7 +10,7 @@
 // enable it regardless of whether they use Business Workspace at all.
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, Switch, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
@@ -319,11 +319,25 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </View>
+      {/* Google Play: apps that let people create an account must give an in-app way to ask for deletion, and a public web address for the same request. */}
+      <View style={styles.legalBlock}>
+        <TouchableOpacity onPress={() => Linking.openURL('https://www.inayanetwork.com/account-deletion')} accessibilityRole="link">
+          <Text style={styles.legalLink}>Delete my account and data</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => Linking.openURL('https://www.inayanetwork.com/privacy')} accessibilityRole="link">
+          <Text style={styles.legalLink}>Privacy policy</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => Linking.openURL('https://www.inayanetwork.com/terms')} accessibilityRole="link">
+          <Text style={styles.legalLink}>Terms of service</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  legalBlock: { marginTop: 24, gap: 8, alignItems: 'center' },
+  legalLink: { color: '#00f2fe', fontSize: 13, textDecorationLine: 'underline', paddingVertical: 4 },
   root: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.xl },
   title: { fontSize: 20, fontFamily: fonts.sansExtraBold, color: colors.textPrimary, letterSpacing: 0.5 },

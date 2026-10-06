@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "inaya-mobile",
+    "name": "Inaya Network",
     "slug": "inaya-mobile",
     "scheme": "inayamobile",
     "version": "1.0.0",
@@ -26,6 +26,11 @@
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -43,7 +48,8 @@
           "faceIDPermission": "Allow Inaya to use Face ID to unlock your Business Workspace."
         }
       ],
-      "./plugins/withGradleJvmArgs.js"
+      "./plugins/withGradleJvmArgs.js",
+      "./plugins/withAdiRegistration.js"
     ],
     "runtimeVersion": {
       "policy": "appVersion"

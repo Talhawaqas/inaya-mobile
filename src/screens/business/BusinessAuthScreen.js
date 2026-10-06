@@ -21,6 +21,7 @@ import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch, setStoredSessionToken } from '../../utils/orgApi';
 import { suspendAppLock, resumeAppLock } from '../../utils/appLockSuspend';
 import MfaVerifyScreen from './MfaVerifyScreen';
+import { PLAY_EDITION } from '../../utils/edition';
 
 // Required once so the in-app browser session Google sign-in opens
 // properly hands control back to the app when it completes — see Expo's
@@ -308,6 +309,7 @@ export default function BusinessAuthScreen({ onAuthenticated }) {
       {!linkSent ? (
         <View style={[styles.card, { marginTop: spacing.lg }]}>
           {!!GOOGLE_CLIENT_ID_FOR_PLATFORM && <GoogleSignInButton onIdToken={handleGoogleIdToken} />}
+          {!PLAY_EDITION && (
           <View style={styles.modeRow}>
             <TouchableOpacity
               style={[styles.modeButton, mode === 'signin' && styles.modeButtonActive]}
@@ -322,6 +324,7 @@ export default function BusinessAuthScreen({ onAuthenticated }) {
               <Text style={[styles.modeButtonText, mode === 'create' && styles.modeButtonTextActive]}>Create company</Text>
             </TouchableOpacity>
           </View>
+          )}
 
           {mode === 'create' && (
             <TextInput

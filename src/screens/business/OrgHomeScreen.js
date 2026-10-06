@@ -7,12 +7,13 @@
 // action, since the assistant is scoped to one org at a time.
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { useBusinessSession } from './BusinessSessionContext';
 import { orgFetch } from '../../utils/orgApi';
+import { PLAY_EDITION } from '../../utils/edition';
 
 const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', member: 'Member' };
 
@@ -100,7 +101,7 @@ export default function OrgHomeScreen({ navigation }) {
               <Text style={styles.aiButtonText}>CRM</Text>
             </TouchableOpacity>
 
-            {org.vertical === 'healthcare' && (
+            {!PLAY_EDITION && org.vertical === 'healthcare' && (
               <TouchableOpacity
                 style={styles.aiButton}
                 onPress={() => navigation.navigate('Health', { orgId: org.orgId, orgName: org.orgName, role: org.role })}
@@ -176,6 +177,12 @@ export default function OrgHomeScreen({ navigation }) {
         <Text style={styles.securityButtonText}>Two-Step Verification</Text>
       </TouchableOpacity>
 
+      <View style={styles.legalBlock}>
+        <TouchableOpacity onPress={() => Linking.openURL('https://www.inayanetwork.com/account-deletion')} accessibilityRole="link">
+          <Text style={styles.legalLink}>Delete my account and data</Text>
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
         <Text style={styles.signOutText}>Sign out</Text>
       </TouchableOpacity>
@@ -184,6 +191,8 @@ export default function OrgHomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  legalBlock: { marginTop: 24, gap: 8, alignItems: 'center' },
+  legalLink: { color: '#00f2fe', fontSize: 13, textDecorationLine: 'underline', paddingVertical: 4 },
   root: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.xl },
   title: { fontSize: 20, fontFamily: fonts.sansExtraBold, color: colors.textPrimary, letterSpacing: 0.5 },

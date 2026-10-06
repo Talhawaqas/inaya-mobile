@@ -17,6 +17,7 @@ import { useCardCustomer } from '../providers/CardCustomerProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import CheckoutWebView from '../components/CheckoutWebView';
+import { PLAY_EDITION } from '../utils/edition';
 
 const SUMMARY_CARDS = [
   { value: '4.5 USDT', label: 'Baseline Storage / TB / Month', color: colors.cyan },
@@ -192,6 +193,7 @@ export default function BusinessModelScreen() {
           </TouchableOpacity>
         ))}
 
+        {!PLAY_EDITION && (
         <View style={styles.checkoutBox}>
           <Text style={styles.checkoutLabel}>// READY FOR ACTIVATION</Text>
           <Text style={styles.checkoutTier}>Selected Allocation: {selectedTier}</Text>
@@ -206,6 +208,7 @@ export default function BusinessModelScreen() {
           </View>
           {!!checkoutMessage && <Text style={styles.checkoutMessage}>{checkoutMessage}</Text>}
         </View>
+        )}
       </View>
 
       {/* FUNDAMENTALS */}
@@ -219,12 +222,12 @@ export default function BusinessModelScreen() {
         ))}
       </View>
 
-      <CheckoutWebView
+      {!PLAY_EDITION && <CheckoutWebView
         visible={!!checkoutUrl}
         url={checkoutUrl}
         onClose={() => setCheckoutUrl(null)}
         onResult={handleCheckoutResult}
-      />
+      />}
     </ScrollView>
   );
 }

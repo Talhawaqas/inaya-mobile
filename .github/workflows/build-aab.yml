@@ -1,0 +1,51 @@
+name: Build Google Play AAB (Play edition)
+
+# Manual only. Builds the Google Play edition of the app as an Android App Bundle (.aab). The bundle comes out signed with a throwaway debug key; it is RE-SIGNED
+# afterwards with the real Play upload key (kept off GitHub), because Google Play only accepts a bundle signed with the registered upload key.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Public identifiers by design (not secrets); embedded in the client bundle.
+      EXPO_PUBLIC_PLAY_EDITION: "true"
+      EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID: fe5441b91ed1d12a68c3f34e18bb75c2
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID: 689943698003-3eb2hmpjfflp5atmq6i5k7fo7hlmg0iv.apps.googleusercontent.com
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID: 689943698003-b991hqvg7rhgip76k8tuvhmvlrt98sig.apps.googleusercontent.com
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Prebuild native Android project
+        run: npx expo prebuild --platform android
+
+      - name: Build the bundle
+        working-directory: ./android
+        run: ./gradlew bundleRelease
+
+      - name: List build output
+        run: find android/app/build/outputs -type f -name "*.aab"
+
+      - name: Upload the bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: inaya-play-edition-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
