@@ -1,29 +1,16 @@
 name: Build Android APK
 
+# Manual only. Builds the Google Play edition of the app as an Android App Bundle (.aab). The bundle comes out signed with a throwaway debug key; it is RE-SIGNED
+# afterwards with the real Play upload key (kept off GitHub), because Google Play only accepts a bundle signed with the registered upload key.
 on:
-  push:
-    branches: [main]
-    tags: ["v*"] # a version tag additionally publishes a GitHub Release with a SHA-256 checksum -- see the last two steps below. An ordinary main push still only produces the dev-loop artifact, same as before.
-  workflow_dispatch: # lets you trigger this manually from GitHub's Actions tab
-
-permissions:
-  contents: write # only needed for the tag-triggered GitHub Release publish step below
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # These are EXPO_PUBLIC_ values — meant to be embedded in the client
-    # bundle, not secrets (Google OAuth "Client ID"s and a WalletConnect
-    # project ID are public identifiers by design, unlike a client secret).
-    # Set at job level so every step sees them, in particular the Gradle
-    # build step below: this pipeline builds via `expo prebuild` + a direct
-    # Gradle build, NOT `expo start`/`expo export` — those Expo-CLI commands
-    # auto-load a local .env file, but a direct Gradle build bypasses that
-    # entirely and only sees real process environment variables. The local
-    # .env file (gitignored, never committed) is invisible to this workflow,
-    # so these have to be set here explicitly or the JS bundle Gradle embeds
-    # ends up with every EXPO_PUBLIC_* value undefined.
     env:
+      # Public identifiers by design (not secrets); embedded in the client bundle.
+      EXPO_PUBLIC_PLAY_EDITION: "true"
       EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID: fe5441b91ed1d12a68c3f34e18bb75c2
       EXPO_PUBLIC_GOOGLE_CLIENT_ID: 689943698003-3eb2hmpjfflp5atmq6i5k7fo7hlmg0iv.apps.googleusercontent.com
       EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID: 689943698003-b991hqvg7rhgip76k8tuvhmvlrt98sig.apps.googleusercontent.com
@@ -37,14 +24,11 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Set up Java (required for Android builds)
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
@@ -52,52 +36,16 @@ jobs:
       - name: Prebuild native Android project
         run: npx expo prebuild --platform android
 
-      - name: Restore the stable signing keystore (release build signs with it, since this is an alpha, not a Play Store submission)
-        # Every run on ubuntu-latest starts on a fresh, empty runner — there
-        # is no persisted ~/.android/debug.keystore to reuse between builds.
-        # Generating a fresh one here on every run (the old approach) meant
-        # the signing fingerprint changed on every single build, which
-        # breaks anything tied to that fingerprint — specifically, Google
-        # Sign-In's Android OAuth client registration, which is pinned to
-        # one exact SHA-1. Restoring the SAME keystore from a repo secret
-        # keeps the fingerprint stable across builds.
-        run: |
-          mkdir -p ~/.android
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/debug.keystore
-
-      - name: Build APK (release — embeds the JS bundle, no dev server required at runtime)
+      - name: Build the bundle
         working-directory: ./android
-        run: ./gradlew assembleRelease
+        run: ./gradlew bundleRelease
 
-      - name: List actual build output (diagnostic — shows real filenames/paths if anything unexpected happens)
-        run: find android/app/build/outputs -type f -name "*.apk"
+      - name: List build output
+        run: find android/app/build/outputs -type f -name "*.aab"
 
-      - name: Upload APK as a downloadable artifact
+      - name: Upload the bundle
         uses: actions/upload-artifact@v4
         with:
-          name: inaya-mobile-release-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          name: inaya-play-edition-aab
+          path: android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
-
-      # Verifiable Inaya Client SOW: the two steps below only ever run on a real version
-      # tag (not every ordinary main push) so routine dev-loop builds don't spam GitHub
-      # Releases. This is also what actually gets a build into GitHub Releases at all --
-      # nothing previously did, despite the admin dashboard already summing GitHub
-      # Releases download counts for .apk assets.
-      - name: Compute APK SHA-256
-        if: startsWith(github.ref, 'refs/tags/')
-        id: hash
-        run: |
-          APK=$(find android/app/build/outputs/apk/release -name "*.apk")
-          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
-          echo "sha256=$(sha256sum "$APK" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
-
-      - name: Publish to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ${{ steps.hash.outputs.apk_path }}
-          body: |
-            **SHA-256:** `${{ steps.hash.outputs.sha256 }}`
-
-            Verify: `sha256sum <downloaded-apk>` should output the hash above.
