@@ -44,6 +44,8 @@ jobs:
           java-version: 17
 
       - name: Set up Android SDK
+        # setup-android currently fails on "sdkmanager tools" (Failed to find package 'tools'); the ubuntu runner already ships the Android SDK, so this must not block the build.
+        continue-on-error: true
         uses: android-actions/setup-android@v3
 
       - name: Install dependencies
