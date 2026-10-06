@@ -69,7 +69,7 @@ jobs:
 
       - name: Build APK (release — embeds the JS bundle, no dev server required at runtime)
         working-directory: ./android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
 
       - name: List actual build output (diagnostic — shows real filenames/paths if anything unexpected happens)
         run: find android/app/build/outputs -type f -name "*.apk"
