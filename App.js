@@ -35,6 +35,7 @@ import {
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
 
+import { PLAY_EDITION } from './src/utils/edition';
 import { WalletProviderRoot, useWallet } from './src/providers/WalletProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CardCustomerProviderRoot } from './src/providers/CardCustomerProvider';
@@ -54,6 +55,7 @@ import KnowledgeBaseScreen from './src/screens/KnowledgeBaseScreen';
 import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ReferralScreen from './src/screens/ReferralScreen';
 import WatcherPioneerScreen from './src/screens/WatcherPioneerScreen';
+import MeetScreen from './src/screens/MeetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import SecurityScreen from './src/screens/SecurityScreen';
 import LearnStack from './src/screens/learn/LearnStack';
@@ -150,6 +152,7 @@ const DRAWER_ICONS = {
   AIAssistant: 'chatbubble-ellipses-outline',
   Referrals: 'people-outline',
   WatcherPioneer: 'trophy-outline',
+  Meet: 'videocam-outline',
   Notifications: 'notifications-outline',
   Learn: 'school-outline',
   Security: 'shield-checkmark-outline',
@@ -170,6 +173,7 @@ const DRAWER_LABELS = {
   AIAssistant: 'Ask AI',
   Referrals: 'Referrals',
   WatcherPioneer: 'Watcher Pioneer Program',
+  Meet: 'Inaya Meet',
   Notifications: 'Notifications',
   Learn: 'Inaya Learn',
   Security: 'Security',
@@ -321,14 +325,20 @@ function AppNavigator() {
         <Drawer.Screen name="Business" component={BusinessModelScreen} options={{ title: DRAWER_LABELS.Business }} />
         <Drawer.Screen name="Workspace" component={BusinessWorkspaceStack} options={{ title: DRAWER_LABELS.Workspace }} />
         <Drawer.Screen name="SaaSRoadmap" component={SaaSRoadmapScreen} options={{ title: DRAWER_LABELS.SaaSRoadmap }} />
-        <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />
-        <Drawer.Screen name="Bridge" component={BridgeScreen} options={{ title: DRAWER_LABELS.Bridge }} />
+        {/* Google Play edition: staking and the cross-chain bridge are the two features that tripped the
+            Financial Features declaration (Play Console flagged "Other" -> staking/bridge smart contracts),
+            which gates the whole app behind an organization developer account. Both stay live on web/desktop;
+            this build only hides the drawer entries so the Play submission can truthfully declare no financial
+            features until the organization account exists. See src/utils/edition.js. */}
+        {!PLAY_EDITION && <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />}
+        {!PLAY_EDITION && <Drawer.Screen name="Bridge" component={BridgeScreen} options={{ title: DRAWER_LABELS.Bridge }} />}
         <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />
         <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />
         <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />
         <Drawer.Screen name="AIAssistant" component={AIAssistantScreen} options={{ title: DRAWER_LABELS.AIAssistant }} />
         <Drawer.Screen name="Referrals" component={ReferralScreen} options={{ title: DRAWER_LABELS.Referrals }} />
         <Drawer.Screen name="WatcherPioneer" component={WatcherPioneerScreen} options={{ title: DRAWER_LABELS.WatcherPioneer }} />
+        <Drawer.Screen name="Meet" component={MeetScreen} options={{ title: DRAWER_LABELS.Meet }} />
         <Drawer.Screen name="Notifications" component={NotificationsScreen} options={{ title: DRAWER_LABELS.Notifications }} />
         <Drawer.Screen name="Learn" component={LearnStack} options={{ title: DRAWER_LABELS.Learn }} />
         <Drawer.Screen name="Security" component={SecurityScreen} options={{ title: DRAWER_LABELS.Security }} />
