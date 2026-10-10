@@ -1,7 +1,12 @@
 name: Build Android APK
 
-# Manual only. Builds the Google Play edition of the app as an Android App Bundle (.aab). The bundle comes out signed with a throwaway debug key; it is RE-SIGNED
-# afterwards with the real Play upload key (kept off GitHub), because Google Play only accepts a bundle signed with the registered upload key.
+# Manual only. Builds the Google Play edition of the app as an Android App Bundle (.aab), then signs it with the
+# real Play upload key if ANDROID_KEYSTORE_BASE64 is set as a repo secret (Settings -> Secrets and variables ->
+# Actions -> New repository secret, alongside ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD).
+# The keystore and passwords never touch a local machine or this file -- GitHub stores repo secrets encrypted and
+# only decrypts them inside the job's own ephemeral runner, the same pattern already used for the desktop app's
+# updater signing key. If those four secrets aren't set, the bundle is uploaded signed with Gradle's throwaway
+# debug key instead and still needs re-signing before Play Console will accept it.
 on:
   workflow_dispatch:
 
@@ -42,6 +47,23 @@ jobs:
 
       - name: List build output
         run: find android/app/build/outputs -type f -name "*.aab"
+
+      - name: Sign the bundle with the real Play upload key
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          AAB="$(find android/app/build/outputs/bundle/release -name '*.aab' | head -1)"
+          echo "$KEYSTORE_B64" | base64 -d > /tmp/upload.keystore
+          jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore /tmp/upload.keystore -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
+            "$AAB" "$KEY_ALIAS"
+          jarsigner -verify "$AAB"
+          rm -f /tmp/upload.keystore
+          echo "Signed with the real upload key: $AAB"
 
       - name: Upload the bundle
         uses: actions/upload-artifact@v4
