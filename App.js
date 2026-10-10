@@ -35,6 +35,7 @@ import {
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
 
+import { PLAY_EDITION } from './src/utils/edition';
 import { WalletProviderRoot, useWallet } from './src/providers/WalletProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CardCustomerProviderRoot } from './src/providers/CardCustomerProvider';
@@ -321,8 +322,13 @@ function AppNavigator() {
         <Drawer.Screen name="Business" component={BusinessModelScreen} options={{ title: DRAWER_LABELS.Business }} />
         <Drawer.Screen name="Workspace" component={BusinessWorkspaceStack} options={{ title: DRAWER_LABELS.Workspace }} />
         <Drawer.Screen name="SaaSRoadmap" component={SaaSRoadmapScreen} options={{ title: DRAWER_LABELS.SaaSRoadmap }} />
-        <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />
-        <Drawer.Screen name="Bridge" component={BridgeScreen} options={{ title: DRAWER_LABELS.Bridge }} />
+        {/* Google Play edition: staking and the cross-chain bridge are the two features that tripped the
+            Financial Features declaration (Play Console flagged "Other" -> staking/bridge smart contracts),
+            which gates the whole app behind an organization developer account. Both stay live on web/desktop;
+            this build only hides the drawer entries so the Play submission can truthfully declare no financial
+            features until the organization account exists. See src/utils/edition.js. */}
+        {!PLAY_EDITION && <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />}
+        {!PLAY_EDITION && <Drawer.Screen name="Bridge" component={BridgeScreen} options={{ title: DRAWER_LABELS.Bridge }} />}
         <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />
         <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />
         <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />

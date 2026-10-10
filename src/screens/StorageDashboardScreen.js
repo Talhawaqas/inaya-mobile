@@ -12,6 +12,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { ethers } from 'ethers';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { PLAY_EDITION } from '../utils/edition';
 import { useWallet } from '../providers/WalletProvider';
 import { useUploadsHistory } from '../hooks/useUploadsHistory';
 import { colors, spacing, radius, fonts, glassCard } from '../theme';
@@ -30,9 +31,11 @@ const ACTIONS = [
   { key: 'Download', icon: 'cloud-download-outline', label: 'Download' },
   { key: 'MyFiles', icon: 'folder-outline', label: 'My Files' },
   { key: 'NodeStatus', icon: 'radio-outline', label: 'Watcher Node' },
-  { key: 'Staking', icon: 'trending-up-outline', label: 'Staking' },
+  // Staking's drawer screen doesn't exist in the Play edition (see App.js) -- filtered below so this tile
+  // never dead-ends into a missing route.
+  { key: 'Staking', icon: 'trending-up-outline', label: 'Staking', hideOnPlay: true },
   { key: 'Dashboard', icon: 'grid-outline', label: 'Dashboard' },
-];
+].filter((a) => !a.hideOnPlay || !PLAY_EDITION);
 
 export default function StorageDashboardScreen({ navigation }) {
   const insets = useSafeAreaInsets();
