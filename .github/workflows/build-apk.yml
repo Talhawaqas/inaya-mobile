@@ -1,12 +1,13 @@
 name: Build Android APK
 
-# Manual only. Builds the Google Play edition of the app as an Android App Bundle (.aab), then signs it with the
-# real Play upload key if ANDROID_KEYSTORE_BASE64 is set as a repo secret (Settings -> Secrets and variables ->
-# Actions -> New repository secret, alongside ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD).
-# The keystore and passwords never touch a local machine or this file -- GitHub stores repo secrets encrypted and
-# only decrypts them inside the job's own ephemeral runner, the same pattern already used for the desktop app's
-# updater signing key. If those four secrets aren't set, the bundle is uploaded signed with Gradle's throwaway
-# debug key instead and still needs re-signing before Play Console will accept it.
+# Manual only. Builds the Google Play edition of the app through EAS's own cloud build service
+# (eas-cli, not a local Gradle build), using the Android signing credentials EAS already has on
+# file for this project's "production" profile -- the same key this app was originally published
+# with. Needs one repo secret: EXPO_TOKEN (Settings -> Secrets and variables -> Actions -> New
+# repository secret), an Expo access token from https://expo.dev/accounts/[account]/settings/
+# access-tokens. That token authenticates this job to Expo's build service; it is not the Android
+# keystore or its password, and neither of those two ever exists on this runner, on GitHub, or on
+# any local machine -- EAS signs the bundle entirely on its own infrastructure.
 on:
   workflow_dispatch:
 
@@ -14,11 +15,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # Public identifiers by design (not secrets); embedded in the client bundle.
-      EXPO_PUBLIC_PLAY_EDITION: "true"
-      EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID: fe5441b91ed1d12a68c3f34e18bb75c2
-      EXPO_PUBLIC_GOOGLE_CLIENT_ID: 689943698003-3eb2hmpjfflp5atmq6i5k7fo7hlmg0iv.apps.googleusercontent.com
-      EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID: 689943698003-b991hqvg7rhgip76k8tuvhmvlrt98sig.apps.googleusercontent.com
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,41 +26,21 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Prebuild native Android project
-        run: npx expo prebuild --platform android
+      - name: Install eas-cli
+        run: npm install -g eas-cli
 
-      - name: Build the bundle
-        working-directory: ./android
-        run: ./gradlew bundleRelease
+      - name: Build and sign on EAS's cloud (profile "play-remote" -- Play edition env vars, production's signing credentials)
+        run: eas build --platform android --profile play-remote --non-interactive --wait --json > eas-build-result.json
 
-      - name: List build output
-        run: find android/app/build/outputs -type f -name "*.aab"
-
-      - name: Sign the bundle with the real Play upload key
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
-        env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - name: Download the signed bundle EAS produced
         run: |
-          AAB="$(find android/app/build/outputs/bundle/release -name '*.aab' | head -1)"
-          echo "$KEYSTORE_B64" | base64 -d > /tmp/upload.keystore
-          jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
-            -keystore /tmp/upload.keystore -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
-            "$AAB" "$KEY_ALIAS"
-          jarsigner -verify "$AAB"
-          rm -f /tmp/upload.keystore
-          echo "Signed with the real upload key: $AAB"
+          URL=$(node -e "console.log(JSON.parse(require('fs').readFileSync('eas-build-result.json','utf8'))[0].artifacts.buildUrl)")
+          echo "Downloading $URL"
+          mkdir -p android/app/build/outputs/bundle/release
+          curl -L "$URL" -o android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Upload the bundle
         uses: actions/upload-artifact@v4

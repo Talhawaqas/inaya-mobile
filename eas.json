@@ -16,6 +16,16 @@
     "production": {
       "autoIncrement": true,
       "channel": "production"
+    },
+    "play-remote": {
+      "extends": "production",
+      "channel": "play",
+      "env": {
+        "EXPO_PUBLIC_PLAY_EDITION": "true"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   },
   "submit": {
