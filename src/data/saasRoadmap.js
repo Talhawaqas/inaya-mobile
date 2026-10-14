@@ -320,169 +320,169 @@ export const ROADMAP_STAGES = [
       'Health/Legal AI assistants (read/summarize/draft only — no diagnosis, no legal advice, no filing, no hold release, no evidence deletion)',
     ],
     notes:
-      "Every domain module for both verticals now has a real, working screen on WEB Business Workspace -- not just Patients and Matters -- live-verified end-to-end against the running app, including the trust ledger's server-side overdraft rejection. Mobile now has real screens for both verticals too (Health OS, Legal OS, and their patient/matter detail screens), built against the exact same vertical-locked API routes as web; these are written and syntax-verified but not yet exercised on a live device/simulator, which is the one thing still holding this at IN_PROGRESS rather than LIVE. FHIR/HL7/e-filing/e-signature/SSO and every other third-party integration are documented adapter interfaces with an honest not-configured stub, not live integrations. No HIPAA/ABA/eDiscovery compliance certification exists or is claimed.",
+      "Every domain module for both verticals now has a real, working screen on WEB Business Workspace — not just Patients and Matters — live-verified end-to-end against the running app, including the trust ledger's server-side overdraft rejection. Mobile now has real screens for both verticals too (Health OS, Legal OS, and their patient/matter detail screens), built against the exact same vertical-locked API routes as web; these are written and syntax-verified but not yet exercised on a live device/simulator, which is the one thing still holding this at IN_PROGRESS rather than LIVE. FHIR/HL7/e-filing/e-signature/SSO and every other third-party integration are documented adapter interfaces with an honest not-configured stub, not live integrations. No HIPAA/ABA/eDiscovery compliance certification exists or is claimed.",
   },
   {
     number: 11,
     title: "Financial Services & Regulated Enterprise OS",
     status: ROADMAP_STATUS.LIVE,
     description:
-      "A third and fourth vertical specialization of the Business Workspace -- Financial Services OS (hedge funds/asset managers), Private Capital OS (PE/VC), and Regulated Enterprise OS (cross-industry compliance for banks, insurers, pharma, and other regulated organizations) -- sharing one platform core with Health OS and Legal OS. All ten phases of the SOW are now built.",
-    securityStatement: "A framework or control mapping is never presented as a compliance certification -- and a control with no test on file shows as \"unknown,\" never as passing.",
+      "A third and fourth vertical specialization of the Business Workspace — Financial Services OS (hedge funds/asset managers), Private Capital OS (PE/VC), and Regulated Enterprise OS (cross-industry compliance for banks, insurers, pharma, and other regulated organizations) — sharing one platform core with Health OS and Legal OS. All ten phases of the SOW are now built.",
+    securityStatement: "A framework or control mapping is never presented as a compliance certification — and a control with no test on file shows as \"unknown,\" never as passing.",
     features: [
-      "Regulatory Framework Engine -- pluggable reference mappings (NIST CSF 2.0, ISO 27001, SOC 2, DORA, GDPR, GLBA/Reg S-P, SEC IA) with an explicit compliance-is-not-certification disclaimer",
+      "Regulatory Framework Engine — pluggable reference mappings (NIST CSF 2.0, ISO 27001, SOC 2, DORA, GDPR, GLBA/Reg S-P, SEC IA) with an explicit compliance-is-not-certification disclaimer",
       "Compliance Control Library, Evidence vault, Findings & Remediation, versioned Policy Management, compliance exceptions, internal audit plans, and a Regulatory Examination Workspace with scoped one-time-use external examiner links",
-      "Financial Entity Core -- funds, entities, investors, counterparties, entity-scoped (not org-wide) permissions",
-      "Investment Management -- research provenance, investment thesis lifecycle, Investment Committee workflow, portfolio/position/exposure tracking, liquidity, valuation, performance",
-      "Private Capital -- deal CRM, screening scorecards, due diligence workspace, term sheets, cap-table ingest (not a transactional share registry), portfolio-company workspace, board management, value creation plans, fundraising, exits, SPVs",
-      "Security & Resilience -- vendor-risk monitoring, ICT asset inventory, BCP/DR, resilience testing, data residency, privileged access & break-glass, segregation-of-duties rules",
+      "Financial Entity Core — funds, entities, investors, counterparties, entity-scoped (not org-wide) permissions",
+      "Investment Management — research provenance, investment thesis lifecycle, Investment Committee workflow, portfolio/position/exposure tracking, liquidity, valuation, performance",
+      "Private Capital — deal CRM, screening scorecards, due diligence workspace, term sheets, cap-table ingest (not a transactional share registry), portfolio-company workspace, board management, value creation plans, fundraising, exits, SPVs",
+      "Security & Resilience — vendor-risk monitoring, ICT asset inventory, BCP/DR, resilience testing, data residency, privileged access & break-glass, segregation-of-duties rules",
       "Role-specific AI copilots (CIO/COO/CCO/CRO/CFO/GC/analyst/deal-team/security/auditor) on the same guarded-execution infrastructure as every other AI tool in the app",
-      "Integration Adapter Architecture -- fund admin/custodian/prime broker/market-data/cap-table/KYC-AML/SSO, honest stub-by-default (configured:false) until a real credential exists",
-      "Executive/Board Layer -- Financial Services & Regulated Enterprise OS Homes, board reporting with the same publish-immutable discipline as policies",
-      "External Data Rooms -- investor, diligence, and audit rooms, generalizing the examiner-access pattern",
-      "Enterprise Hardening -- tamper-evident regulated export packages, pre-import migration validation",
-      "Vertical-locked API across every phase -- a general or mismatched-vertical org is rejected, not just hidden from",
+      "Integration Adapter Architecture — fund admin/custodian/prime broker/market-data/cap-table/KYC-AML/SSO, honest stub-by-default (configured:false) until a real credential exists",
+      "Executive/Board Layer — Financial Services & Regulated Enterprise OS Homes, board reporting with the same publish-immutable discipline as policies",
+      "External Data Rooms — investor, diligence, and audit rooms, generalizing the examiner-access pattern",
+      "Enterprise Hardening — tamper-evident regulated export packages, pre-import migration validation",
+      "Vertical-locked API across every phase — a general or mismatched-vertical org is rejected, not just hidden from",
     ],
     notes:
-      "This remains WEB ONLY -- nothing on mobile for this vertical yet, unlike Health OS/Legal OS above, which is the one thing holding a fully-built vertical at LIVE-on-web rather than a plain LIVE. Live-verified end-to-end against the running app across every phase: control creation and activation, a failing test auto-opening a finding and walking its full state machine to closed, the dashboard's unknown/failing/passing distinction, the full policy lifecycle including the immutability guard and amend-creates-a-new-version behavior, an examiner magic-link's issue/exchange/one-time-use cycle, entity-scoped fund/deal visibility, and the board-report/export-package immutability guards. Not yet built: mobile screens for these verticals (Financial Services OS/Private Capital OS/Regulated Enterprise OS have zero mobile presence today -- web only), and real third-party integrations (every adapter is a documented, honest not-configured stub). No compliance certification of any kind exists or is claimed.",
+      "This remains WEB ONLY — nothing on mobile for this vertical yet, unlike Health OS/Legal OS above, which is the one thing holding a fully-built vertical at LIVE-on-web rather than a plain LIVE. Live-verified end-to-end against the running app across every phase: control creation and activation, a failing test auto-opening a finding and walking its full state machine to closed, the dashboard's unknown/failing/passing distinction, the full policy lifecycle including the immutability guard and amend-creates-a-new-version behavior, an examiner magic-link's issue/exchange/one-time-use cycle, entity-scoped fund/deal visibility, and the board-report/export-package immutability guards. Not yet built: mobile screens for these verticals (Financial Services OS/Private Capital OS/Regulated Enterprise OS have zero mobile presence today — web only), and real third-party integrations (every adapter is a documented, honest not-configured stub). No compliance certification of any kind exists or is claimed.",
   },
   {
     number: 12,
     title: "Government & Public Sector Sovereign OS",
     status: ROADMAP_STATUS.IN_PROGRESS,
     description:
-      "A fifth vertical specialization of the Business Workspace, for government departments and agencies handling citizen, legal, financial, procurement, health, and operational data -- sharing the same platform core as every other vertical above.",
-    securityStatement: "Citizen-record visibility is assignment-based, not department-based -- being in the right department, or even holding staff-level government access, is never enough on its own to see a specific person's record.",
+      "A fifth vertical specialization of the Business Workspace, for government departments and agencies handling citizen, legal, financial, procurement, health, and operational data — sharing the same platform core as every other vertical above.",
+    securityStatement: "Citizen-record visibility is assignment-based, not department-based — being in the right department, or even holding staff-level government access, is never enough on its own to see a specific person's record.",
     features: [
-      "Citizen Records -- need-to-know, assignment-based access, mirroring Health OS's care-team model exactly",
-      "Case Management -- a 6-state case workflow, optionally linked to a citizen record, with need-to-know inherited from that link",
-      "Policy Knowledge Base -- the same publish-immutable, versioned lifecycle as Regulated Enterprise OS's Policy Management",
-      "A government-only stricter chain-of-custody rule -- every document READ is logged, not just every write",
-      "Break-glass emergency access -- reused unchanged from the Financial/Regulated Enterprise SOW's cross-vertical privileged-access module",
-      "Operations + Security Readiness dashboard -- case KPIs and audit-chain integrity, always reported as separate honest panels, never a single fabricated score",
-      "Government AI assistant -- 6 read-only tools; need-to-know is enforced inside the tool itself, not just at the API layer, so it can never see more than the human it's acting for could",
-      "Procurement/Contracts/Finance/HR/Tasks/Approvals -- the same modules every other vertical already uses, now vertical-gated for Government orgs too",
+      "Citizen Records — need-to-know, assignment-based access, mirroring Health OS's care-team model exactly",
+      "Case Management — a 6-state case workflow, optionally linked to a citizen record, with need-to-know inherited from that link",
+      "Policy Knowledge Base — the same publish-immutable, versioned lifecycle as Regulated Enterprise OS's Policy Management",
+      "A government-only stricter chain-of-custody rule — every document READ is logged, not just every write",
+      "Break-glass emergency access — reused unchanged from the Financial/Regulated Enterprise SOW's cross-vertical privileged-access module",
+      "Operations + Security Readiness dashboard — case KPIs and audit-chain integrity, always reported as separate honest panels, never a single fabricated score",
+      "Government AI assistant — 6 read-only tools; need-to-know is enforced inside the tool itself, not just at the API layer, so it can never see more than the human it's acting for could",
+      "Procurement/Contracts/Finance/HR/Tasks/Approvals — the same modules every other vertical already uses, now vertical-gated for Government orgs too",
       "5 stub-by-default government-system integration providers (civil/national ID registry, legacy government ERP, GIS/land records, public records portal, interagency data exchange)",
-      "Vertical-locked API -- a general or mismatched-vertical org is rejected, not just hidden from",
+      "Vertical-locked API — a general or mismatched-vertical org is rejected, not just hidden from",
     ],
     notes:
-      "This is WEB ONLY so far -- nothing on mobile for this vertical yet, same gap as Financial/Private Capital/Regulated Enterprise OS above. Live-verified: the Government OS vertical option renders correctly in the org-creation flow, and every new API route is statically confirmed to lock to the government vertical. 51 new automated tests cover the two load-bearing properties (citizen-record access requires an actual assignment; a published policy knowledge base entry can never be mutated in place) plus case-workflow transition legality, dashboard honesty (unknown is never shown as passing), and AI tool need-to-know enforcement. Not yet built: mobile screens (Government OS has zero mobile presence today, same gap as Financial/Private Capital/Regulated Enterprise OS), a real pilot-agency onboarding, and any government-specific procurement rule beyond an explicitly informational, non-binding competitive-bid threshold flag. No government certification, accreditation, FedRAMP authorization, or jurisdiction-specific compliance claim exists or is claimed -- that requires separate authorities entirely outside this codebase.",
+      "This is WEB ONLY so far — nothing on mobile for this vertical yet, same gap as Financial/Private Capital/Regulated Enterprise OS above. Live-verified: the Government OS vertical option renders correctly in the org-creation flow, and every new API route is statically confirmed to lock to the government vertical. 51 new automated tests cover the two load-bearing properties (citizen-record access requires an actual assignment; a published policy knowledge base entry can never be mutated in place) plus case-workflow transition legality, dashboard honesty (unknown is never shown as passing), and AI tool need-to-know enforcement. Not yet built: mobile screens (Government OS has zero mobile presence today, same gap as Financial/Private Capital/Regulated Enterprise OS), a real pilot-agency onboarding, and any government-specific procurement rule beyond an explicitly informational, non-binding competitive-bid threshold flag. No government certification, accreditation, FedRAMP authorization, or jurisdiction-specific compliance claim exists or is claimed — that requires separate authorities entirely outside this codebase.",
   },
   {
     number: 13,
     title: 'Storage Interoperability & Inaya Drive',
     status: ROADMAP_STATUS.LIVE,
     description:
-      "Makes Business Workspace storage consumable through the exact tools an enterprise IT team already has -- real AWS S3, Azure Blob, and Google Cloud Storage protocol compatibility, a real mounted drive letter on Windows and Linux, and a local migration tool that moves existing cloud data in -- without rebuilding or weakening the encryption/sharding/DePIN pipeline underneath any of it.",
-    securityStatement: "A signed URL or federated Google sign-in can never grant more access than the credential or membership it's built on already has -- verified by adversarial test, not just by design intent.",
+      "Makes Business Workspace storage consumable through the exact tools an enterprise IT team already has — real AWS S3, Azure Blob, and Google Cloud Storage protocol compatibility, a real mounted drive letter on Windows and Linux, and a local migration tool that moves existing cloud data in — without rebuilding or weakening the encryption/sharding/DePIN pipeline underneath any of it.",
+    securityStatement: "A signed URL or federated Google sign-in can never grant more access than the credential or membership it's built on already has — verified by adversarial test, not just by design intent.",
     features: [
       'Real AWS SigV4 (AWS4-HMAC-SHA256) and native Google Cloud Storage (GOOG4-HMAC-SHA256) request signing on one endpoint',
       'Real Azure Blob Shared Key compatibility, plus Microsoft Entra ID identity federation',
-      'Google Sign-In as a direct authentication path for the storage endpoint itself, mapped to existing organization membership -- no separate Google-only permission tier',
+      'Google Sign-In as a direct authentication path for the storage endpoint itself, mapped to existing organization membership — no separate Google-only permission tier',
       'Temporary signed download URLs with real, tested expiration, tamper rejection, and method restriction',
       'Virtual-hosted bucket addressing (bucket-name-in-the-hostname, matching real AWS/GCS convention), off by default until an operator configures it',
-      'Inaya Drive -- a real Windows drive letter (WinFSP) and a real Linux mount (FUSE), including genuine empty-folder creation, file read/write, rename, and delete, all proven to survive a full mount-process restart',
-      'Local Data Migration Agent -- moves existing AWS S3, Azure Blob, or Google Cloud Storage data into Inaya, resumable and integrity-verified, with every credential staying on the operator’s own machine',
-      'Compliance Evidence Exporter -- a read-only, downloadable JSON/PDF evidence package built from the organization’s own existing audit chain and storage protection settings, with a cryptographic export hash',
+      'Inaya Drive — a real Windows drive letter (WinFSP) and a real Linux mount (FUSE), including genuine empty-folder creation, file read/write, rename, and delete, all proven to survive a full mount-process restart',
+      'Local Data Migration Agent — moves existing AWS S3, Azure Blob, or Google Cloud Storage data into Inaya, resumable and integrity-verified, with every credential staying on the operator’s own machine',
+      'Compliance Evidence Exporter — a read-only, downloadable JSON/PDF evidence package built from the organization’s own existing audit chain and storage protection settings, with a cryptographic export hash',
       'Validated against real, unmodified third-party tools: the AWS CLI, rclone, Terraform, and Google’s own gcloud storage CLI',
       'Object tags/labels, a real independently-verifiable checksum on every upload, a one-click storage inventory export (JSON/CSV), bulk tag/retention/legal-hold operations across up to 1,000 objects, per-bucket storage analytics, and a read-only storage-credential policy analyzer',
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- Inaya Drive and the storage endpoint's protocol-level features (signing, signed URLs, virtual-hosted addressing) have no mobile app surface; nothing here appears on the mobile roadmap screen as an interactive feature, it's listed for completeness. Live-verified end-to-end: real SigV4/GOOG4/Shared-Key signature verification, a real signed-URL adversarial test suite (including waiting for genuine wall-clock expiration, not a simulated clock), real Terraform init/apply/plan/destroy and rclone upload/sync/download runs against the live endpoint, and Inaya Drive mounted for real on both a Windows machine and a Linux kernel (WSL2) with a full helper-process kill-and-restart persistence proof. macOS Drive support is written but not yet compiled or tested on real Mac hardware -- explicitly not claimed until it is. The September 2026 storage feature expansion (tags, checksum, inventory, batch operations, analytics, policy analyzer) is covered by 9 additional automated tests, with zero regressions to the 57 pre-existing storage tests. No official AWS/Microsoft/Google partnership, certification, or full protocol parity is claimed anywhere; only what's been directly tested.",
+      "This is WEB/DESKTOP ONLY — Inaya Drive and the storage endpoint's protocol-level features (signing, signed URLs, virtual-hosted addressing) have no mobile app surface; nothing here appears on the mobile roadmap screen as an interactive feature, it's listed for completeness. Live-verified end-to-end: real SigV4/GOOG4/Shared-Key signature verification, a real signed-URL adversarial test suite (including waiting for genuine wall-clock expiration, not a simulated clock), real Terraform init/apply/plan/destroy and rclone upload/sync/download runs against the live endpoint, and Inaya Drive mounted for real on both a Windows machine and a Linux kernel (WSL2) with a full helper-process kill-and-restart persistence proof. macOS Drive support is written but not yet compiled or tested on real Mac hardware — explicitly not claimed until it is. The September 2026 storage feature expansion (tags, checksum, inventory, batch operations, analytics, policy analyzer) is covered by 9 additional automated tests, with zero regressions to the 57 pre-existing storage tests. No official AWS/Microsoft/Google partnership, certification, or full protocol parity is claimed anywhere; only what's been directly tested.",
   },
   {
     number: 14,
-    title: 'Evidence Graph & Digital Twin -- Trusted Business Events and What-If Simulation',
+    title: 'Evidence Graph & Digital Twin — Trusted Business Events and What-If Simulation',
     status: ROADMAP_STATUS.LIVE,
     description:
-      "Connects existing invoices, purchase orders, purchase requests, and AI-proposed actions into one traceable Business Event -- with a plain-language \"Why?\" explanation, a portable cryptographic-proof passport, and a read-only \"What If?\" simulator -- then extends that same simulation discipline into a broader Digital Twin that can answer \"what would happen if a supplier became unavailable, an employee lost project access, a project was delayed, or a warehouse went offline\" using the organization's own real, already-connected data.",
-    securityStatement: "A simulation can compute what a real change would affect, but it can never make that change happen -- verified by tests that snapshot every touched record before and after, and confirm every one is left byte-for-byte identical.",
+      "Connects existing invoices, purchase orders, purchase requests, and AI-proposed actions into one traceable Business Event — with a plain-language \"Why?\" explanation, a portable cryptographic-proof passport, and a read-only \"What If?\" simulator — then extends that same simulation discipline into a broader Digital Twin that can answer \"what would happen if a supplier became unavailable, an employee lost project access, a project was delayed, or a warehouse went offline\" using the organization's own real, already-connected data.",
+    securityStatement: "A simulation can compute what a real change would affect, but it can never make that change happen — verified by tests that snapshot every touched record before and after, and confirm every one is left byte-for-byte identical.",
     features: [
-      'Business Event model -- references an existing invoice/PO/PR/AI-action by ID rather than copying it, department-scoped exactly like every other Business Operations record',
-      '"Why?" explainability -- permission-aware evidence resolution (a record you can’t otherwise see is disclosed only as existing, never its contents), real AI-recommendation fields only, never internal model reasoning',
-      'Business Event Passport -- a JSON+PDF evidence package with an independently re-verifiable cryptographic manifest hash, reusing the same canonicalization the existing Compliance Evidence Exporter already uses',
-      '"What If?" simulation for a single business decision, and a Digital Twin dependency graph for broader organizational scenarios -- both read-only by construction, with zero import of any function that could actually execute a change',
-      'Digital Twin scenarios: supplier unavailable, employee access removed, project delayed, warehouse unavailable -- each honestly reports "unknown" for any consequence no real stored field can back, rather than inventing a plausible-sounding number',
-      'Additive integration into Unified Search, the Activity Center digest, Trust Health, and manager notifications for high-risk events -- none of it changing how those existing systems already worked',
+      'Business Event model — references an existing invoice/PO/PR/AI-action by ID rather than copying it, department-scoped exactly like every other Business Operations record',
+      '"Why?" explainability — permission-aware evidence resolution (a record you can’t otherwise see is disclosed only as existing, never its contents), real AI-recommendation fields only, never internal model reasoning',
+      'Business Event Passport — a JSON+PDF evidence package with an independently re-verifiable cryptographic manifest hash, reusing the same canonicalization the existing Compliance Evidence Exporter already uses',
+      '"What If?" simulation for a single business decision, and a Digital Twin dependency graph for broader organizational scenarios — both read-only by construction, with zero import of any function that could actually execute a change',
+      'Digital Twin scenarios: supplier unavailable, employee access removed, project delayed, warehouse unavailable — each honestly reports "unknown" for any consequence no real stored field can back, rather than inventing a plausible-sounding number',
+      'Additive integration into Unified Search, the Activity Center digest, Trust Health, and manager notifications for high-risk events — none of it changing how those existing systems already worked',
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for the Evidence Graph or Digital Twin yet; listed here for completeness. Live-verified: 47 tests for the Evidence Graph layer and 9 tests for the Digital Twin layer, all passing against the real database, with zero regressions to any pre-existing test suite. The single strongest test in both layers is the same: run every simulation/scenario type, snapshot every record it reads before and after, and assert byte-for-byte equality -- proving a simulation can never silently become a real action. Cross-organization Digital Twins were researched (zero-knowledge proofs, secure multiparty computation, trusted execution) and deliberately deferred rather than built, since no validated customer need for it exists yet. Not yet built: a graph-visualization UI, versioned Twin snapshots, and natural-language scenario creation.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for the Evidence Graph or Digital Twin yet; listed here for completeness. Live-verified: 47 tests for the Evidence Graph layer and 9 tests for the Digital Twin layer, all passing against the real database, with zero regressions to any pre-existing test suite. The single strongest test in both layers is the same: run every simulation/scenario type, snapshot every record it reads before and after, and assert byte-for-byte equality — proving a simulation can never silently become a real action. Cross-organization Digital Twins were researched (zero-knowledge proofs, secure multiparty computation, trusted execution) and deliberately deferred rather than built, since no validated customer need for it exists yet. Not yet built: a graph-visualization UI, versioned Twin snapshots, and natural-language scenario creation.",
   },
   {
     number: 15,
-    title: 'Modular Enterprise Adoption Layer -- DirectSync, Data Room Templates, Cloud Backup Scheduler & What-If Studio',
+    title: 'Modular Enterprise Adoption Layer — DirectSync, Data Room Templates, Cloud Backup Scheduler & What-If Studio',
     status: ROADMAP_STATUS.LIVE,
     description:
-      "Four self-contained features that make the existing platform materially easier for a real company to adopt without changing how it already works -- automatic local-folder backup, ready-made secure data-room templates, a recurring cloud-to-Inaya backup scheduler, and a visual front-end over the existing Digital Twin simulation layer -- all built strictly on top of existing storage, permissions, audit, migration, and simulation infrastructure rather than as four disconnected new products.",
-    securityStatement: "A local file's own delete action can never delete its backup, a rename can never create a duplicate remote copy, and a what-if simulation can never mutate a real record -- each guarantee proven by a real, non-mocked automated test, not just asserted by design.",
+      "Four self-contained features that make the existing platform materially easier for a real company to adopt without changing how it already works — automatic local-folder backup, ready-made secure data-room templates, a recurring cloud-to-Inaya backup scheduler, and a visual front-end over the existing Digital Twin simulation layer — all built strictly on top of existing storage, permissions, audit, migration, and simulation infrastructure rather than as four disconnected new products.",
+    securityStatement: "A local file's own delete action can never delete its backup, a rename can never create a duplicate remote copy, and a what-if simulation can never mutate a real record — each guarantee proven by a real, non-mocked automated test, not just asserted by design.",
     features: [
-      'DirectSync -- a background local-folder watcher inside the Inaya desktop app; automatically, incrementally uploads new/changed files via the existing S3-compatible API, duplicate-safe and resumable across restarts, reusing the same real S3 client Inaya Drive already uses',
-      'Zero-Knowledge Data Room Templates -- four ready-made room configurations (Fundraising, M&A, Legal Review, Web3 Due-Diligence) built on the existing Data Room, NDA, and audit infrastructure, not a second document-sharing system',
-      'Smart Cloud Backup & Health Scheduler -- recurring, incremental AWS S3/Azure Blob/Google Cloud Storage backup into Inaya, orchestrating the existing, already-tested migration engine rather than a second copy of it, with real size-verified integrity checks and a six-state health status',
-      'Interactive What-If Scenario Studio -- a Business Workspace view over the existing Digital Twin simulation API (not a second simulation engine), with scenario history, current-vs-simulated comparison, dependency impact, and integrity-hashed provenance',
-      'A mandatory capability audit was produced and published before any of the four features was built, classifying every proposed capability as already-implemented, reusable, or a genuine gap -- nothing here duplicates an existing system',
+      'DirectSync — a background local-folder watcher inside the Inaya desktop app; automatically, incrementally uploads new/changed files via the existing S3-compatible API, duplicate-safe and resumable across restarts, reusing the same real S3 client Inaya Drive already uses',
+      'Zero-Knowledge Data Room Templates — four ready-made room configurations (Fundraising, M&A, Legal Review, Web3 Due-Diligence) built on the existing Data Room, NDA, and audit infrastructure, not a second document-sharing system',
+      'Smart Cloud Backup & Health Scheduler — recurring, incremental AWS S3/Azure Blob/Google Cloud Storage backup into Inaya, orchestrating the existing, already-tested migration engine rather than a second copy of it, with real size-verified integrity checks and a six-state health status',
+      'Interactive What-If Scenario Studio — a Business Workspace view over the existing Digital Twin simulation API (not a second simulation engine), with scenario history, current-vs-simulated comparison, dependency impact, and integrity-hashed provenance',
+      'A mandatory capability audit was produced and published before any of the four features was built, classifying every proposed capability as already-implemented, reusable, or a genuine gap — nothing here duplicates an existing system',
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for any of these four features yet; listed here for completeness. Live-verified: Data Room Templates covered by 8 automated tests (zero regressions to the pre-existing external-data-room suite); Cloud Backup Scheduler by 12 tests, including a genuine end-to-end run through the real migration engine and real storage write path; What-If Studio extends the existing, already-tested Digital Twin test suite with 2 additional tests. DirectSync is covered by 7 unit tests plus 1 real, non-mocked end-to-end test -- a real folder watched, real files uploaded, real duplicate-safety, real rename, and real delete-preserves-remote-copy behavior, all run on real Windows hardware. DirectSync's Windows support is real and tested; Linux is built on the same already-proven cross-platform components but has not yet been run on a real Linux machine, so it is stated as not yet verified rather than claimed. A real bug -- a rename only updating local bookkeeping without actually relocating the object in storage -- was found by the end-to-end test and fixed before this stage was marked live.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for any of these four features yet; listed here for completeness. Live-verified: Data Room Templates covered by 8 automated tests (zero regressions to the pre-existing external-data-room suite); Cloud Backup Scheduler by 12 tests, including a genuine end-to-end run through the real migration engine and real storage write path; What-If Studio extends the existing, already-tested Digital Twin test suite with 2 additional tests. DirectSync is covered by 7 unit tests plus 1 real, non-mocked end-to-end test — a real folder watched, real files uploaded, real duplicate-safety, real rename, and real delete-preserves-remote-copy behavior, all run on real Windows hardware. DirectSync's Windows support is real and tested; Linux is built on the same already-proven cross-platform components but has not yet been run on a real Linux machine, so it is stated as not yet verified rather than claimed. A real bug — a rename only updating local bookkeeping without actually relocating the object in storage — was found by the end-to-end test and fixed before this stage was marked live.",
   },
   {
     number: 16,
-    title: "Storage Control Plane & Terraform Provider -- Volumes, Snapshots, Backup Policies, and Infrastructure-as-Code",
+    title: "Storage Control Plane & Terraform Provider — Volumes, Snapshots, Backup Policies, and Infrastructure-as-Code",
     status: ROADMAP_STATUS.LIVE,
     description:
-      "An IBM Cloud VPC Storage-inspired control plane for Inaya's own storage -- a unified resource registry (volumes and file shares), a real point-in-time snapshot engine, consistency groups, cross-org snapshot sharing, and a tag-driven automated backup policy engine -- plus a real Terraform provider so an IT team can declare all of it as code, the same way they already automate their other cloud infrastructure.",
-    securityStatement: "A capacity decrease is always rejected rather than silently ignored, a deleted backup policy stops being picked up by the automated cron sweep rather than continuing to run invisibly, and every automatic retention deletion is audited -- none of it happens silently.",
+      "An IBM Cloud VPC Storage-inspired control plane for Inaya's own storage — a unified resource registry (volumes and file shares), a real point-in-time snapshot engine, consistency groups, cross-org snapshot sharing, and a tag-driven automated backup policy engine — plus a real Terraform provider so an IT team can declare all of it as code, the same way they already automate their other cloud infrastructure.",
+    securityStatement: "A capacity decrease is always rejected rather than silently ignored, a deleted backup policy stops being picked up by the automated cron sweep rather than continuing to run invisibly, and every automatic retention deletion is audited — none of it happens silently.",
     features: [
-      "Storage Resource Registry -- volumes and file shares as a real, taggable, resizable control-plane record, each backed by a real S3-compatible bucket, with a static, honest physicalCapability field stating plainly that Inaya has no compute/VM layer for a volume to physically attach to",
-      "Volume attach/detach as a real reservation/lock mechanism, and file-share mount targets as declared bookkeeping -- neither ever claims to be a physical device mount or a real NFS server",
-      "Snapshot engine built entirely on existing S3-compatible object versioning -- genuinely incremental at capture time (references, not copies), with a real, independently recomputable integrity hash, real copy-forward restore, consistency groups that honestly disclose a sequential (not atomic) capture boundary, cross-region copy, and cross-organization sharing that fails closed on wrong org, revocation, or expiry",
-      "Automated backup policy engine -- tag-selector-scoped policies with daily/weekly/monthly/long-term plans, real retention enforcement (oldest snapshots beyond a configured count are deleted, every deletion audited), and a six-state health status shared with the existing Cloud Backup Scheduler for a consistent operator experience",
-      "terraform-provider-inaya -- a real Go-based Terraform provider (inaya_storage_resource, inaya_snapshot, inaya_backup_policy, inaya_backup_plan) authenticated with an org API key, talking to a new bearer-token /api/public/v1/storage/* route namespace built specifically because Terraform runs headless and can't use the existing browser-session storage routes",
+      "Storage Resource Registry — volumes and file shares as a real, taggable, resizable control-plane record, each backed by a real S3-compatible bucket, with a static, honest physicalCapability field stating plainly that Inaya has no compute/VM layer for a volume to physically attach to",
+      "Volume attach/detach as a real reservation/lock mechanism, and file-share mount targets as declared bookkeeping — neither ever claims to be a physical device mount or a real NFS server",
+      "Snapshot engine built entirely on existing S3-compatible object versioning — genuinely incremental at capture time (references, not copies), with a real, independently recomputable integrity hash, real copy-forward restore, consistency groups that honestly disclose a sequential (not atomic) capture boundary, cross-region copy, and cross-organization sharing that fails closed on wrong org, revocation, or expiry",
+      "Automated backup policy engine — tag-selector-scoped policies with daily/weekly/monthly/long-term plans, real retention enforcement (oldest snapshots beyond a configured count are deleted, every deletion audited), and a six-state health status shared with the existing Cloud Backup Scheduler for a consistent operator experience",
+      "terraform-provider-inaya — a real Go-based Terraform provider (inaya_storage_resource, inaya_snapshot, inaya_backup_policy, inaya_backup_plan) authenticated with an org API key, talking to a new bearer-token /api/public/v1/storage/* route namespace built specifically because Terraform runs headless and can't use the existing browser-session storage routes",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for the Storage Control Plane or the Terraform provider (a developer tool, not an end-user feature); listed here for completeness. Live-verified: 35 automated tests across the storage resource, snapshot, backup policy, and Digital Twin integration layers, all passing against the real database and real S3-compatible storage write path, plus the Terraform provider's full create/read/update/delete cycle run against a real local Inaya deployment with real MongoDB-backed state -- not a dry run. That testing caught and fixed a real bug (the provider's computed health/created_at fields were briefly blank immediately after creation, before the next refresh). Not built: fast/accelerated restore (no backend primitive exists to make one honestly faster than a normal restore), real physical block-volume attach or real multi-client NFS mounting (structurally impossible without a compute layer Inaya doesn't have), and live interop validation against real IBM Cloud Object Storage (blocked on IBM's own account sign-up, not on anything left to build). The Terraform provider is not yet published to the Terraform Registry -- it runs from a local build today.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for the Storage Control Plane or the Terraform provider (a developer tool, not an end-user feature); listed here for completeness. Live-verified: 35 automated tests across the storage resource, snapshot, backup policy, and Digital Twin integration layers, all passing against the real database and real S3-compatible storage write path, plus the Terraform provider's full create/read/update/delete cycle run against a real local Inaya deployment with real MongoDB-backed state — not a dry run. That testing caught and fixed a real bug (the provider's computed health/created_at fields were briefly blank immediately after creation, before the next refresh). Not built: fast/accelerated restore (no backend primitive exists to make one honestly faster than a normal restore), real physical block-volume attach or real multi-client NFS mounting (structurally impossible without a compute layer Inaya doesn't have), and live interop validation against real IBM Cloud Object Storage (blocked on IBM's own account sign-up, not on anything left to build). The Terraform provider is not yet published to the Terraform Registry — it runs from a local build today.",
   },
   {
     number: 17,
-    title: 'Official Documentation Platform -- Product Guides, API/SDK/CLI Reference, Search, and an OpenAPI Spec',
+    title: 'Official Documentation Platform — Product Guides, API/SDK/CLI Reference, Search, and an OpenAPI Spec',
     status: ROADMAP_STATUS.LIVE,
     description:
-      "An IBM Cloud Docs-inspired official documentation portal at inayanetwork.com/docs -- real product guides, a hand-verified API/SDK/CLI reference, a real keyword search, release notes, and a downloadable OpenAPI spec, all built directly from the actual shipped implementation rather than aspirational copy.",
-    securityStatement: "Every page's status badge (Live/Testnet/Beta/Planned/Deprecated) is enforced by the content loader itself -- a page with a missing or invalid status fails to build rather than silently defaulting to a reassuring label.",
+      "An IBM Cloud Docs-inspired official documentation portal at inayanetwork.com/docs — real product guides, a hand-verified API/SDK/CLI reference, a real keyword search, release notes, and a downloadable OpenAPI spec, all built directly from the actual shipped implementation rather than aspirational copy.",
+    securityStatement: "Every page's status badge (Live/Testnet/Beta/Planned/Deprecated) is enforced by the content loader itself — a page with a missing or invalid status fails to build rather than silently defaulting to a reassuring label.",
     features: [
-      'Product Guides, API Reference (all 11 public/v1 endpoints), SDK Reference (all 5 published npm packages), and CLI Reference (all 3 published CLI tools) -- every fact hand-verified against the real route files, package.json/README content, and exports, not generated or assumed',
+      'Product Guides, API Reference (all 11 public/v1 endpoints), SDK Reference (all 5 published npm packages), and CLI Reference (all 3 published CLI tools) — every fact hand-verified against the real route files, package.json/README content, and exports, not generated or assumed',
       'A real markdown+frontmatter content engine with automatic table-of-contents generation, explicit related-doc cross-references, and a content loader that fails loudly on a missing field or duplicate slug rather than rendering a broken page',
-      'A real client-side keyword search, kept deliberately separate from -- and linking out to -- the existing semantic AI Docs Assistant, which the new content was wired into as a new RAG source rather than a second AI stack',
+      'A real client-side keyword search, kept deliberately separate from — and linking out to — the existing semantic AI Docs Assistant, which the new content was wired into as a new RAG source rather than a second AI stack',
       'A downloadable OpenAPI 3.0 spec generated directly from the same verified API reference data (no OpenAPI spec existed anywhere in this codebase before), validated with a real OpenAPI parser',
       'Release Notes rendered directly from this same roadmap\'s own stage data, so it can never drift into a second, hand-maintained changelog',
-      'The site\'s first-ever "Documentation" navigation entry point -- confirmed absent anywhere before this',
+      'The site\'s first-ever "Documentation" navigation entry point — confirmed absent anywhere before this',
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this documentation portal; listed here for completeness. Live-verified: 10 automated tests (frontmatter/slug/status validation, cross-reference integrity, and an OpenAPI-spec-matches-reference-data regression guard), a clean production build, and real browser verification including a genuine mobile-layout bug found and fixed (a search button overlapping its own placeholder text at narrow widths). Shipping this also surfaced and fixed an unrelated, pre-existing production issue: Vercel deployments had been silently failing for roughly 20 hours because a sibling local package's own dependencies were never installed in that environment -- fixed with a postinstall hook, verified by simulating a clean install before shipping. Not built: a Tutorials/Solutions/FAQ-as-a-system content type, API/SDK/CLI drift checking against the live route files, a full CI validation/accessibility/SEO suite, an admin/governance interface, and an API playground -- the SOW's own 15-phase plan spans well beyond this pass, and this stage covers Phases 0-3 plus slices of 4-7.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this documentation portal; listed here for completeness. Live-verified: 10 automated tests (frontmatter/slug/status validation, cross-reference integrity, and an OpenAPI-spec-matches-reference-data regression guard), a clean production build, and real browser verification including a genuine mobile-layout bug found and fixed (a search button overlapping its own placeholder text at narrow widths). Shipping this also surfaced and fixed an unrelated, pre-existing production issue: Vercel deployments had been silently failing for roughly 20 hours because a sibling local package's own dependencies were never installed in that environment — fixed with a postinstall hook, verified by simulating a clean install before shipping. Not built: a Tutorials/Solutions/FAQ-as-a-system content type, API/SDK/CLI drift checking against the live route files, a full CI validation/accessibility/SEO suite, an admin/governance interface, and an API playground — the SOW's own 15-phase plan spans well beyond this pass, and this stage covers Phases 0-3 plus slices of 4-7.",
   },
   {
     number: 18,
-    title: 'Mainframe & Legacy Data Access -- Real-Time SQL Virtualization, a Connector Framework, and Real JDBC + ODBC Drivers',
+    title: 'Mainframe & Legacy Data Access — Real-Time SQL Virtualization, a Connector Framework, and Real JDBC + ODBC Drivers',
     status: ROADMAP_STATUS.LIVE,
     description:
-      "A Software AG CONNX-inspired live SQL virtualization layer: connect a data source, publish it as a versioned virtual schema, and query it in real time with standard SQL and standard client tooling -- without moving the data or replacing the source system. A real connector framework, a real reference connector, and now a real RMS/OpenVMS connector proven against a genuine OpenVMS x86-64 instance.",
-    securityStatement: "A query can only touch a table that has actually been published as a virtual table for that data source -- an unpublished or unauthorized table fails closed with a real 403, never a silent partial result -- and write operations are rejected outright rather than silently no-opped, since the gateway is read-only this pass.",
+      "A Software AG CONNX-inspired live SQL virtualization layer: connect a data source, publish it as a versioned virtual schema, and query it in real time with standard SQL and standard client tooling — without moving the data or replacing the source system. A real connector framework, a real reference connector, and now a real RMS/OpenVMS connector proven against a genuine OpenVMS x86-64 instance.",
+    securityStatement: "A query can only touch a table that has actually been published as a virtual table for that data source — an unpublished or unauthorized table fails closed with a real 403, never a silent partial result — and write operations are rejected outright rather than silently no-opped, since the gateway is read-only this pass.",
     features: [
-      'Connector framework/SDK -- a pluggable connector interface (isConfigured/testConnection/discoverMetadata/executeQuery/health/capabilities), following the same pattern already established by Inaya\'s storage pinning providers',
-      'A real relational reference connector (Node\'s own node:sqlite) -- real connection, real metadata discovery, real SQL execution, proven end-to-end',
-      'A real RMS/OpenVMS connector (connectors/rmsOpenVms.js) -- SSH + real DCL against a genuine OpenVMS x86-64 instance, since there\'s no ODBC/JDBC bridge for RMS without Oracle Rdb/DBMS; metadata discovery parses OpenVMS\'s own FDL output, not an invented schema; real record reads for text-organized sequential files, with fixed-format binary and indexed files honestly reported as needing a compiled OpenVMS-side reader',
-      'Metadata & virtual schema engine -- real schema discovery with explicit, versioned publishing; a re-import never silently overwrites a previously published schema',
-      'SQL gateway -- a real SQL parser, authorization against exactly what\'s been published, real query execution with row/timeout limits, and every query (succeeded, denied, or failed) audited to the same shared audit trail every other Inaya feature uses',
-      'A real JDBC driver (jdbc-driver/) -- a genuine, compiled java.sql.Driver implementation, tested end-to-end including a standalone-jar smoke test with zero other classpath dependencies',
-      'A real ODBC driver (odbc-driver/) -- a genuine, compiled Win32 DLL exporting 34 standard ODBC entry points, built with MinGW-w64 GCC against the real ODBC SDK, verified end-to-end (19/19 checks) by loading the compiled DLL directly, AND now proven to register and connect through the real Windows ODBC Driver Manager itself (the path Excel/Power BI actually use)',
+      'Connector framework/SDK — a pluggable connector interface (isConfigured/testConnection/discoverMetadata/executeQuery/health/capabilities), following the same pattern already established by Inaya\'s storage pinning providers',
+      'A real relational reference connector (Node\'s own node:sqlite) — real connection, real metadata discovery, real SQL execution, proven end-to-end',
+      'A real RMS/OpenVMS connector (connectors/rmsOpenVms.js) — SSH + real DCL against a genuine OpenVMS x86-64 instance, since there\'s no ODBC/JDBC bridge for RMS without Oracle Rdb/DBMS; metadata discovery parses OpenVMS\'s own FDL output, not an invented schema; real record reads for text-organized sequential files, with fixed-format binary and indexed files honestly reported as needing a compiled OpenVMS-side reader',
+      'Metadata & virtual schema engine — real schema discovery with explicit, versioned publishing; a re-import never silently overwrites a previously published schema',
+      'SQL gateway — a real SQL parser, authorization against exactly what\'s been published, real query execution with row/timeout limits, and every query (succeeded, denied, or failed) audited to the same shared audit trail every other Inaya feature uses',
+      'A real JDBC driver (jdbc-driver/) — a genuine, compiled java.sql.Driver implementation, tested end-to-end including a standalone-jar smoke test with zero other classpath dependencies',
+      'A real ODBC driver (odbc-driver/) — a genuine, compiled Win32 DLL exporting 34 standard ODBC entry points, built with MinGW-w64 GCC against the real ODBC SDK, verified end-to-end (19/19 checks) by loading the compiled DLL directly, AND now proven to register and connect through the real Windows ODBC Driver Manager itself (the path Excel/Power BI actually use)',
       'A real REST API (/api/public/v1/data-sources/**) and Business Workspace admin UI (Data Sources + SQL Console tabs)',
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this developer/admin feature; listed here for completeness. Live-verified: 11 automated tests for the connector/metadata/gateway layer, 7 automated JDBC integration tests, 19 automated ODBC direct-load tests, and 7 automated RMS/OpenVMS tests against a live OpenVMS instance. Real bugs found and fixed this pass, each confirmed against the real system: getting OpenVMS itself to boot under a hypervisor took five separate genuine firmware/controller/boot-order fixes; the RMS connector's SSH dependency broke Next.js's production bundling for every route that touches the connector registry; and getting the ODBC driver through the real Windows Driver Manager for the first time surfaced five more real bugs (a PowerShell script parameter colliding with a built-in variable, two connection-attribute handlers that hard-errored instead of no-opping, a DSN-resolution gap, and a missing mandatory ODBC Core function whose absence crashed the Driver Manager itself). ODBC registration and a real Driver-Manager-mediated connection are now proven; query execution through that same path still crashes, isolated via the Windows Event Log to a fault inside Microsoft's own odbc32.dll, not this driver -- documented honestly as open. Not built: Adabas, VSAM and IMS connectors (Adabas's test environment -- a real Docker container -- is up and healthy, but the connector code isn't written; VSAM/IMS require a genuine z/OS environment, a much larger undertaking), write-back, and federated cross-source joins. See docs/mainframe-legacy-data-access-report.md for the full breakdown.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this developer/admin feature; listed here for completeness. Live-verified: 11 automated tests for the connector/metadata/gateway layer, 7 automated JDBC integration tests, 19 automated ODBC direct-load tests, and 7 automated RMS/OpenVMS tests against a live OpenVMS instance. Real bugs found and fixed this pass, each confirmed against the real system: getting OpenVMS itself to boot under a hypervisor took five separate genuine firmware/controller/boot-order fixes; the RMS connector's SSH dependency broke Next.js's production bundling for every route that touches the connector registry; and getting the ODBC driver through the real Windows Driver Manager for the first time surfaced five more real bugs (a PowerShell script parameter colliding with a built-in variable, two connection-attribute handlers that hard-errored instead of no-opping, a DSN-resolution gap, and a missing mandatory ODBC Core function whose absence crashed the Driver Manager itself). ODBC registration and a real Driver-Manager-mediated connection are now proven; query execution through that same path still crashes, isolated via the Windows Event Log to a fault inside Microsoft's own odbc32.dll, not this driver — documented honestly as open. Not built: Adabas, VSAM and IMS connectors (Adabas's test environment — a real Docker container — is up and healthy, but the connector code isn't written; VSAM/IMS require a genuine z/OS environment, a much larger undertaking), write-back, and federated cross-source joins. See docs/mainframe-legacy-data-access-report.md for the full breakdown.",
   },
   {
     number: 19,
-    title: "Sovereign NAS -- an On-Premises SMB/NFS Storage Appliance Managed and Audited by Inaya",
+    title: "Sovereign NAS — an On-Premises SMB/NFS Storage Appliance Managed and Audited by Inaya",
     status: ROADMAP_STATUS.LIVE,
     description:
       "A control plane and appliance agent that turn a Linux machine into a managed on-premises file server: Windows, Mac and Linux computers use it like any office file server (SMB and NFS), while Inaya sets it up, controls who can open what, snapshots it, protects it from ransomware, backs it up and records every action in the tamper-evident audit trail. The office keeps working when the internet is down.",
@@ -499,11 +499,11 @@ export const ROADMAP_STAGES = [
       "49 API route files, an 18-section Business Workspace console and a background worker, reusing the existing permissions, audit chain, Evidence Graph, Digital Twin and encrypted storage",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. Implemented and tested end to end on ONE documented profile: a Linux VM appliance (Ubuntu 26.04, Samba, NFSv4.2, mdadm, Btrfs) with real disk failure, crash recovery and real Windows and Linux clients. NOT validated on physical hardware (SMART, temperature and UPS are reported UNKNOWN on virtual disks) -- the largest remaining gap and the next step before selling hardware. NAS-to-NAS replication was tested on one host only; Active Directory/LDAP login, iSCSI, a local S3 gateway and Kubernetes CSI are not implemented; macOS is untested.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. Implemented and tested end to end on ONE documented profile: a Linux VM appliance (Ubuntu 26.04, Samba, NFSv4.2, mdadm, Btrfs) with real disk failure, crash recovery and real Windows and Linux clients. NOT validated on physical hardware (SMART, temperature and UPS are reported UNKNOWN on virtual disks) — the largest remaining gap and the next step before selling hardware. NAS-to-NAS replication was tested on one host only; Active Directory/LDAP login, iSCSI, a local S3 gateway and Kubernetes CSI are not implemented; macOS is untested.",
   },
   {
     number: 20,
-    title: "AI Security Workflow -- One Checked, Recorded Checkpoint for Every Text AI in Inaya",
+    title: "AI Security Workflow — One Checked, Recorded Checkpoint for Every Text AI in Inaya",
     status: ROADMAP_STATUS.LIVE,
     description:
       "A single AI Security Gateway that sits in front of Inaya's AI assistants so the AI cannot be tricked by hidden instructions, cannot leak personal data, and cannot act without permission. Every request passes identity, guardrails, model policy and monitoring, and every decision is recorded so a company can later see why something was allowed, warned, redacted, blocked or sent for human approval.",
@@ -511,16 +511,16 @@ export const ROADMAP_STAGES = [
     features: [
       "Deterministic prompt-injection detection and personal/sensitive-data detection on user input and documents, before the model sees them",
       "A policy engine per organization (allow, warn, redact, block, require human approval), a model registry, and rate limiting wired into every route",
-      "Decisions written to the existing tamper-evident audit chain and to the Evidence Graph as a new AI_SECURITY_CHECK subject -- no second audit system",
+      "Decisions written to the existing tamper-evident audit chain and to the Evidence Graph as a new AI_SECURITY_CHECK subject — no second audit system",
       "Coverage of all six text AI routes: the business assistant, wallet assistant, security assistant, Learn assistant, documentation assistant and the OS chat",
       "An AI Security view in the Business Workspace showing what each request was allowed to see, which checks ran and why one was blocked or redacted",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. Live-verified: 23/23 adversarial tests, and a real HTTP round trip against the running server in which a real injection attempt on the business assistant was blocked while normal chat was unaffected. Known boundaries: the voice assistant (speech goes browser to Gemini Live directly) is not gateway-covered; the documentation assistant streams with input-side checks only; routes that have no organization log without an organization audit chain. No independent security certification is claimed.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. Live-verified: 23/23 adversarial tests, and a real HTTP round trip against the running server in which a real injection attempt on the business assistant was blocked while normal chat was unaffected. Known boundaries: the voice assistant (speech goes browser to Gemini Live directly) is not gateway-covered; the documentation assistant streams with input-side checks only; routes that have no organization log without an organization audit chain. No independent security certification is claimed.",
   },
   {
     number: 21,
-    title: "Native Document & Invoice Automation Engine -- Generate, Approve, Store and Send Business Documents",
+    title: "Native Document & Invoice Automation Engine — Generate, Approve, Store and Send Business Documents",
     status: ROADMAP_STATUS.LIVE,
     description:
       "One pipeline that creates professional business documents from the records Inaya already holds (Finance, CRM, Procurement): data, template, exact calculation, document, validation, approval, evidence, encrypted storage, secure delivery, verification. Nine document types run through the same engine: invoices (standard and professional layouts), purchase orders, quotations, receipts, customer statements, credit notes, debit notes, delivery notes and business reports.",
@@ -534,11 +534,11 @@ export const ROADMAP_STAGES = [
       "Search, Business Brief, Activity Center and trust-health integration, permission-aware",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. Verified against the real database, including a storage-outage simulation and provider fallback. The Pinata plan limit blocked storage during testing; storage now falls back across configured providers. Live PDF generation, including Arabic and Urdu, was confirmed on the production site on 2026-09-27 (a bundler defect that broke every PDF export on Vercel was found by this live check and fixed the same day; see SQA-026 in the defect registry). A secure link is bearer access -- the recipient's email is recorded, not verified, except in Data Room delivery. Country-specific e-invoicing formats are not built. Follow-up under investigation: one document-number ledger assertion in the lifecycle suite after an invoice cancel.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. Verified against the real database, including a storage-outage simulation and provider fallback. The Pinata plan limit blocked storage during testing; storage now falls back across configured providers. Live PDF generation, including Arabic and Urdu, was confirmed on the production site on 2026-09-27 (a bundler defect that broke every PDF export on Vercel was found by this live check and fixed the same day; see SQA-026 in the defect registry). A secure link is bearer access — the recipient's email is recorded, not verified, except in Data Room delivery. Country-specific e-invoicing formats are not built. Follow-up under investigation: one document-number ledger assertion in the lifecycle suite after an invoice cancel.",
   },
   {
     number: 22,
-    title: "AI Business Operations Manager -- Visual Automations, Approvals, Evidence and Notifications",
+    title: "AI Business Operations Manager — Visual Automations, Approvals, Evidence and Notifications",
     status: ROADMAP_STATUS.LIVE,
     description:
       "A visual, node-based workflow builder inside the Business Workspace. A company draws its own routines (a schedule, a webhook or an event as the trigger, then steps that read its own data, ask the AI to summarize or decide, send notifications, or wait for a person's approval), publishes them, and Inaya runs them on its own with a full step-by-step record. Ready-made templates cover daily business health, invoice follow-up, support escalation, and the Finance Operations Manager routine for the AI Bookkeeper.",
@@ -551,11 +551,11 @@ export const ROADMAP_STAGES = [
       "Data readers and action nodes added by later features (support tickets, bookkeeping) through the same engine",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. Verified against the real database. Slack sending and Gmail delivery were each verified live from a published production workflow on 2026-09-26. A real external helpdesk product is NOT verified (tested against a local stand-in only).",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. Verified against the real database. Slack sending and Gmail delivery were each verified live from a published production workflow on 2026-09-26. A real external helpdesk product is NOT verified (tested against a local stand-in only).",
   },
   {
     number: 23,
-    title: "Customer Portal & Customer Service -- Tickets, Portal, SLAs, Knowledge Base, AI Assist, and Help & Support for Inaya Users",
+    title: "Customer Portal & Customer Service — Tickets, Portal, SLAs, Knowledge Base, AI Assist, and Help & Support for Inaya Users",
     status: ROADMAP_STATUS.LIVE,
     description:
       "A complete support desk built into Inaya, on the customer and invoice records the company already has. Customers sign in to their own portal to raise tickets, attach files and follow the conversation; the company's team works them in a console with queues, assignment, business-hours SLAs that pause and resume correctly, saved replies, internal notes customers never see, a help centre with search, an AI helper that answers from the company's own articles with citations, satisfaction ratings, idea voting, analytics and an open API. Inaya's own users get Help & Support: Business Workspace members raise a ticket to Inaya's support desk, with an email copy to the support mailbox, and dApp visitors are pointed to the portal.",
@@ -568,11 +568,11 @@ export const ROADMAP_STAGES = [
       "Help & Support: a Business Workspace view that files tickets in Inaya's own support desk from the verified account, five requests per hour, idempotent against double submission, with an email copy to the support mailbox (Reply-To set to the requester)",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. Verified against the real database; Help & Support verified by seven automated tests and a live production check of the endpoints. NOT yet verified against real providers: reply-by-email through the inbound email provider (built, setup pending), company single sign-on, and the malware scanner. To make Help & Support fully visible to dApp visitors, the Inaya Network organization's portal must be switched on in Customer Support settings.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. Verified against the real database; Help & Support verified by seven automated tests and a live production check of the endpoints. NOT yet verified against real providers: reply-by-email through the inbound email provider (built, setup pending), company single sign-on, and the malware scanner. To make Help & Support fully visible to dApp visitors, the Inaya Network organization's portal must be switched on in Customer Support settings.",
   },
   {
     number: 24,
-    title: "Identity Integration -- Microsoft Entra, Active Directory, SCIM, Rewst and MSP Multi-Tenancy",
+    title: "Identity Integration — Microsoft Entra, Active Directory, SCIM, Rewst and MSP Multi-Tenancy",
     status: ROADMAP_STATUS.LIVE,
     description:
       "When a company hires, changes or dismisses someone in its own directory, Inaya follows automatically and can prove the person really lost access. Access is keyed to the provider's immutable identity, changes are planned, executed and verified, and a leaver's revocation is checked step by step: freeze, sessions, credentials, permissions, sharing and break-glass, with failed steps listed and retryable. Managed-service providers can look after several customer companies with strict separation.",
@@ -584,14 +584,14 @@ export const ROADMAP_STAGES = [
       "Group and attribute mapping (versioned), temporary access, access reviews, orphan detection, manager replacement, incident restrict/restore, credential lifecycle",
       "MSP delegation with two-sided links and four delegated roles, re-verified on every request; a REST API and outbound events for automation platforms such as Rewst",
       "Reconciliation (MATCH / DRIFT / CONFLICT / UNRESOLVED) and an Identity & Access console (15 tabs) with no fabricated metrics",
-      "A real, standalone on-prem Active Directory sync agent (ad-sync-agent/) -- outbound-only LDAP to the customer's own DC, HTTPS to Inaya, never the reverse; real full and incremental sync via AD's own uSNChanged watermark, feeding the same signed webhook and unmodified engine already proven against Entra",
+      "A real, standalone on-prem Active Directory sync agent (ad-sync-agent/) — outbound-only LDAP to the customer's own DC, HTTPS to Inaya, never the reverse; real full and incremental sync via AD's own uSNChanged watermark, feeding the same signed webhook and unmodified engine already proven against Entra",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. Verified against a REAL Microsoft Entra tenant: the Graph directory pull, and the SCIM connection test, joiner and leaver as sent by Entra's own provisioning service, including a leaver with six verified revocation steps. Active Directory is now ALSO verified for real: a genuine Windows Server domain controller was stood up, a real test user (with mail/department/title) was created in it, and the new sync agent pulled her and pushed her through the unmodified engine end to end -- PROCESSED, with real identity/membership records to show for it. Three real bugs were found and fixed along the way (tenantId derivation, AD's GeneralizedTime timestamp format, an async client-shutdown race that crashed the agent on Windows). NOT verified: group-membership push from Entra, Rewst (a paid product not available to test; Inaya works with any automation platform through its open API), Okta, and HR/PSA/RMM tools, which are built as generic adapters only. Documentation labels each integration VERIFIED, PARTIAL, UNVERIFIED, UNSUPPORTED or FUTURE.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. Verified against a REAL Microsoft Entra tenant: the Graph directory pull, and the SCIM connection test, joiner and leaver as sent by Entra's own provisioning service, including a leaver with six verified revocation steps. Active Directory is now ALSO verified for real: a genuine Windows Server domain controller was stood up, a real test user (with mail/department/title) was created in it, and the new sync agent pulled her and pushed her through the unmodified engine end to end — PROCESSED, with real identity/membership records to show for it. Three real bugs were found and fixed along the way (tenantId derivation, AD's GeneralizedTime timestamp format, an async client-shutdown race that crashed the agent on Windows). NOT verified: group-membership push from Entra, Rewst (a paid product not available to test; Inaya works with any automation platform through its open API), Okta, and HR/PSA/RMM tools, which are built as generic adapters only. Documentation labels each integration VERIFIED, PARTIAL, UNVERIFIED, UNSUPPORTED or FUTURE.",
   },
   {
     number: 25,
-    title: "AI Bookkeeper -- Bank Statements, Bills and Receipts Matched, Categorized and Reconciled with Human Review",
+    title: "AI Bookkeeper — Bank Statements, Bills and Receipts Matched, Categorized and Reconciled with Human Review",
     status: ROADMAP_STATUS.LIVE,
     description:
       "The AI reads bills, receipts and bank statements, works out what each is and which payments and invoices it matches, and sends anything doubtful or risky to a person. Statements are imported (CSV and OFX/QFX), documents arrive by upload, a signed email relay or WhatsApp, every extracted figure carries where it came from, and confidence is explained and configurable (default 99 percent).",
@@ -601,14 +601,14 @@ export const ROADMAP_STAGES = [
       "Categorization by rule, then approved mapping, then history, then AI; payment-to-bill and receipt-to-invoice matching including part payments, over/under payments, fees, one payment covering several invoices, currency differences, and purchase-order / goods-received / bill three-way match",
       "A review queue with ten actions (approve, reject, edit, re-match, split, merge, mark duplicate, request document, defer, escalate) that learns corrections without rewriting history",
       "Anomaly signals with mandatory wording (\"Potential anomaly detected: human review required\"), configurable and audited thresholds, reports (CSV), a month-end checklist that is explicitly not a statutory close, and read-only what-if scenarios labelled SIMULATED",
-      "Business Insights, AI assistant tool, a Finance Operations Manager automation template, notifications, Evidence Graph and audit chain -- all reusing existing systems, with no second ledger",
+      "Business Insights, AI assistant tool, a Finance Operations Manager automation template, notifications, Evidence Graph and audit chain — all reusing existing systems, with no second ledger",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. Verified against the real database (flow, unit and security suites, including organization and department isolation, webhook signatures and replay, and hostile files). NOT verified against real outside accounts: live bank feeds (no provider is registered; import statements instead), a live email provider, a real WhatsApp Business account (tested against a stand-in for Meta), and OCR of images and scanned PDFs (no local OCR engine; depends on the AI model and is never auto-processed). Inaya has no general ledger and none was invented; no savings figures are estimated. Excel and PDF report exports are not offered.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. Verified against the real database (flow, unit and security suites, including organization and department isolation, webhook signatures and replay, and hostile files). NOT verified against real outside accounts: live bank feeds (no provider is registered; import statements instead), a live email provider, a real WhatsApp Business account (tested against a stand-in for Meta), and OCR of images and scanned PDFs (no local OCR engine; depends on the AI model and is never auto-processed). Inaya has no general ledger and none was invented; no savings figures are estimated. Excel and PDF report exports are not offered.",
   },
   {
     number: 26,
-    title: "Whole-Codebase Quality Review & Hardening -- Independent SQA Across the Ecosystem",
+    title: "Whole-Codebase Quality Review & Hardening — Independent SQA Across the Ecosystem",
     status: ROADMAP_STATUS.IN_PROGRESS,
     description:
       "An independent quality audit that deliberately tries to break Inaya rather than re-running existing tests: every API route is probed for access-control gaps, real client tools (the official AWS command line, rclone) are driven against Inaya's storage, and the money, bridge and payment flows are attacked. Each confirmed defect is reproduced, fixed and locked in with an automated regression test, and everything is recorded in a defect registry with severity, root cause and status. Phase one is delivered; the review is continuing across the remaining repositories.",
@@ -622,7 +622,7 @@ export const ROADMAP_STAGES = [
       "Test-suite health: the standard contract test run works again (175 passing), a test-runner hang that would freeze automated checks was fixed, and non-breaking dependency fixes were applied",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. In progress. Done: main dApp routes, bridge, payments, S3 layer against the AWS CLI and rclone, contract suite, dependency audit. Still to do: Azure, Google Cloud Storage and Terraform against Inaya storage with their real tools; mobile, desktop and Inaya Drive on real devices (needs hardware); concurrency and failure injection; smart-contract static analysis; performance; CI review; and a complete re-run of the 179 test files. Open risks recorded: wallet-address metadata reads are unauthenticated by design, card-customer identity is the payer's email, the main dApp is on a Next.js version whose fix needs a major upgrade, and deleting an object does not yet unpin its provider copy. Provider plan limits (Pinata blocked, Filebase at its 500-pin free limit) need the owner's action.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. In progress. Done: main dApp routes, bridge, payments, S3 layer against the AWS CLI and rclone, contract suite, dependency audit. Still to do: Azure, Google Cloud Storage and Terraform against Inaya storage with their real tools; mobile, desktop and Inaya Drive on real devices (needs hardware); concurrency and failure injection; smart-contract static analysis; performance; CI review; and a complete re-run of the 179 test files. Open risks recorded: wallet-address metadata reads are unauthenticated by design, card-customer identity is the payer's email, the main dApp is on a Next.js version whose fix needs a major upgrade, and deleting an object does not yet unpin its provider copy. Provider plan limits (Pinata blocked, Filebase at its 500-pin free limit) need the owner's action.",
   },
   {
     number: 27,
@@ -630,23 +630,23 @@ export const ROADMAP_STAGES = [
     status: ROADMAP_STATUS.LIVE,
     description:
       "A real, provisioned PostgreSQL database managed from inside the Business Workspace; a general document-understanding studio that reads any document, not just invoices; and an AI workbench for cataloguing data, checking its quality, registering models, and running one governed piece of code at a time in an isolated, disposable sandbox.",
-    securityStatement: "Provisioning a database and running code are owner/admin-only, rate-limited and fully audited. The sandbox never receives Inaya's own server secrets and has no internet access unless a person explicitly turns it on for one run. Inaya does not train AI models on its own infrastructure -- registering a model tracks a real file a team already produced elsewhere.",
+    securityStatement: "Provisioning a database and running code are owner/admin-only, rate-limited and fully audited. The sandbox never receives Inaya's own server secrets and has no internet access unless a person explicitly turns it on for one run. Inaya does not train AI models on its own infrastructure — registering a model tracks a real file a team already produced elsewhere.",
     features: [
-      "Databases: provision, start, stop, list backups, restore to a point in time, and query a real PostgreSQL database through a real external provider (Supabase) -- Inaya's own serverless hosting cannot run a database engine itself",
+      "Databases: provision, start, stop, list backups, restore to a point in time, and query a real PostgreSQL database through a real external provider (Supabase) — Inaya's own serverless hosting cannot run a database engine itself",
       "Document Intelligence: built-in readers for invoices, purchase orders, receipts and contracts, plus custom analyzers with a real draft-to-live lifecycle; every extracted field shows its confidence and whether it was actually found in the document's own text",
       "Human corrections are added to the record, never overwriting the original extraction",
       "AI/ML Studio: a data and model catalogue verified against real sources, automatic data-quality checks, a model registry with real artifact hashing, and named evaluation metrics reported separately, never as one score",
-      "A single governed way to run one Python or Node.js snippet in a fresh, network-off-by-default sandbox that is destroyed the instant it finishes -- deliberately not a persistent notebook",
+      "A single governed way to run one Python or Node.js snippet in a fresh, network-off-by-default sandbox that is destroyed the instant it finishes — deliberately not a persistent notebook",
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet; listed here for completeness. Live. 26 real tests passing across all three workstreams, including live runs against a real, disposable cloud sandbox created and destroyed for each test -- not simulated. A real bug (an Evidence Graph collection-name mismatch) was found and fixed by the tests before shipping. Not built: read replicas / failover for the managed database (not yet verified through a real incident), and REGEX-type data-quality rules (the reference SQL connector has no portable REGEXP).",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet; listed here for completeness. Live. 26 real tests passing across all three workstreams, including live runs against a real, disposable cloud sandbox created and destroyed for each test — not simulated. A real bug (an Evidence Graph collection-name mismatch) was found and fixed by the tests before shipping. Not built: read replicas / failover for the managed database (not yet verified through a real incident), and REGEX-type data-quality rules (the reference SQL connector has no portable REGEXP).",
   },
   {
     number: 28,
-    title: "Secure Collaboration & Enterprise Governance -- Competitive Expansion",
+    title: "Secure Collaboration & Enterprise Governance — Competitive Expansion",
     status: ROADMAP_STATUS.IN_PROGRESS,
     description:
-      "A competitive-expansion layer inspired by the strongest patterns of two well-known products -- private end-to-end encrypted collaboration (chat, notes, sharing), and the controls a large organization needs (governance, classification, device management, compliance readiness) -- built inside Inaya's existing encrypted storage and permission model rather than as a separate product. Every capability here is off by default; an organization turns it on for itself.",
+      "A competitive-expansion layer inspired by the strongest patterns of two well-known products — private end-to-end encrypted collaboration (chat, notes, sharing), and the controls a large organization needs (governance, classification, device management, compliance readiness) — built inside Inaya's existing encrypted storage and permission model rather than as a separate product. Every capability here is off by default; an organization turns it on for itself.",
     securityStatement:
       "Chat and notes are end-to-end encrypted on the device; an administrator cannot read them. Nothing here is claimed as a government certification or an independently audited cryptographic protocol unless it actually is one.",
     groups: [
@@ -673,7 +673,7 @@ export const ROADMAP_STAGES = [
         items: [
           "Device inventory, trust/block/revoke, ransomware behavior signals",
           "Endpoint backup with restore jobs",
-          "Sovereign Gateway -- an on-premises connector agent for a company's own file servers",
+          "Sovereign Gateway — an on-premises connector agent for a company's own file servers",
           "Site replication, Microsoft 365/Outlook integration, customer portal file requests",
         ],
       },
@@ -688,7 +688,106 @@ export const ROADMAP_STAGES = [
       },
     ],
     notes:
-      "This is WEB/DESKTOP ONLY -- no mobile app surface exists for this feature yet (mobile chat and push notifications are the 3 explicitly not-built items below); listed here for completeness. Built across 26 workstreams and deployed to the live website behind off-by-default feature flags, 3-5 October 2026. Honest ledger of 114 tracked deliverables: 49 finished and independently checked against the real database and, where there's a screen, a real browser; 35 built and tested in code but not yet proven against a real outside system; 27 partly built; 3 not built (mobile chat and push notifications -- left for later by deliberate choice, not an oversight). The Sovereign Gateway, NTFS/Active-Directory folder-permission bridge, high-availability site replication, and Microsoft 365/Outlook integration are built and tested but not yet proven against a real company file server or a real Microsoft 365 tenant. The chat protocol's open-source library implementation has not had an independent security audit. The project's own final verification report states plainly that the SOW is not yet complete -- this stage stays IN_PROGRESS until it is.",
+      "This is WEB/DESKTOP ONLY — no mobile app surface exists for this feature yet (mobile chat and push notifications are the 3 explicitly not-built items below); listed here for completeness. Built across 26 workstreams and deployed to the live website behind off-by-default feature flags, 3-5 October 2026. Honest ledger of 114 tracked deliverables: 49 finished and independently checked against the real database and, where there's a screen, a real browser; 35 built and tested in code but not yet proven against a real outside system; 27 partly built; 3 not built (mobile chat and push notifications — left for later by deliberate choice, not an oversight). The Sovereign Gateway, NTFS/Active-Directory folder-permission bridge, high-availability site replication, and Microsoft 365/Outlook integration are built and tested but not yet proven against a real company file server or a real Microsoft 365 tenant. The chat protocol's open-source library implementation has not had an independent security audit. The project's own final verification report states plainly that the SOW is not yet complete — this stage stays IN_PROGRESS until it is.",
+  },
+  {
+    number: 29,
+    title: "Post-Quantum Security, Private Meetings & Device Protection — Internxt-Inspired Expansion",
+    status: ROADMAP_STATUS.IN_PROGRESS,
+    description:
+      "A delta scope on top of the Competitive Expansion above, inspired by another well-known product's strongest ideas: future-proof encryption key establishment, a private local device cleaner, private video meetings, and one coherent view over the backup system Inaya already had. Nothing here duplicates an existing system — the first engineering step was a full audit of what already existed, and every new piece extends it.",
+    securityStatement:
+      "The post-quantum layer protects key establishment, not file content — AES-256 remains the content cipher, unchanged. Meeting media never touches an Inaya server (peer-to-peer by design, not routed through a middle server). Nothing here is described as quantum-safe, zero-access, or fully end-to-end encrypted beyond what is actually implemented and tested.",
+    groups: [
+      {
+        title: "Post-Quantum Cryptography",
+        items: [
+          "A hybrid ML-KEM-768 + X25519 key-establishment layer (the NIST-standardized successor to what competitors market as \"Kyber\"), combined through a domain-separated HKDF — never a bare hash of two secrets concatenated together",
+          "A versioned envelope format and a device key registry, with no private key ever leaving the device it was generated on",
+          "An algorithm-agile extension of the existing file-sharing primitive — classical, hybrid, or PQC-required, with a policy that refuses to silently downgrade",
+          "Device revocation now also revokes that device's PQC key in the same action",
+        ],
+      },
+      {
+        title: "Inaya Cleaner",
+        items: [
+          "A local-first scan for temporary and duplicate files, built into the existing desktop app rather than a separate application",
+          "A platform-specific protected-path list so system, application and Inaya's own files can never be touched",
+          "Trash, not permanent delete, by default — reviewed and confirmed before anything is removed",
+          "A warning (never a silent skip) when a file is inside a folder actively protected by backup",
+        ],
+      },
+      {
+        title: "Inaya Meet",
+        items: [
+          "Private, peer-to-peer video meetings — media flows directly between participants' browsers, never through an Inaya server",
+          "A lobby with host approval, server-enforced moderator controls (lock, end, remove, mute request)",
+          "Four guest-access modes, including a named-invite list verified by a one-time emailed code",
+          "In-call chat reuses the existing Secure Chat system rather than a second messaging engine, and is ephemeral by default",
+          "This app has a real join screen (a web view pointed at the same meeting link, with camera/microphone permissions) — hosting and scheduling meetings stay web/desktop-only for now",
+        ],
+      },
+      {
+        title: "Device Protection",
+        items: [
+          "Backup, Sync, Cleaner and Device status consolidated into one surface instead of four scattered screens (web/desktop)",
+          "A per-device PQC-capability badge and backup-health badge",
+          "A full audit of the 8 existing backup-related files found nearly everything Internxt-style already existed — the only new work was reconciliation, not a second backup engine",
+        ],
+      },
+    ],
+    notes:
+      "Post-quantum cryptography and Computer Backup reconciliation are web/desktop and SDK work with no separate mobile surface — complete and verified (127/127 SDK cryptography tests, including official ML-KEM test vectors and adversarial downgrade/tamper cases). Cleaner is desktop-only by design (it scans this computer's own filesystem) — built and tested (9/9 real filesystem tests on Windows); the live round trip through the compiled desktop app's native command bridge was attempted but not completed in this environment. Meet is functionally complete on web — 28 server-side tests passing, including every guest-access mode and server-enforced PQC-downgrade rejection — and was verified against a real running server in a real browser, a pass that found and fixed two genuine bugs (a pre-existing crash affecting any user, and a Meet-specific false error for anyone without a camera). This app's own Meet join screen is built but not yet run on a real phone. What's still needed, honestly: a real two-person video call with real cameras, and a real phone running this app's build — both need real hardware this engineering environment cannot provide. This stage stays IN_PROGRESS until that real-world test happens.",
+  },
+  {
+    number: 30,
+    title: "Sovereign Infrastructure Fabric — Bring-Your-Own-Hardware Compute",
+    status: ROADMAP_STATUS.LIVE,
+    description:
+      "Inaya could always store and protect files, but had no way to actually run compute for a customer. This stage closes that gap: a customer connects their own computer (or a rented server) and it comes online as real, managed infrastructure — their own private slice of cloud-like compute, running on hardware they own, not shared with anyone else. Built independently, inspired by how BYOH providers like Spinifex approach the problem, reusing Inaya's existing security, permissions and activity-logging rather than a second stack. This is a web/desktop Business Workspace capability — there is no separate mobile surface for it yet.",
+    securityStatement:
+      "Each connected node authenticates with its own signed-request credential, never a shared password, and can be revoked at any time. Each customer's virtual machines sit in their own isolated network with default-drop firewall rules. TPM and confidential-compute hardware is detected and reported, never claimed as in use beyond what's verified — see what's explicitly not built below.",
+    groups: [
+      {
+        title: "Compute, storage & networking",
+        items: [
+          "Real QEMU/KVM virtual machines on a customer's own connected hardware — create, start, stop, restart, delete, confirmed by a real guest OS genuinely booting and coming online with its own network address, not just an engine starting and stopping",
+          "Real qcow2 block storage, written and read back byte-for-byte, with image-backed overlay disks for fast VM creation",
+          "A private, isolated network per customer with default-drop nftables rules and NAT so guests reach the internet safely without reaching each other",
+          "An Infrastructure console in the Business Workspace (web/desktop) showing connected nodes, VMs, capacity, clusters, load balancers and access keys, with real Terraform provider support (3 compute resources, separate from the earlier storage-only provider)",
+        ],
+      },
+      {
+        title: "AWS CLI compatibility",
+        items: [
+          "The real, official `aws` command-line tool — not a lookalike — authenticated with a real Inaya-issued key pair and real SigV4 request signing, genuinely creating, listing, starting, stopping and terminating virtual machines on a customer's own hardware",
+          "A working subset only: instance and volume lifecycle plus VPCs. S3, IAM and autoscaling are not included — never claimed as \"full AWS compatibility\"",
+        ],
+      },
+      {
+        title: "Load balancing",
+        items: [
+          "A real HAProxy process per load balancer, run on the customer's own node, spreading real TCP connections round-robin across healthy backends and surviving a live configuration change without dropping traffic",
+          "TCP-level only today — no HTTP-aware routing yet, and no AWS-compatible load-balancer API",
+        ],
+      },
+      {
+        title: "Kubernetes",
+        items: [
+          "Real upstream Kubernetes (k3s, not a custom orchestrator) installed on real guest VMs this stage creates, with a working kubeconfig handed to the customer's own `kubectl` — proven by `kubectl get nodes` showing real nodes Ready and a real test pod reaching Running",
+          "This required building real guest OS boot from scratch as new groundwork — the first VM in this project to ever boot and come online, now reused by every capability above",
+        ],
+      },
+      {
+        title: "Hardware detection",
+        items: [
+          "Honest detection and reporting of whether a connected node has a TPM security chip or a confidential-compute CPU feature (SEV/TDX) — detection only, same precedent as existing GPU detection",
+          "Not yet built: GPU passthrough (needs a dedicated GPU host this environment can't test against), TPM-backed node identity, and actual SEV/TDX-encrypted VM execution",
+        ],
+      },
+    ],
+    notes:
+      "Built in two rounds and tested against real hardware throughout, not just written and assumed to work — a real VM, a real disk, a real VPC, a real `aws` CLI call, a real HAProxy round-trip, and a real k3s cluster were each exercised end to end on a real QEMU/KVM host. 82+ automated tests pass (30 Rust, 52 Node.js). Real hardware testing caught and fixed 7 genuine bugs a code review alone would have missed, including a pre-existing camelCase/snake_case wire-format mismatch in the node scheduler's capacity comparison (fixed at the customer's own request) and an SSH protocol ordering bug that silently truncated longer guest responses. Explicitly not built: GPU passthrough, full AWS coverage (S3/IAM/autoscaling), HTTP-aware load balancing, and TPM-backed identity or real SEV/TDX execution — each deferred for a stated, concrete reason, not silently skipped. No separate mobile UI exists for this stage; it is managed entirely from the web/desktop Business Workspace.",
   },
 ];
 
