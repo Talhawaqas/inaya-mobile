@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { requireOptionalNativeModule } from 'expo';
 import { orgFetch } from './orgApi';
+import { withSystemUi } from './jobNative';
 
 const PROJECT_ID = 'd3ab3b26-0be8-4082-9f01-45a7b90d8f56';
 const available = () => { try { return !!requireOptionalNativeModule('ExpoPushTokenManager') && !!requireOptionalNativeModule('ExpoNotificationPermissionsModule'); } catch { return false; } };
@@ -26,7 +27,7 @@ export async function registerJobPush(orgIds = []) {
     const Notifications = N();
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('jobs', { name: 'Jobs', importance: Notifications.AndroidImportance.HIGH, lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE });
     let perm = await Notifications.getPermissionsAsync();
-    if (!perm.granted && perm.canAskAgain) perm = await Notifications.requestPermissionsAsync();
+    if (!perm.granted && perm.canAskAgain) perm = await withSystemUi(() => Notifications.requestPermissionsAsync()); // the permission dialog backgrounds the app
     if (!perm.granted) return { registered: 0, reason: 'denied' };
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
     let n = 0;

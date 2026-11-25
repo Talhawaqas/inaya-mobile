@@ -7,7 +7,7 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, TextInput,
 import * as Application from 'expo-application';
 import { colors, spacing } from '../../theme';
 import { orgFetch, getStoredSessionToken, API_BASE } from '../../utils/orgApi';
-import { takeJobPhoto, currentLocationOnce, scannerComponent, nativeCaps } from '../../utils/jobNative';
+import { takeJobPhoto, currentLocationOnce, scannerComponent, nativeCaps, withSystemUi } from '../../utils/jobNative';
 import { styles, reqKey, human, when } from './MyJobsScreen';
 import { enqueue, flushQueue, onQueueChange, dismiss, isOffline, LABEL } from '../../utils/jobQueue';
 
@@ -164,7 +164,7 @@ export default function JobScreen({ route }) {
 
 function ScannerView({ Cam, onCode, onClose }) {
   const [perm, requestPerm] = Cam.useCameraPermissions(); const [done, setDone] = useState(false);
-  useEffect(() => { if (perm && !perm.granted && perm.canAskAgain) requestPerm(); }, [perm, requestPerm]);
+  useEffect(() => { if (perm && !perm.granted && perm.canAskAgain) withSystemUi(() => requestPerm()); }, [perm, requestPerm]);
   if (!perm) return <View style={styles.center}><ActivityIndicator color={colors.cyan} /></View>;
   if (!perm.granted) return <View style={styles.center}><Text style={styles.error}>Camera access was not allowed. Type the site code instead.</Text><TouchableOpacity style={styles.btn} onPress={onClose}><Text style={styles.btnText}>Close</Text></TouchableOpacity></View>;
   return <View style={{ flex: 1, backgroundColor: '#000' }}>
