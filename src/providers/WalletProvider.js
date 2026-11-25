@@ -31,7 +31,9 @@ const BSC_TESTNET_PARAMS = {
   chainId: '0x61',
   chainName: 'BNB Smart Chain Testnet',
   nativeCurrency: { name: 'tBNB', symbol: 'tBNB', decimals: 18 },
-  rpcUrls: ['https://rpc.ankr.com/bsc_testnet', 'https://data-seed-prebsc-1-s1.binance.org:8545/'],
+  // 2026-10-19: Ankr's public bsc_testnet endpoint now rejects requests without an API key (HTTP 403,
+  // -32052), which surfaced as RPC errors in MetaMask for anyone whose network was added with it first.
+  rpcUrls: ['https://bsc-testnet-rpc.publicnode.com', 'https://data-seed-prebsc-1-s1.binance.org:8545/'],
   blockExplorerUrls: ['https://testnet.bscscan.com'],
 };
 

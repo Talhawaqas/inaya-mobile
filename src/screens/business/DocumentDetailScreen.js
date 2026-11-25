@@ -26,6 +26,7 @@ import { InayaKernel } from '@inaya-network/custody-sdk';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { orgFetch } from '../../utils/orgApi';
 import { fetchShardFromIPFS } from '../../utils/custody';
+import { openChunkedToFile } from '../../utils/chunkedDocument';
 import { suspendAppLock, resumeAppLock } from '../../utils/appLockSuspend';
 
 const SHARE_PRESETS = ['1h', '24h', '7d', '30d'];
@@ -97,22 +98,33 @@ export default function DocumentDetailScreen({ route, navigation }) {
     setOpening(true);
     setOpenError('');
     try {
-      setOpenStatus('Fetching encrypted shards...');
-      const [shardAlpha, shardBeta] = await Promise.all([
-        fetchShardFromIPFS(meta.cidAlpha),
-        fetchShardFromIPFS(meta.cidBeta),
-      ]);
-
-      setOpenStatus('Decrypting...');
-      const dataUrl = await InayaKernel.reconstructAndDecrypt({ shardAlpha, shardBeta, passkey });
-      const match = /^data:([^;]+);base64,(.*)$/s.exec(dataUrl);
-      if (!match) throw new Error('Unexpected decrypted data format.');
-      const [, mimeType, base64Data] = match;
-
-      setOpenStatus('Saving to device...');
       const file = new File(Paths.cache, meta.filename || filename);
-      file.create({ overwrite: true });
-      file.write(base64Data, { encoding: 'base64' });
+      let mimeType;
+      if (meta.chunked) {
+        // Large file stored in encrypted pieces (chunkedDocument.js): decrypted piece by piece straight into the file.
+        setOpenStatus('Downloading and decrypting...');
+        ({ mimeType } = await openChunkedToFile({
+          alpha: meta.chunked.alpha, beta: meta.chunked.beta, passkey, file,
+          onProgress: ({ done, count }) => setOpenStatus(`Downloading and decrypting... ${Math.round((done / count) * 100)}%`),
+        }));
+      } else {
+        setOpenStatus('Fetching encrypted shards...');
+        const [shardAlpha, shardBeta] = await Promise.all([
+          fetchShardFromIPFS(meta.cidAlpha),
+          fetchShardFromIPFS(meta.cidBeta),
+        ]);
+
+        setOpenStatus('Decrypting...');
+        const dataUrl = await InayaKernel.reconstructAndDecrypt({ shardAlpha, shardBeta, passkey });
+        const match = /^data:([^;]+);base64,(.*)$/s.exec(dataUrl);
+        if (!match) throw new Error('Unexpected decrypted data format.');
+        let base64Data;
+        [, mimeType, base64Data] = match;
+
+        setOpenStatus('Saving to device...');
+        file.create({ overwrite: true });
+        file.write(base64Data, { encoding: 'base64' });
+      }
 
       if (await Sharing.isAvailableAsync()) {
         // Same AppLockGate risk as the document picker in UploadScreen.js —

@@ -17,25 +17,31 @@ import { useCardCustomer } from '../providers/CardCustomerProvider';
 import { colors, spacing, radius, fonts } from '../theme';
 import GradientButton from '../components/GradientButton';
 import CheckoutWebView from '../components/CheckoutWebView';
+import { PLAY_EDITION } from '../utils/edition';
 
 const SUMMARY_CARDS = [
-  { value: '4.5 USDT', label: 'Baseline Storage / TB / Month', color: colors.cyan },
-  { value: '5 INAYA', label: 'Egress / 0.5 TB Retrieved', color: colors.success },
-  { value: '5 USDT', label: 'Flat Annual Maintenance', color: colors.warning },
+  { value: '6.49 USDT', label: 'Baseline Storage / TB / Month', color: colors.cyan },
+  { value: 'Included', label: 'Retrieval up to stored volume / month', color: colors.success },
+  { value: '12 USDT', label: 'Flat Annual Maintenance', color: colors.warning },
   { value: '26.7%', label: 'Staking Rewards Pool APY Source', color: '#a78bfa' },
 ];
 
 const MARKET_COMPARISON = [
-  { provider: 'Amazon S3 (Standard)', storage: '~23.00 USDT', egress: '~90.00 USDT', duration: '30 Days' },
-  { provider: 'Google Cloud Storage', storage: '~20.00 USDT', egress: '~80.00 USDT', duration: '30 Days' },
-  { provider: 'Legacy Web2 (B2)', storage: '~6.00 USDT', egress: '~10.00 USDT', duration: 'None' },
-  { provider: 'Inaya Network (DePIN)', storage: '4.50 USDT', egress: '10 INAYA', duration: 'Zero Constraints', highlight: true },
+  // Competitor list prices in USD as of November 2026 (same table as the web app's src/lib/dappPricing.js).
+  { provider: 'Amazon S3 (Standard)', storage: '~23.00 USDT', egress: '~90 USDT', duration: 'None' },
+  { provider: 'Google Cloud Storage', storage: '~20.00 USDT', egress: '~120 USDT', duration: 'None' },
+  { provider: 'Cloudflare R2', storage: '15.00 USDT', egress: 'Free', duration: 'None' },
+  { provider: 'Wasabi', storage: '~7.99 USDT', egress: 'Free within limits', duration: '1 TB, 90 days' },
+  { provider: 'Storj', storage: '7.00 USDT', egress: '7 USDT', duration: '5 USDT / month' },
+  { provider: 'Backblaze B2', storage: '6.95 USDT', egress: 'Free to 3x stored, then 10 USDT', duration: 'None' },
+  { provider: 'Inaya Network (DePIN)', storage: '6.49 USDT', egress: 'Included to 1x stored, then 10 INAYA / 0.5 TB', duration: 'None', highlight: true },
 ];
 
 const CORPORATE_TIERS = [
-  { tier: '250 TB / Year', aws: '76,680 USDT/yr', b2: '19,500 USDT/yr', inaya: '13,500 USDT/Year', maintenance: '500 USDT-eq/yr' },
-  { tier: '500 TB / Year', aws: '151,680 USDT/yr', b2: '39,000 USDT/yr', inaya: '27,000 USDT/Year', maintenance: '1,000 USDT-eq/yr' },
-  { tier: '1000 TB / Year', aws: '295,680 USDT/yr', b2: '78,000 USDT/yr', inaya: '54,000 USDT/Year', maintenance: '2,000 USDT-eq/yr' },
+  // aws / b2: a year of storage only at list price (S3 Standard tiers 23/22/21 USD per TB; B2 6.95).
+  { tier: '250 TB / Year', aws: '66,600 USDT/yr', b2: '20,850 USDT/yr', inaya: '17,970 USDT/Year', maintenance: '500 USDT-eq/yr' },
+  { tier: '500 TB / Year', aws: '132,600 USDT/yr', b2: '41,700 USDT/yr', inaya: '34,740 USDT/Year', maintenance: '1,000 USDT-eq/yr' },
+  { tier: '1000 TB / Year', aws: '258,600 USDT/yr', b2: '83,400 USDT/yr', inaya: '65,880 USDT/Year', maintenance: '2,000 USDT-eq/yr' },
 ];
 
 const FUNDAMENTALS = [
@@ -113,21 +119,21 @@ export default function BusinessModelScreen() {
         <View style={styles.payggrid}>
           <View style={styles.paygCard}>
             <Text style={styles.paygLabel}>Storage Subscription (30 Days)</Text>
-            <Text style={styles.paygPrice}>4.5 USDT / TB</Text>
+            <Text style={styles.paygPrice}>6.49 USDT / TB</Text>
             <TouchableOpacity style={styles.disabledButton} disabled>
               <Text style={styles.disabledButtonText}>💵 PAY STORAGE (PAYG)</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.paygCard}>
-            <Text style={styles.paygLabel}>Egress / Retrieval Fee</Text>
-            <Text style={styles.paygPrice}>5 INAYA / 0.5 TB</Text>
+            <Text style={styles.paygLabel}>Retrieval Beyond Monthly Allowance</Text>
+            <Text style={styles.paygPrice}>10 INAYA / 0.5 TB</Text>
             <TouchableOpacity style={styles.disabledButton} disabled>
               <Text style={styles.disabledButtonText}>💵 PAY EGRESS (PAYG)</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.paygCard}>
             <Text style={styles.paygLabel}>Annual Maintenance</Text>
-            <Text style={styles.paygPrice}>5 USDT / Year</Text>
+            <Text style={styles.paygPrice}>12 USDT / Year</Text>
             <TouchableOpacity style={styles.disabledButton} disabled>
               <Text style={styles.disabledButtonText}>💵 PAY MAINTENANCE (PAYG)</Text>
             </TouchableOpacity>
@@ -148,6 +154,7 @@ export default function BusinessModelScreen() {
             </View>
           </View>
         ))}
+        <Text style={styles.panelNote}>Competitor figures are list prices in USD as of November 2026; figures marked ~ are widely reported list prices. Retrieval up to your stored volume is included each month; the INAYA fee beyond that applies from mainnet.</Text>
       </View>
 
       {/* CARD CUSTOMER PLAN STATUS -- the piece that was missing entirely: checkout
@@ -186,12 +193,13 @@ export default function BusinessModelScreen() {
           >
             <Text style={styles.tierCardTitle}>{row.tier}</Text>
             <Text style={styles.tierCardLine}>Inaya Fee: <Text style={styles.tierCardHighlight}>{row.inaya}</Text></Text>
-            <Text style={styles.tierCardLine}>Legacy AWS S3: {row.aws}</Text>
-            <Text style={styles.tierCardLine}>Competitor B2: {row.b2}</Text>
+            <Text style={styles.tierCardLine}>AWS S3 Standard (storage only): {row.aws}</Text>
+            <Text style={styles.tierCardLine}>Backblaze B2 (storage only): {row.b2}</Text>
             <Text style={styles.tierCardLine}>Maintenance: {row.maintenance}</Text>
           </TouchableOpacity>
         ))}
 
+        {!PLAY_EDITION && (
         <View style={styles.checkoutBox}>
           <Text style={styles.checkoutLabel}>// READY FOR ACTIVATION</Text>
           <Text style={styles.checkoutTier}>Selected Allocation: {selectedTier}</Text>
@@ -206,6 +214,7 @@ export default function BusinessModelScreen() {
           </View>
           {!!checkoutMessage && <Text style={styles.checkoutMessage}>{checkoutMessage}</Text>}
         </View>
+        )}
       </View>
 
       {/* FUNDAMENTALS */}
@@ -219,12 +228,12 @@ export default function BusinessModelScreen() {
         ))}
       </View>
 
-      <CheckoutWebView
+      {!PLAY_EDITION && <CheckoutWebView
         visible={!!checkoutUrl}
         url={checkoutUrl}
         onClose={() => setCheckoutUrl(null)}
         onResult={handleCheckoutResult}
-      />
+      />}
     </ScrollView>
   );
 }

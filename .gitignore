@@ -46,3 +46,8 @@ inaya-mobile.zip
 # generated native folders
 /ios
 /android
+
+# Play upload key credentials (never commit)
+credentials.json
+keystores/inaya-play-upload.jks
+verify-credentials.json

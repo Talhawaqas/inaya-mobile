@@ -41,11 +41,24 @@ export function getReadOnlyCustody() {
 // Mirrors InayaKernel's own defaultFetchShard() — the pinning route
 // (api/upload/route.js) stores { shard, element } as the pinned JSON, so
 // retrieval reads back the same `.shard` field.
+// Gateways in order of speed (SQA 17 Nov 2026: Filebase's served both Pinata- and Filebase-held shards in
+// 0.5-0.8 s; Pinata's took 4-5 s). Same order as the website (inaya-network-dapp/src/lib/ipfsGateways.js).
+const IPFS_GATEWAYS = ['https://ipfs.filebase.io/ipfs/', 'https://gateway.pinata.cloud/ipfs/'];
+
 export async function fetchShardFromIPFS(cid) {
-  const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
-  if (!res.ok) throw new Error(`Failed to fetch shard ${cid} (HTTP ${res.status})`);
-  const json = await res.json();
-  return json.shard;
+  let lastError;
+  for (const base of IPFS_GATEWAYS) {
+    try {
+      const res = await fetch(`${base}${cid}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (typeof json?.shard !== 'string') throw new Error('not a shard');
+      return json.shard;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw new Error(`Failed to fetch shard ${cid} (${lastError?.message || 'unknown error'})`);
 }
 
 export const MIME_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg', 'application/pdf': 'pdf', 'text/plain': 'txt' };

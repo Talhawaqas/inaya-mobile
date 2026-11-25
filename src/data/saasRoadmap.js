@@ -789,6 +789,181 @@ export const ROADMAP_STAGES = [
     notes:
       "Built in two rounds and tested against real hardware throughout, not just written and assumed to work — a real VM, a real disk, a real VPC, a real `aws` CLI call, a real HAProxy round-trip, and a real k3s cluster were each exercised end to end on a real QEMU/KVM host. 82+ automated tests pass (30 Rust, 52 Node.js). Real hardware testing caught and fixed 7 genuine bugs a code review alone would have missed, including a pre-existing camelCase/snake_case wire-format mismatch in the node scheduler's capacity comparison (fixed at the customer's own request) and an SSH protocol ordering bug that silently truncated longer guest responses. Explicitly not built: GPU passthrough, full AWS coverage (S3/IAM/autoscaling), HTTP-aware load balancing, and TPM-backed identity or real SEV/TDX execution — each deferred for a stated, concrete reason, not silently skipped. No separate mobile UI exists for this stage; it is managed entirely from the web/desktop Business Workspace.",
   },
+  {
+    number: 31,
+    title: "Education OS — Schools and Colleges",
+    status: ROADMAP_STATUS.LIVE,
+    description:
+      "The seventh industry vertical of the Business Workspace, for small and mid-sized schools, colleges and academies in Pakistan, India, Bangladesh and the UAE. It runs in ERP mode alongside the existing Finance, HR and Documents modules, and is built around the three things schools asked to keep safe: students' personal data, fee payments, and documents.",
+    securityStatement:
+      "Guardian contact details, home addresses, national ID numbers and medical notes are encrypted before they are stored, and a teacher can only open the records of students in the classes they are assigned to, with ID numbers masked.",
+    groups: [
+      {
+        title: "Student and guardian data",
+        items: [
+          "Student register with guardians, encrypted at the field level (AES-256-GCM); name, admission number and class stay searchable",
+          "Role-based views: principal and admissions see the full record, accounts see contact details only, a class teacher sees masked ID numbers and no address; anyone else is refused",
+          "ID formats for B-Form/CNIC, Aadhaar (last 4 digits only, never the full number), APAAR, Bangladesh birth registration/NID, Emirates ID and passport",
+          "Every opening of a student record, every mark change and every payment is written to the tamper-evident audit chain",
+          "Student data export (JSON) and erasure on request; erasure removes personal data and keeps the fee ledger under an anonymised name",
+          "Document checklist per student, linked to files in Documents, which are encrypted on the uploader's device",
+        ],
+      },
+      {
+        title: "Fees and payments",
+        items: [
+          "Fee structures with fee heads, in PKR, INR, BDT or AED, stored as whole minor units",
+          "Fee invoices generated per period without ever billing a student twice for the same period",
+          "Concessions (sibling, merit, staff child, need-based, scholarship) that need a second person to approve",
+          "Payment recording that can't overpay an invoice, sequential receipt numbers, printable receipts, and reversals with a reason instead of deletions",
+          "Late fees, an overdue list with days overdue, and collection totals by payment method",
+        ],
+      },
+      {
+        title: "School operations",
+        items: [
+          "Academic years, classes and sections, subjects, and teacher assignments",
+          "Admissions pipeline from application to enrolment",
+          "Daily attendance registers; teachers can correct a register for 3 days, after that only the principal",
+          "Exams and report cards: results are locked once published, and a change needs the principal and a reason, with the old mark kept",
+          "Read-only parent links (30 days by default, 90 at most) showing fees, attendance and published results only; revocable, logged, and dead on erasure",
+          "Education AI assistant with 6 read-only tools that see only what the person asking could see",
+        ],
+      },
+    ],
+    notes:
+      "Verified with 14 automated tests against the real database (encryption at rest, per-role views, duplicate billing, overpayment, self-approval, publish lock, parent-link contents, revocation and erasure) plus a static check that every Education OS API path is locked to the education vertical; the screens and the parent page were checked in a running app. Not yet built: online fee collection through a payment gateway (fees are recorded, not collected online), SMS/WhatsApp fee reminders, timetables, transport and hostel, and mobile screens. No claim is made of compliance with India's DPDP Act, the UAE PDPL, or Pakistani or Bangladeshi data-protection law; the features help a school meet its own obligations.",
+  },
+  {
+    number: 32,
+    title: "Appointments & Email Marketing — Online Booking, Team Calendars, Campaigns and Follow-ups",
+    status: ROADMAP_STATUS.LIVE,
+    description:
+      "An online booking calendar and a mass email marketing tool inside the Business Workspace, both connected to the CRM, so an enquiry becomes a lead, a booking, a meeting on the customer's record and a follow-up campaign without leaving Inaya. Included in the Business and Enterprise packages.",
+    securityStatement:
+      "Customer phone numbers, meeting notes and calendar addresses are encrypted before they are stored, staff email addresses never appear on public booking pages, and every marketing email carries a one-click unsubscribe that is honoured for good.",
+    groups: [
+      {
+        title: "Appointment calendar",
+        items: [
+          "A public booking page per company: service, optional choice of person, and a time shown in the visitor's own time zone, plus an enquiry form",
+          "Confirmation with a calendar invite and a private link to reschedule or cancel; the link changes whenever the appointment moves",
+          "Staff working hours, time off, buffers, notice, booking window, daily limits and round-robin assignment; double bookings refused",
+          "Day, week and month views for yourself, the team or a department, with total, completed, upcoming-today and customers-engaged cards",
+          "Google Calendar and Outlook sync without a paid API: a private calendar address out, busy times read from the person's own calendar in",
+          "Email reminders, encrypted notes and attachments, Inaya Meet links, and the meeting outcome written to the CRM record",
+        ],
+      },
+      {
+        title: "Email marketing",
+        items: [
+          "A four-step builder (design, audience, review, send) with five starter templates and personalisation",
+          "CRM segments, including inactive customers for re-engagement and people who have or haven't booked",
+          "Two-person approval, one-off or repeating schedules, and test sends to colleagues",
+          "Follow-up sequences after an enquiry, a meeting or a campaign that stop on unsubscribe, bounce or booking",
+          "Opens, clicks, bounces, unsubscribes and top links per campaign, against open-rate and click-through targets",
+          "A separate sending domain, one-click unsubscribe, the sender's postal address, and automatic suppression of bounces and complaints",
+        ],
+      },
+      {
+        title: "Everywhere",
+        items: [
+          "Web, mobile app (agenda and approvals) and public API endpoints",
+          "Workflow node and ready-made automations for enquiry nurture and after-meeting follow-up",
+          "The AI Business Assistant can answer calendar, enquiry and campaign questions",
+        ],
+      },
+    ],
+    notes:
+      "Verified with automated tests against the real database (booking, double-booking refusal, encryption at rest, reschedule and cancel links, reminders, CRM logging, the calendar feed, two-person approval, delivery, bounce and complaint suppression, tracking, unsubscribe and sequences) and checked in a running app. Campaign sending starts once the separate marketing sending domain is connected. SMS reminders are built but off because no SMS provider is connected, so reminders go by email.",
+  },
+  {
+    number: 33,
+    title: "Hospitality OS — Reservations, Tables, Menu, Stock and Daily Operations for Restaurants",
+    status: ROADMAP_STATUS.LIVE,
+    description:
+      "An industry edition of the Business Workspace for restaurants, cafes, caterers and cloud kitchens. It connects reservations and guests to the CRM, recipes and wastage to Inventory, reorders to Procurement, shifts to HR and guest campaigns to the Campaigns module, instead of being a separate restaurant app.",
+    securityStatement:
+      "Every action is checked on the server by role and by location, guest contact details and staff notes are hidden from service staff, the public booking page shows only free times, and reservations, price and allergen changes, wastage and stock counts are written to the tamper-evident audit chain.",
+    groups: [
+      {
+        title: "Front of house",
+        items: [
+          "Locations with opening hours, closures, time zone, currency and a reservation policy",
+          "Seating areas and tables, combinable tables and temporary closures",
+          "Reservations by phone, in person, walk-in or an online booking page, with a table chosen automatically and double bookings refused",
+          "A guest limit per time slot, a live floor view and a waitlist that suggests the next party that fits",
+          "Confirmation, change, cancellation and reminder emails, and a private link for guests to view or cancel",
+        ],
+      },
+      {
+        title: "Guests",
+        items: [
+          "Guests are CRM contacts: completed visits, feedback and preferences on the customer record",
+          "Phone-only matches are reviewed by a manager, never merged automatically",
+          "Marketing opt-in recorded separately from the booking, and a 'guest visits' audience in Campaigns",
+          "Export and erase a guest's data",
+        ],
+      },
+      {
+        title: "Kitchen and stock",
+        items: [
+          "Menus, categories, items, options, dietary labels and allergens, reviewed and published by a manager",
+          "Recipes from Inventory ingredients with versions, stock coverage and an estimated cost only when every price is known",
+          "Wastage with reasons and approval, stock counts, reorder suggestions that draft purchase requests, and delivery checks",
+        ],
+      },
+      {
+        title: "Daily operations",
+        items: [
+          "Weekly roster with publishing, unavailability, approved leave from HR and shift swaps",
+          "Opening and closing checklists with due times and required evidence",
+          "Guest complaints and operational incidents with assignment and escalation",
+          "Reports with metric definitions, read-only AI assistant tools and four automation templates",
+        ],
+      },
+    ],
+    notes:
+      "This is WEB/DESKTOP ONLY — no mobile app screens exist for Hospitality OS yet; listed here for completeness. Verified with automated tests against the real database, including simultaneous booking attempts, capacity limits, role and location access, other-company isolation and the public booking page. No point-of-sale, payments, kitchen display or payroll: stock isn't deducted from sales and no sales or food-cost figures are shown.",
+  },
+  {
+    number: 34,
+    title: "Launch Readiness — Package Activation, Invoices, Data Export, Daily Backups and Built-in Help",
+    status: ROADMAP_STATUS.LIVE,
+    description:
+      "Everything a paying company needs before the public launch on 1 January 2027: a clear way to request and pay for a package without a card, invoices from our side, a copy of all its data on demand, daily backups, and help inside the Workspace that can fix common problems on the spot.",
+    securityStatement:
+      "A company's workspace stays closed until its package is paid and activated. The data download is limited to owners and admins, backups are encrypted before they are stored, and the support assistant can only make a short list of safe account fixes, each recorded in the activity log; anything else goes to a person.",
+    groups: [
+      {
+        title: "Packages and billing",
+        items: [
+          "Request a package from inside the Workspace with your contact details and NayaPay or bank transfer as the payment method; a confirmation email arrives straight away",
+          "Prices in USD, or in PKR for companies in Pakistan, with the pilot discount and setup fee shown before you send",
+          "Numbered PDF invoices with the payment details, emailed in one click by the Inaya team",
+          "The workspace opens as soon as the payment is confirmed, and the company is emailed when its package is active",
+          "Extra users on top of a package, up to each package's limit, and upgrades to a larger package",
+        ],
+      },
+      {
+        title: "Your data",
+        items: [
+          "Owners and admins can download all of the company's records and documents as one ZIP file from Billing",
+          "Company records are backed up every day, encrypted, with a restore that only adds missing records and never overwrites",
+        ],
+      },
+      {
+        title: "Help",
+        items: [
+          "A support assistant in the Workspace Help panel that checks your account, explains what is wrong in plain words and, once an owner or admin says yes, fixes common problems such as a missing company name, the wrong business type or a lost invitation",
+          "Problems it cannot fix are emailed to the support team with the details, and the team replies within one working day",
+          "A step-by-step setup guide, downloadable from the Workspace and the website",
+        ],
+      },
+    ],
+    notes:
+      "These are WEB/DESKTOP features (the Workspace, its Help panel and Billing); listed here for completeness. Verified with automated tests and in a running app. Payment is confirmed by the Inaya team when the transfer arrives, not by an automatic payment gateway.",
+  },
 ];
 
 export const VISION = {
