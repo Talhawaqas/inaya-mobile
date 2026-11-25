@@ -45,6 +45,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The default list includes the retired "tools" package, which the current command-line tools no longer ship
+          # (sdkmanager exits 1). platform-tools is all the Gradle build needs; Gradle fetches the platform/build-tools.
+          packages: platform-tools
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
