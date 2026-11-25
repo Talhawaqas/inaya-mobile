@@ -72,6 +72,8 @@ import {
 import { isAppLockSuspended, openExternalLink } from './src/utils/appLockSuspend';
 import { colors, fonts } from './src/theme';
 import { ThemeProviderRoot, useTheme } from './src/providers/ThemeProvider';
+import { loadAppMode, saveAppMode, onAppModeChange, visibleScreen, firstScreen } from './src/utils/appMode';
+import ModeChooserScreen from './src/screens/ModeChooserScreen';
 
 // General safety net for any render-time crash NOT already caught by
 // WalletProvider's own try/catch around createAppKit() — shows the real
@@ -162,7 +164,7 @@ const DRAWER_LABELS = {
   Home: 'Home',
   Faucet: 'Testnet Faucet',
   Business: 'Business',
-  Workspace: 'Business Workspace',
+  Workspace: 'Business OS',
   SaaSRoadmap: 'Business SaaS Roadmap',
   Staking: 'Staking',
   Bridge: 'Cross-Chain Bridge',
@@ -286,7 +288,12 @@ function AppNavigator() {
   // ping in src/app/page.js: most sessions start before a wallet is
   // connected, so anonymous presence still needs to count.
   const { address: walletAddress } = useWallet();
+  // Which part of Inaya this phone shows (src/utils/appMode.js). Read BEFORE the first activity ping, because the ping
+  // creates the device id that marks an install as "used before".
+  const [mode, setMode] = useState(undefined);
+  useEffect(() => { loadAppMode().then(setMode); return onAppModeChange(setMode); }, []);
   useEffect(() => {
+    if (mode === undefined || mode === null) return;
     (async () => {
       const deviceId = await getOrCreateDeviceId();
       const identityId = walletAddress || deviceId;
@@ -297,13 +304,17 @@ function AppNavigator() {
         body: JSON.stringify({ surface: 'mobile', identityId }),
       }).catch(() => {});
     })();
-  }, [walletAddress]);
+  }, [walletAddress, mode]);
+
+  if (mode === undefined) return null;
+  if (mode === null) return <ModeChooserScreen onChoose={(m) => saveAppMode(m)} />;
 
   return (
     <NavigationContainer theme={navTheme}>
       <StatusBar style="light" />
       <Drawer.Navigator
-        initialRouteName="Home"
+        key={mode}
+        initialRouteName={firstScreen(mode)}
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={({ route }) => ({
           headerShown: route.name !== 'Home' && route.name !== 'Workspace' && route.name !== 'Learn',
@@ -319,24 +330,24 @@ function AppNavigator() {
           drawerIcon: ({ color, size }) => <Ionicons name={DRAWER_ICONS[route.name]} color={color} size={size ?? 20} />,
         })}
       >
-        <Drawer.Screen name="Home" component={HomeStack} options={{ title: DRAWER_LABELS.Home }} />
-        <Drawer.Screen name="Faucet" component={FaucetScreen} options={{ title: DRAWER_LABELS.Faucet }} />
-        <Drawer.Screen name="Business" component={BusinessModelScreen} options={{ title: DRAWER_LABELS.Business }} />
-        <Drawer.Screen name="Workspace" component={BusinessWorkspaceStack} options={{ title: DRAWER_LABELS.Workspace }} />
-        <Drawer.Screen name="SaaSRoadmap" component={SaaSRoadmapScreen} options={{ title: DRAWER_LABELS.SaaSRoadmap }} />
-        <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />
-        <Drawer.Screen name="Bridge" component={BridgeScreen} options={{ title: DRAWER_LABELS.Bridge }} />
-        <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />
-        <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />
-        <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />
-        <Drawer.Screen name="AIAssistant" component={AIAssistantScreen} options={{ title: DRAWER_LABELS.AIAssistant }} />
-        <Drawer.Screen name="Referrals" component={ReferralScreen} options={{ title: DRAWER_LABELS.Referrals }} />
-        <Drawer.Screen name="WatcherPioneer" component={WatcherPioneerScreen} options={{ title: DRAWER_LABELS.WatcherPioneer }} />
-        <Drawer.Screen name="Meet" component={MeetScreen} options={{ title: DRAWER_LABELS.Meet }} />
-        <Drawer.Screen name="Notifications" component={NotificationsScreen} options={{ title: DRAWER_LABELS.Notifications }} />
-        <Drawer.Screen name="Learn" component={LearnStack} options={{ title: DRAWER_LABELS.Learn }} />
-        <Drawer.Screen name="Security" component={SecurityScreen} options={{ title: DRAWER_LABELS.Security }} />
-        <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: DRAWER_LABELS.Settings }} />
+        {visibleScreen(mode, 'Home') && <Drawer.Screen name="Home" component={HomeStack} options={{ title: DRAWER_LABELS.Home }} />}
+        {visibleScreen(mode, 'Faucet') && <Drawer.Screen name="Faucet" component={FaucetScreen} options={{ title: DRAWER_LABELS.Faucet }} />}
+        {visibleScreen(mode, 'Business') && <Drawer.Screen name="Business" component={BusinessModelScreen} options={{ title: DRAWER_LABELS.Business }} />}
+        {visibleScreen(mode, 'Workspace') && <Drawer.Screen name="Workspace" component={BusinessWorkspaceStack} options={{ title: DRAWER_LABELS.Workspace }} />}
+        {visibleScreen(mode, 'SaaSRoadmap') && <Drawer.Screen name="SaaSRoadmap" component={SaaSRoadmapScreen} options={{ title: DRAWER_LABELS.SaaSRoadmap }} />}
+        {visibleScreen(mode, 'Staking') && <Drawer.Screen name="Staking" component={StakingScreen} options={{ title: DRAWER_LABELS.Staking }} />}
+        {visibleScreen(mode, 'Bridge') && <Drawer.Screen name="Bridge" component={BridgeScreen} options={{ title: DRAWER_LABELS.Bridge }} />}
+        {visibleScreen(mode, 'Dashboard') && <Drawer.Screen name="Dashboard" component={MyDashboardScreen} options={{ title: DRAWER_LABELS.Dashboard }} />}
+        {visibleScreen(mode, 'WhitePaper') && <Drawer.Screen name="WhitePaper" component={WhitePaperScreen} options={{ title: DRAWER_LABELS.WhitePaper }} />}
+        {visibleScreen(mode, 'KnowledgeBase') && <Drawer.Screen name="KnowledgeBase" component={KnowledgeBaseScreen} options={{ title: DRAWER_LABELS.KnowledgeBase }} />}
+        {visibleScreen(mode, 'AIAssistant') && <Drawer.Screen name="AIAssistant" component={AIAssistantScreen} options={{ title: DRAWER_LABELS.AIAssistant }} />}
+        {visibleScreen(mode, 'Referrals') && <Drawer.Screen name="Referrals" component={ReferralScreen} options={{ title: DRAWER_LABELS.Referrals }} />}
+        {visibleScreen(mode, 'WatcherPioneer') && <Drawer.Screen name="WatcherPioneer" component={WatcherPioneerScreen} options={{ title: DRAWER_LABELS.WatcherPioneer }} />}
+        {visibleScreen(mode, 'Meet') && <Drawer.Screen name="Meet" component={MeetScreen} options={{ title: DRAWER_LABELS.Meet }} />}
+        {visibleScreen(mode, 'Notifications') && <Drawer.Screen name="Notifications" component={NotificationsScreen} options={{ title: DRAWER_LABELS.Notifications }} />}
+        {visibleScreen(mode, 'Learn') && <Drawer.Screen name="Learn" component={LearnStack} options={{ title: DRAWER_LABELS.Learn }} />}
+        {visibleScreen(mode, 'Security') && <Drawer.Screen name="Security" component={SecurityScreen} options={{ title: DRAWER_LABELS.Security }} />}
+        {visibleScreen(mode, 'Settings') && <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: DRAWER_LABELS.Settings }} />}
       </Drawer.Navigator>
     </NavigationContainer>
   );

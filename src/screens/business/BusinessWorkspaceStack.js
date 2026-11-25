@@ -9,6 +9,8 @@
 // DocumentDetail stack. Mirrors HomeStack's pattern of hiding its own
 // Drawer header and using its own Stack.Navigator headers instead.
 
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -111,7 +113,11 @@ export default function BusinessWorkspaceStack() {
           headerShadowVisible: false,
         }}
       >
-        <Stack.Screen name="OrgHome" component={OrgHomeScreen} options={{ title: 'Business Workspace' }} />
+        <Stack.Screen name="OrgHome" component={OrgHomeScreen} options={({ navigation }) => ({ title: 'Business OS', headerLeft: () => (
+          <TouchableOpacity onPress={() => navigation.getParent()?.openDrawer?.()} accessibilityRole="button" accessibilityLabel="Open menu" style={{ paddingRight: 12, minHeight: 44, justifyContent: 'center' }}>
+            <Ionicons name="menu" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+        ) })} />
         <Stack.Screen name="Departments" component={DepartmentsScreen} />
         <Stack.Screen name="Projects" component={ProjectsScreen} />
         <Stack.Screen name="Documents" component={DocumentsScreen} />

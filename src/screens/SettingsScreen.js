@@ -20,6 +20,8 @@ import { colors, spacing, radius, fonts, glassCard, THEMES, THEME_LABELS } from 
 import { useTheme } from '../providers/ThemeProvider';
 import { isBiometricAvailable, getBiometricEnabled, setBiometricEnabled } from '../utils/biometric';
 import { setStoredPasskey, getStoredPasskey, clearStoredPasskey, hasStoredPasskey } from '../utils/passkeyStorage';
+import { loadAppMode, saveAppMode } from '../utils/appMode';
+import { PLAY_EDITION } from '../utils/edition';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -184,9 +186,25 @@ export default function SettingsScreen() {
     setSecureStorageMessage('Cleared from secure storage.');
   }
 
+  const [appMode, setAppMode] = useState(null);
+  useEffect(() => { loadAppMode().then((m) => setAppMode(m || 'all')); }, []);
+
   return (
     <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxxl }]}>
       <Text style={styles.title}>Settings</Text>
+
+      {!PLAY_EDITION && appMode && (
+        <View style={[styles.card, { marginTop: spacing.lg }]}>
+          <Text style={styles.rowTitle}>What do you use Inaya for?</Text>
+          <Text style={styles.rowHint}>The menu shows only the part you choose.</Text>
+          {[['business', 'Inaya Business OS', 'My company: jobs, finance, HR, documents'], ['network', 'Inaya Network', 'Storage, wallet, staking, bridge, Watcher'], ['all', 'Both', 'Show everything']].map(([m, label, hint]) => (
+            <TouchableOpacity key={m} onPress={() => { setAppMode(m); saveAppMode(m); }} accessibilityRole="radio" accessibilityState={{ checked: appMode === m }} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, minHeight: 48 }}>
+              <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: colors.cyan, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md }}>{appMode === m && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.cyan }} />}</View>
+              <View style={{ flex: 1 }}><Text style={styles.rowTitle}>{label}</Text><Text style={styles.rowHint}>{hint}</Text></View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {!checking && (
         <View style={[styles.card, styles.row, { marginTop: spacing.lg }]}>
