@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "317928925348",
+    "project_id": "inaya-9d520",
+    "storage_bucket": "inaya-9d520.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317928925348:android:104fd46a071340d3ef5e31",
+        "android_client_info": {
+          "package_name": "com.inayanetworksteam.inayamobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCspNgN2_ujzxOMqvev66umm4CNHyunRNk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
