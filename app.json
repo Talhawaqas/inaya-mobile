@@ -3,7 +3,7 @@
     "name": "Inaya Network",
     "slug": "inaya-mobile",
     "scheme": "inayamobile",
-    "version": "1.0.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -39,7 +39,8 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE"
       ],
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 130
     },
     "web": {
       "favicon": "./assets/favicon.png"
