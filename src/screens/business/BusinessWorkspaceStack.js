@@ -25,10 +25,15 @@ import TasksScreen from './TasksScreen';
 import TaskDetailScreen from './TaskDetailScreen';
 import CRMScreen from './CRMScreen';
 import DealDetailScreen from './DealDetailScreen';
+import AppointmentsScreen from './AppointmentsScreen';
+import CampaignsScreen from './CampaignsScreen';
 import HealthScreen from './HealthScreen';
 import PatientDetailScreen from './PatientDetailScreen';
 import LegalScreen from './LegalScreen';
 import MatterDetailScreen from './MatterDetailScreen';
+import RegulatedScreen from './RegulatedScreen';
+import FinancialScreen from './FinancialScreen';
+import GovernmentScreen from './GovernmentScreen';
 import ProcurementScreen from './ProcurementScreen';
 import OrderDetailScreen from './OrderDetailScreen';
 import InventoryScreen from './InventoryScreen';
@@ -36,10 +41,13 @@ import ProductDetailScreen from './ProductDetailScreen';
 import FinanceScreen from './FinanceScreen';
 import InvoiceDetailScreen from './InvoiceDetailScreen';
 import HRScreen from './HRScreen';
+import MyJobsScreen from './MyJobsScreen';
+import JobScreen from './JobScreen';
 import EmployeeDetailScreen from './EmployeeDetailScreen';
 import InsightsScreen from './InsightsScreen';
 import BusinessAIScreen from './BusinessAIScreen';
 import MfaSettingsScreen from './MfaSettingsScreen';
+import { PLAY_EDITION } from '../../utils/edition';
 
 const Stack = createNativeStackNavigator();
 
@@ -112,10 +120,16 @@ export default function BusinessWorkspaceStack() {
         <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
         <Stack.Screen name="CRM" component={CRMScreen} />
         <Stack.Screen name="DealDetail" component={DealDetailScreen} />
-        <Stack.Screen name="Health" component={HealthScreen} options={{ title: 'Health OS' }} />
-        <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />
+        <Stack.Screen name="Appointments" component={AppointmentsScreen} />
+        <Stack.Screen name="Campaigns" component={CampaignsScreen} options={{ title: 'Email campaigns' }} />
+        {!PLAY_EDITION && <Stack.Screen name="Health" component={HealthScreen} options={{ title: 'Health OS' }} />}
+        {!PLAY_EDITION && <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />}
         <Stack.Screen name="Legal" component={LegalScreen} options={{ title: 'Legal OS' }} />
         <Stack.Screen name="MatterDetail" component={MatterDetailScreen} />
+        {/* Batch 4 vertical OS screens; kept out of the Play edition like Health OS. */}
+        {!PLAY_EDITION && <Stack.Screen name="Regulated" component={RegulatedScreen} options={{ title: 'Regulated OS' }} />}
+        {!PLAY_EDITION && <Stack.Screen name="Financial" component={FinancialScreen} options={{ title: 'Financial OS' }} />}
+        {!PLAY_EDITION && <Stack.Screen name="Government" component={GovernmentScreen} options={{ title: 'Government OS' }} />}
         <Stack.Screen name="Procurement" component={ProcurementScreen} />
         <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
         <Stack.Screen name="Inventory" component={InventoryScreen} />
@@ -123,6 +137,8 @@ export default function BusinessWorkspaceStack() {
         <Stack.Screen name="Finance" component={FinanceScreen} />
         <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} />
         <Stack.Screen name="HR" component={HRScreen} />
+        <Stack.Screen name="MyJobs" component={MyJobsScreen} options={{ title: 'Manage Orders · My jobs' }} />
+        <Stack.Screen name="Job" component={JobScreen} options={({ route }) => ({ title: route.params?.title || 'Job' })} />
         <Stack.Screen name="EmployeeDetail" component={EmployeeDetailScreen} />
         <Stack.Screen name="Insights" component={InsightsScreen} />
         <Stack.Screen name="BusinessAI" component={BusinessAIScreen} options={{ title: 'AI Assistant' }} />

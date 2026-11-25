@@ -56,7 +56,29 @@
         }
       ],
       "./plugins/withGradleJvmArgs.js",
-      "./plugins/withAdiRegistration.js"
+      "./plugins/withAdiRegistration.js",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Inaya to attach photos to the jobs you work on.",
+          "cameraPermission": "Allow Inaya to take photos of the jobs you work on."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Inaya to take job photos and scan job and site QR codes.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Inaya records your location only at the moment you start or finish a job, when your company has switched this on. It is never tracked in the background.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isIosBackgroundLocationEnabled": false
+        }
+      ]
     ],
     "runtimeVersion": {
       "policy": "appVersion"

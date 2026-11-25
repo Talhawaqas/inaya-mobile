@@ -6,13 +6,15 @@
 // departments; each card also has a secondary "Ask the AI Assistant"
 // action, since the assistant is scoped to one org at a time.
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, fonts, glassCard } from '../../theme';
 import { useBusinessSession } from './BusinessSessionContext';
 import { orgFetch } from '../../utils/orgApi';
+import { PLAY_EDITION } from '../../utils/edition';
+import { registerJobPush, listenForJobTaps } from '../../utils/jobPush';
 
 const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', member: 'Member' };
 
@@ -61,6 +63,12 @@ function CreateCompanyForm({ onCreated }) {
 export default function OrgHomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { session, signOut, refreshSession } = useBusinessSession();
+  // Manage Orders (GitHub edition only; the Play Store edition stays unchanged): register this phone for job
+  // notifications and open the job when one is tapped.
+  const opsOrgIds = PLAY_EDITION ? [] : (session?.orgs || []).filter((o) => o.manageOrders).map((o) => o.orgId);
+  const opsKey = opsOrgIds.join(',');
+  useEffect(() => { if (opsOrgIds.length) registerJobPush(opsOrgIds); }, [opsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => (opsOrgIds.length ? listenForJobTaps(({ orgId, jobId }) => navigation.navigate('Job', { orgId, jobId })) : undefined), [opsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const orgs = session?.orgs || [];
 
   return (
@@ -100,7 +108,23 @@ export default function OrgHomeScreen({ navigation }) {
               <Text style={styles.aiButtonText}>CRM</Text>
             </TouchableOpacity>
 
-            {org.vertical === 'healthcare' && (
+            <TouchableOpacity
+              style={styles.aiButton}
+              onPress={() => navigation.navigate('Appointments', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="calendar-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>Appointments</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiButton}
+              onPress={() => navigation.navigate('Campaigns', { orgId: org.orgId, orgName: org.orgName })}
+            >
+              <Ionicons name="mail-outline" size={14} color={colors.cyan} />
+              <Text style={styles.aiButtonText}>Email campaigns</Text>
+            </TouchableOpacity>
+
+            {!PLAY_EDITION && org.vertical === 'healthcare' && (
               <TouchableOpacity
                 style={styles.aiButton}
                 onPress={() => navigation.navigate('Health', { orgId: org.orgId, orgName: org.orgName, role: org.role })}
@@ -117,6 +141,36 @@ export default function OrgHomeScreen({ navigation }) {
               >
                 <Ionicons name="briefcase-outline" size={14} color={colors.cyan} />
                 <Text style={styles.aiButtonText}>Legal OS</Text>
+              </TouchableOpacity>
+            )}
+
+            {!PLAY_EDITION && org.vertical === 'regulated' && (
+              <TouchableOpacity
+                style={styles.aiButton}
+                onPress={() => navigation.navigate('Regulated', { orgId: org.orgId, orgName: org.orgName, role: org.role })}
+              >
+                <Ionicons name="shield-checkmark-outline" size={14} color={colors.cyan} />
+                <Text style={styles.aiButtonText}>Regulated OS</Text>
+              </TouchableOpacity>
+            )}
+
+            {!PLAY_EDITION && (org.vertical === 'financial' || org.vertical === 'private_capital') && (
+              <TouchableOpacity
+                style={styles.aiButton}
+                onPress={() => navigation.navigate('Financial', { orgId: org.orgId, orgName: org.orgName, role: org.role, vertical: org.vertical })}
+              >
+                <Ionicons name="trending-up-outline" size={14} color={colors.cyan} />
+                <Text style={styles.aiButtonText}>{org.vertical === 'private_capital' ? 'Private Capital OS' : 'Financial OS'}</Text>
+              </TouchableOpacity>
+            )}
+
+            {!PLAY_EDITION && org.vertical === 'government' && (
+              <TouchableOpacity
+                style={styles.aiButton}
+                onPress={() => navigation.navigate('Government', { orgId: org.orgId, orgName: org.orgName, role: org.role })}
+              >
+                <Ionicons name="business-outline" size={14} color={colors.cyan} />
+                <Text style={styles.aiButtonText}>Government OS</Text>
               </TouchableOpacity>
             )}
 
@@ -143,6 +197,16 @@ export default function OrgHomeScreen({ navigation }) {
               <Ionicons name="cash-outline" size={14} color={colors.cyan} />
               <Text style={styles.aiButtonText}>Finance</Text>
             </TouchableOpacity>
+
+            {org.manageOrders && !PLAY_EDITION && (
+              <TouchableOpacity
+                style={styles.aiButton}
+                onPress={() => navigation.navigate('MyJobs', { orgId: org.orgId, orgName: org.orgName })}
+              >
+                <Ionicons name="construct-outline" size={14} color={colors.cyan} />
+                <Text style={styles.aiButtonText}>My jobs</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.aiButton}
@@ -176,6 +240,12 @@ export default function OrgHomeScreen({ navigation }) {
         <Text style={styles.securityButtonText}>Two-Step Verification</Text>
       </TouchableOpacity>
 
+      <View style={styles.legalBlock}>
+        <TouchableOpacity onPress={() => Linking.openURL('https://www.inayanetwork.com/account-deletion')} accessibilityRole="link">
+          <Text style={styles.legalLink}>Delete my account and data</Text>
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
         <Text style={styles.signOutText}>Sign out</Text>
       </TouchableOpacity>
@@ -184,6 +254,8 @@ export default function OrgHomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  legalBlock: { marginTop: 24, gap: 8, alignItems: 'center' },
+  legalLink: { color: '#00f2fe', fontSize: 13, textDecorationLine: 'underline', paddingVertical: 4 },
   root: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.xl },
   title: { fontSize: 20, fontFamily: fonts.sansExtraBold, color: colors.textPrimary, letterSpacing: 0.5 },
